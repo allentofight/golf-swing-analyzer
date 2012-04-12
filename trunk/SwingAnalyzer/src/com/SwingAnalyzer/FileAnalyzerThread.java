@@ -174,10 +174,12 @@ public class FileAnalyzerThread extends Thread{
     	
     	element.mIndex = index;
     	element.mTimestamp = Integer.parseInt(data[0]);
-    	element.mXvalue = Float.parseFloat(data[1]);
-    	element.mZvalue = Float.parseFloat(data[2]);
-    	element.mZvalue -= 9.81;
-    	element.mYvalue = Float.parseFloat(data[3]);    			
+    	element.mXvalue = Float.parseFloat(data[1]);    	
+    	
+    	element.mYvalue = Float.parseFloat(data[2]);
+    	element.mYvalue -= 9.81;
+    	
+    	element.mZvalue = Float.parseFloat(data[3]);
     	
     	//Log.i("Debug", "index= " + element.mIndex + " timestamp: " + element.mTimestamp);
     	//Log.i("Debug", "X= " + element.mXvalue + " Y= " + element.mYvalue + " Z= " + element.mZvalue);

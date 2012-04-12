@@ -20,12 +20,23 @@ public class DetectingPointActivity extends Activity{
 	final static String RESULT_EXT = ".dat";
 	final static String ACCEL_EXT = ".acc";
 	
+	// X-axis Threshold Value
+	final static int X_THRESHOLD_MAX = 10;
+	final static int X_THRESHOLD_MIN = -10;
+	
+	// Y-axis Threshold Values
+	final static int Y_THRESHOLD_MAX = 5;
+	final static int Y_THRESHOLD_MIN = -10;
+	
 
 	final static int MSG_DETECT 	= 1;
 	final static int MSG_PEAK		= 2;
 	final static int MSG_IMPACT 	= 3;
 	final static int MSG_DETECT_DONE = 4;
 	
+	
+	final static int X_AXIS	= 0;
+	final static int Y_AXIS = 1;
 	/*
 	 * Member variables
 	 */
@@ -35,7 +46,11 @@ public class DetectingPointActivity extends Activity{
 	List<AccelerationData> mXImpactArray = null;
 	List<AccelerationData> mYImpactArray = null;
 	
+	// X-axis detection thread
 	DetectImpactThread mDetectImpactThread;
+	
+	// Y-axis detection thread
+	DetectYPointsThread mDetectYPointsThread;
 		
 	String mResultOutputFile;		// Result file name
 	String mSelectedFile;		// The selected file in a spinner widget
@@ -51,14 +66,23 @@ public class DetectingPointActivity extends Activity{
 	long mStartTimeMillis = 0;
 	long mEndTimeMillis = 0;
 	
+	int mMaxThreshold;
+	int mMinThreshold;
+	
+	boolean mXChecked;
+	boolean mYChecked;
 	/*
 	 * Widgets
 	 */
-	Button mXAnalysis;
-	Button mYAnalysis;
-
 	
 	Spinner mOutfileSpinner;
+	
+	RadioGroup mRadioAxisType;
+	
+	EditText mMaxEditText;
+	EditText mMinEditText;
+
+	Button mDetectButton;
 	
 	TextView mDetectImpactTitleView;
 	TextView mDetectImpactResultView;
@@ -67,15 +91,16 @@ public class DetectingPointActivity extends Activity{
 	
 	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.detecting_points);                
-
-		
-		mXAnalysis = (Button)findViewById(R.id.x_analysis_button);
-		mYAnalysis = (Button)findViewById(R.id.y_analysis_button);
-		
-        mXAnalysis.setOnClickListener(mClickListener);
-        mYAnalysis.setOnClickListener(mClickListener);
-
+        setContentView(R.layout.detecting_points);   
+        
+        mRadioAxisType = (RadioGroup)findViewById(R.id.radio_group_axis);
+        mRadioAxisType.setOnCheckedChangeListener(mCheckedChangeListener);
+        
+        mDetectButton = (Button)findViewById(R.id.detect_button);
+        mDetectButton.setOnClickListener(mClickListener);
+        
+        mMaxEditText = (EditText)findViewById(R.id.threshold_hi_edit);
+        mMinEditText = (EditText)findViewById(R.id.threshold_low_edit);
         
         mDetectImpactTitleView = (TextView)findViewById(R.id.detect_impact_title);
         mDetectImpactResultView = (TextView)findViewById(R.id.detect_impactpoint_text);
@@ -84,7 +109,10 @@ public class DetectingPointActivity extends Activity{
         mOutfileSpinner.setOnItemSelectedListener(mItemSelectedListener);
         
         initMemberVariables();
+        
+        
         searchAccelerationFiles();
+        showThresholdValues();
 	}
 
 	@Override
@@ -124,7 +152,7 @@ public class DetectingPointActivity extends Activity{
 			// TODO Auto-generated method stub
 			mSelectedFile = (String)parent.getSelectedItem();
 			Log.i("Debug", "Selected File: " + mSelectedFile);
-			mDetectImpactTitleView.setText("File name : " + mSelectedFile);
+			mDetectImpactTitleView.setText(mSelectedFile);
 		}
 
 		public void onNothingSelected(AdapterView<?> arg0) {
@@ -133,7 +161,35 @@ public class DetectingPointActivity extends Activity{
 		}
 	};
 
-	
+	RadioGroup.OnCheckedChangeListener mCheckedChangeListener 
+		= new RadioGroup.OnCheckedChangeListener()
+	{
+		public void onCheckedChanged(RadioGroup group, int checkedId)
+		{
+			if(group.getId() == R.id.radio_group_axis)
+			{
+				switch(checkedId)
+				{
+				case R.id.radio_xaxis:
+					mXChecked = true;
+					mYChecked = false;
+					
+					mMaxThreshold = X_THRESHOLD_MAX;
+					mMinThreshold = X_THRESHOLD_MIN;
+					showThresholdValues();
+					break;
+				case R.id.radio_yaxis:
+					mYChecked = true;
+					mXChecked = false;
+					
+					mMaxThreshold = Y_THRESHOLD_MAX;
+					mMinThreshold = Y_THRESHOLD_MIN;
+					showThresholdValues();
+					break;
+				}
+			}
+		}
+	};
 	/*=============================================================================
 	 * Name: mClickListener
 	 * 
@@ -150,13 +206,12 @@ public class DetectingPointActivity extends Activity{
 			// TODO Auto-generated method stub
 			switch(v.getId())
 			{
-			case R.id.x_analysis_button:
+			case R.id.detect_button:
 				clearTextView();
-				startDetectProcessOfXvalue(v.getContext());
-				break;
-			case R.id.y_analysis_button:
-				clearTextView();
-				startDetectProcessOfYvalue(v.getContext());
+				mDetectImpactTitleView.setText(mSelectedFile 
+											+ ", Threshold Max:" + mMaxThreshold
+											+ ", Min:" + mMinThreshold);
+				startDetectProcess(v.getContext());
 				break;
 			}
 		}
@@ -184,7 +239,40 @@ public class DetectingPointActivity extends Activity{
 		mSdPath = "";
 		
 		mDetected = false;
+		
 
+        mRadioAxisType.check(R.id.radio_yaxis);
+        mYChecked = true;
+        mXChecked = false;
+        
+		if(mYChecked)
+		{
+			mMaxThreshold = Y_THRESHOLD_MAX;
+			mMinThreshold = Y_THRESHOLD_MIN;
+		}
+		else
+		{
+			mMaxThreshold = X_THRESHOLD_MAX;
+			mMinThreshold = X_THRESHOLD_MIN;
+		}
+	
+
+	}
+	/*=============================================================================
+	 * Name: showThresholdValues
+	 * 
+	 * Description:
+	 * 		show Max and Min threshold values according to X or Y axis
+	 * 		- X-axis: Max = 10, Min= -10
+	 * 		- Y-axis: Max = 5, Min = -10
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
+	public void showThresholdValues()
+	{
+		mMaxEditText.setText(Integer.toString(mMaxThreshold));
+		mMinEditText.setText(Integer.toString(mMinThreshold));
 	}
 	/*=============================================================================
 	 * Name: clearTextView
@@ -332,7 +420,7 @@ public class DetectingPointActivity extends Activity{
 		mProgress.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel",
 					new DialogInterface.OnClickListener() {
 						public void onClick(DialogInterface dialog, int whichButton) {
-							mDetectImpactThread.mFinished = false;
+							//mDetectImpactThread.mFinished = false;
 							mProgress.dismiss();
 						}
 		});
@@ -340,6 +428,36 @@ public class DetectingPointActivity extends Activity{
 		mProgress.show();
 	}
 
+	/*=============================================================================
+	 * Name: startDetectProcess
+	 * 
+	 * Description:
+	 * 		- Run a thread for detecting critical points according to a Radio button checked
+	 * 		- If X-axis is checked, execute startDetectProcessOfXvalue()
+	 * 		- If Y-axis is checked, execute startDetectProcessOfYvalue()
+	 *   	
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
+	public void startDetectProcess(Context context)
+	{
+		
+		mMaxThreshold = Integer.parseInt(mMaxEditText.getText().toString());
+		mMinThreshold = Integer.parseInt(mMinEditText.getText().toString());
+
+		Log.i("Detect", "Threshold Max: " + mMaxThreshold + ", Min: " + mMinThreshold);
+		
+		if((mXChecked == true) && (mYChecked == false) )
+		{	
+			Log.i("Detect", "Start X detection.");
+			startDetectProcessOfXvalue(context);
+		}
+		else
+		{
+			Log.i("Detect", "Start Y detection.");
+			startDetectProcessOfYvalue(context);
+		}
+	}
 	/*=============================================================================
 	 * Name: startDetectProcessOfXvalue
 	 * 
@@ -374,7 +492,7 @@ public class DetectingPointActivity extends Activity{
 		/*
 		 * Impact Text File : j8_acc_out_x.txt
 		 */		
-		setImpactOutFileName(outFileName);
+		setImpactOutFileName(outFileName, X_AXIS);
 		
 		initProgressDialog(context, title, msg);
 		
@@ -382,7 +500,7 @@ public class DetectingPointActivity extends Activity{
 		 * Create and run DetectImpactThread 
 		 */
 		mDetectImpactThread = new DetectImpactThread(inFile, 
-													outFile, mMsgHandler);
+													outFile, mXMsgHandler);
 		
 		// Synchronize ArrayList
 		mMainImpactArray = Collections.synchronizedList(mDetectImpactThread.mImpactPointArray);
@@ -405,7 +523,46 @@ public class DetectingPointActivity extends Activity{
 	 *=============================================================================*/ 
 	public void startDetectProcessOfYvalue(Context context)
 	{
+		String title = "Detecting Y-axis";
+		String msg = "Wait ...";
+		int dotPos = 0;
+		String outFileName = "";
+		String outFile = "";
+
+		/*
+		 * Input file name: j8_acc.txt
+		 * Output file name: j8_acc_out_x.dat
+		 */
+		String inFile = mSdPath + RESULT_DIR + mSelectedFile;
 		
+		dotPos = mSelectedFile.lastIndexOf(".");		
+		outFileName = mSelectedFile.substring(0, dotPos);		
+		outFile = mSdPath + RESULT_DIR + outFileName + Y_RESULT_NAME + RESULT_EXT;
+		mResultOutputFile = outFile;
+
+		Log.i("Debug", "outFile: " + outFile);
+		/*
+		 * Impact Text File : j8_acc_out_y.txt
+		 */		
+		setImpactOutFileName(outFileName, Y_AXIS);
+		
+		initProgressDialog(context, title, msg);
+		
+		/*
+		 * Create and run DetectImpactThread 
+		 */
+		mDetectYPointsThread = new DetectYPointsThread(inFile, outFile, 
+												mMaxThreshold, mMinThreshold, mYMsgHandler);
+		
+		// Synchronize ArrayList
+		mYImpactArray = Collections.synchronizedList(mDetectYPointsThread.mYImpactPointArray);
+		
+		mDetectYPointsThread.setDaemon(true);
+		// Start to check time
+		mStartTimeMillis = System.currentTimeMillis();
+		
+		mDetectYPointsThread.start();
+
 	}
 	
 	
@@ -424,8 +581,29 @@ public class DetectingPointActivity extends Activity{
     	int impactCount=0;
     	String stringTimeDiff = "";    	
     	
-    	
-    	impactCount = mMainImpactArray.size();
+    	if(mXChecked)
+    	{
+    		impactCount = mMainImpactArray.size();
+    	}
+    	else
+    	{
+    		impactCount = mYImpactArray.size();
+        	/*
+        	for(int i=0; i<impactCount; i++)
+        	{
+        		String impactString = "";	
+        		impactString = "index: " + (i+1) + " " + mYImpactArray.get(i).mTimestamp
+        									 + " " + mYImpactArray.get(i).mXvalue
+        									 + " " + mYImpactArray.get(i).mYvalue
+        									 + " " + mYImpactArray.get(i).mZvalue + "\n";
+
+        		mDetectImpactResultView.append(impactString);
+        		
+        		Log.i("Detect", impactString);
+        	}
+        */
+
+    	}
     	
     	mDetectImpactTitleView.setText("The number of impact point: " + impactCount 
     									+ ", "+ timeDiff + "\n");
@@ -447,15 +625,15 @@ public class DetectingPointActivity extends Activity{
     }
     
 	/*=============================================================================
-	 * Name: mMsgHandler
+	 * Name: mXMsgHandler
 	 * 
 	 * Description:
-	 * 		Process handle message		
+	 * 		Process handle message	(X-axis values)	
 	 * 
 	 * Return:
 	 * 		None
 	 *=============================================================================*/    
-    Handler mMsgHandler = new Handler()
+    Handler mXMsgHandler = new Handler()
     {
     	public void handleMessage(Message msg)
     	{
@@ -463,20 +641,9 @@ public class DetectingPointActivity extends Activity{
     		mProgress.dismiss();
     		if(msg.what == MSG_DETECT)
     		{
-    			if(mDetectImpactThread.mFinished == false)
-    			{
     			
-	    			mDetectImpactTitleView.setText("Detecting process: count = " 
+    			mDetectImpactTitleView.setText("Detecting process: count = " 
 	    										+ Integer.toString(msg.arg1));
-    			}
-    			else
-    			{
-    				mDetected = true;
-	    			mDetectImpactTitleView.setText("Detected Impact point: = " 
-	    										+ Integer.toString(msg.arg1));
-
-	    			
-    			}
     		}
     		else if(msg.what == MSG_DETECT_DONE)
     		{
@@ -513,6 +680,64 @@ public class DetectingPointActivity extends Activity{
     		}
     	}
     };
+    
+	/*=============================================================================
+	 * Name: mXMsgHandler
+	 * 
+	 * Description:
+	 * 		Process handle message	(X-axis values)	
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/     
+    Handler mYMsgHandler = new Handler()
+    {
+    	public void handleMessage(Message msg)
+    	{
+
+    		mProgress.dismiss();
+    		if(msg.what == MSG_DETECT)
+    		{
+    			
+	    		mDetectImpactTitleView.setText("Detecting process: count = " 
+	    										+ Integer.toString(msg.arg1));
+    		}
+    		else if(msg.what == MSG_DETECT_DONE)
+    		{
+    			/*
+    			 * Save the elapsed time to the output file
+    			 */
+    			mEndTimeMillis = System.currentTimeMillis();
+    			String stringTimeDiff = getTimeDifference(mStartTimeMillis, mEndTimeMillis);
+    			writeImpactString(stringTimeDiff);
+    			
+    			//writeObjectToFile();
+    			displayImpactPoint(stringTimeDiff);
+    			closeImpactOutStream();
+    		}
+    		else if(msg.what == MSG_IMPACT)
+    		{
+    			String stringImpact = "";
+    			stringImpact = "- Peak:" + Integer.toString(msg.arg1) 
+    							+ ", Time: " + Integer.toString(msg.arg2) + "\n";
+    			
+    			mDetectImpactResultView.append(stringImpact);
+    			
+    			// Write impact information to a file
+    			writeImpactString(stringImpact);    			
+    			
+    		}
+    		else if(msg.what == MSG_PEAK)
+    		{
+    			String stringPeak = "";
+    			stringPeak = "+ Peak:" + Integer.toString(msg.arg1)
+    								+ ", Time: " + Integer.toString(msg.arg2) + "\n";
+    			
+    			mDetectImpactResultView.append(stringPeak);	// Debug: changsu
+    		}
+    	}
+    };
+
 	/*=============================================================================
 	 * Name: writeObjectToFile
 	 * 
@@ -565,10 +790,23 @@ public class DetectingPointActivity extends Activity{
     	if(mMainImpactArray.size() > 0)
     		mMainImpactArray.clear();    	
     }
-
-    public void setImpactOutFileName(String filename)
+	/*=============================================================================
+	 * Name: setImpactOutFileName
+	 * 
+	 * Description:
+	 * 		Detect ArrayList
+	 * 		- mAccelerationArray
+	 * 		- mImpactPointArray		
+	 * 		 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/    
+    public void setImpactOutFileName(String filename, int axis)
     {
-    	mImpactOutFileName = mSdPath + RESULT_DIR + filename + X_RESULT_NAME + ".txt";    	
+    	if(axis == X_AXIS)
+    		mImpactOutFileName = mSdPath + RESULT_DIR + filename + X_RESULT_NAME + ".txt";
+    	else
+    		mImpactOutFileName = mSdPath + RESULT_DIR + filename + Y_RESULT_NAME + ".txt";
     	
     	try
     	{
