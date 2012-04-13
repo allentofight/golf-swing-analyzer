@@ -1,3 +1,15 @@
+/*----------------------------------------------------------------------------
+  File:   DetectYPointThread.java
+
+  Author: Jung Chang Su
+  ----------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+  
+  This is a source for a thread to detect some critical points such as impact
+  and peak points from Y-axis values collected from an accelerometer in 
+  an Android smart phone. 
+  *--------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 import java.io.FileInputStream;
@@ -12,10 +24,13 @@ import android.util.Log;
 
 public class DetectYPointsThread extends Thread
 {
-	final static int MSG_DETECT 	= 1;
-	final static int MSG_PEAK		= 2;
-	final static int MSG_IMPACT 	= 3;
-	final static int MSG_DETECT_DONE = 4;
+	/*
+	 * Message ID for Y-axis
+	 */
+	final static int MSG_DETECT_Y 		= 0x10;
+	final static int MSG_PEAK_Y 		= 0x20;
+	final static int MSG_IMPACT_Y		= 0x30;
+	final static int MSG_DETECT_DONE_Y	= 0x40;
 	
 	final static int Y_THRESHOLD_HI = 5;
 	final static int Y_THRESHOLD_LOW = -10;
@@ -134,7 +149,7 @@ public class DetectYPointsThread extends Thread
 			mFinished = true;
 		}
 		
-		sendMessageToHandler(MSG_DETECT_DONE, mImpactCount, 0);
+		sendMessageToHandler(MSG_DETECT_DONE_Y, mImpactCount, 0);
 	}
 	
 	/*=============================================================================
@@ -252,7 +267,7 @@ public class DetectYPointsThread extends Thread
     					minValue = y2;
     					minIndex = i;        					
     					negativePeakTimestamp = AccelDataList.get(i).mTimestamp;    					
-    					sendMessageToHandler(MSG_IMPACT, mNegativePeakCount, timestamp);
+    					sendMessageToHandler(MSG_IMPACT_Y, mNegativePeakCount, timestamp);
     					
     				}
     			}        			
@@ -301,7 +316,7 @@ public class DetectYPointsThread extends Thread
         				maxValue = y2;
         				maxIndex = i;        					
         				positivePeakTimestamp = AccelDataList.get(i).mTimestamp;
-        				sendMessageToHandler(MSG_PEAK, mPositivePeakCount, timestamp);
+        				sendMessageToHandler(MSG_PEAK_Y, mPositivePeakCount, timestamp);
         				
             			minValue = 0;
             			minIndex = 0;
@@ -323,7 +338,7 @@ public class DetectYPointsThread extends Thread
 			}
 			
 			// To display the counter processed 
-			sendMessageToHandler(MSG_DETECT, mCount, 0);
+			sendMessageToHandler(MSG_DETECT_Y, mCount, 0);
     		i++;
     		
     	}while(i <= size-1);
