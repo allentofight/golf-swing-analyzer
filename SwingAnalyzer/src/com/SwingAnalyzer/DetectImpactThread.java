@@ -1,3 +1,13 @@
+/*----------------------------------------------------------------------------
+  File:   DetectImpactThread.java
+
+  Author: Jung Chang Su
+  ----------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+  Detect some critical points from X-axis values collected from an Accelerometer
+  in an Android smart phone
+  *--------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 import java.io.FileInputStream;
@@ -24,11 +34,14 @@ import android.util.Log;
 class DetectImpactThread extends Thread
 {
 
-	final static int MSG_DETECT 	= 1;
-	final static int MSG_PEAK		= 2;
-	final static int MSG_IMPACT 	= 3;
-	final static int MSG_DETECT_DONE = 4;
-	
+	/*
+	 *	Message ID for X-axis 
+	 */
+	final static int MSG_DETECT_X 		= 0x01;
+	final static int MSG_PEAK_X			= 0x02;
+	final static int MSG_IMPACT_X 		= 0x03;
+	final static int MSG_DETECT_DONE_X 	= 0x04;
+
 	final static int IMPACT_HI_VALUE = 10;		// 
 	final static int IMPACT_LOW_VALUE = -5;
 
@@ -138,7 +151,7 @@ class DetectImpactThread extends Thread
 			mFinished = true;
 		}
 		
-		sendMessageToHandler(MSG_DETECT_DONE, mImpactCount, 0);
+		sendMessageToHandler(MSG_DETECT_DONE_X, mImpactCount, 0);
 	}
 	
 	/*=============================================================================
@@ -291,7 +304,7 @@ class DetectImpactThread extends Thread
 								+ ", Max:" + maxValue);    
 
         			//sendMessageToHandler(MSG_PEAK, mPeakCount, peakTimestamp);
-        			sendMessageToHandler(MSG_IMPACT, mImpactCount, timestamp);
+        			sendMessageToHandler(MSG_IMPACT_X, mImpactCount, timestamp);
         			
         			maxValue = 0;
         			maxIndex = 0;
@@ -309,7 +322,7 @@ class DetectImpactThread extends Thread
 			}
 			
 			// To display the counter processed 
-			sendMessageToHandler(MSG_DETECT, mCount, 0);
+			sendMessageToHandler(MSG_DETECT_X, mCount, 0);
     		i++;
     		
     	}while(i <= size-1);

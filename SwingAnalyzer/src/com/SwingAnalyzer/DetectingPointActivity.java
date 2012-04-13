@@ -28,12 +28,29 @@ public class DetectingPointActivity extends Activity{
 	final static int Y_THRESHOLD_MAX = 5;
 	final static int Y_THRESHOLD_MIN = -10;
 	
-
-	final static int MSG_DETECT 	= 1;
-	final static int MSG_PEAK		= 2;
-	final static int MSG_IMPACT 	= 3;
-	final static int MSG_DETECT_DONE = 4;
+	/*
+	 *	Message ID for X-axis 
+	 */
+	final static int MSG_DETECT_X 		= 0x01;
+	final static int MSG_PEAK_X			= 0x02;
+	final static int MSG_IMPACT_X 		= 0x03;
+	final static int MSG_DETECT_DONE_X 	= 0x04;
 	
+	/*
+	 * Message ID for Y-axis
+	 */
+	final static int MSG_DETECT_Y 		= 0x10;
+	final static int MSG_PEAK_Y 		= 0x20;
+	final static int MSG_IMPACT_Y		= 0x30;
+	final static int MSG_DETECT_DONE_Y	= 0x40;
+	
+	/*
+	 * Message ID for Z-axis
+	 */
+	final static int MSG_DETECT_Z		= 0x100;
+	final static int MSG_PEAK_Z			= 0x200;
+	final static int MSG_IMPACT_Z		= 0x300;
+	final static int MSG_DETECT_DONE_Z 	= 0x400;
 	
 	final static int X_AXIS	= 0;
 	final static int Y_AXIS = 1;
@@ -639,26 +656,26 @@ public class DetectingPointActivity extends Activity{
     	{
 
     		mProgress.dismiss();
-    		if(msg.what == MSG_DETECT)
+    		if(msg.what == MSG_DETECT_X)
     		{
     			
     			mDetectImpactTitleView.setText("Detecting process: count = " 
 	    										+ Integer.toString(msg.arg1));
     		}
-    		else if(msg.what == MSG_DETECT_DONE)
+    		else if(msg.what == MSG_DETECT_DONE_X)
     		{
     			/*
     			 * Save the elapsed time to the output file
     			 */
     			mEndTimeMillis = System.currentTimeMillis();
     			String stringTimeDiff = getTimeDifference(mStartTimeMillis, mEndTimeMillis);
-    			writeImpactString(stringTimeDiff);
+    			writeEventStringToFile(stringTimeDiff);
     			
     			//writeObjectToFile();
     			displayImpactPoint(stringTimeDiff);
-    			closeImpactOutStream();
+    			closeFileOutStrem();
     		}
-    		else if(msg.what == MSG_IMPACT)
+    		else if(msg.what == MSG_IMPACT_X)
     		{
     			String stringImpact = "";
     			stringImpact = "Impact:" + Integer.toString(msg.arg1) 
@@ -667,10 +684,10 @@ public class DetectingPointActivity extends Activity{
     			mDetectImpactResultView.append(stringImpact);
     			
     			// Write impact information to a file
-    			writeImpactString(stringImpact);    			
+    			writeEventStringToFile(stringImpact);    			
     			
     		}
-    		else if(msg.what == MSG_PEAK)
+    		else if(msg.what == MSG_PEAK_X)
     		{
     			String stringPeak = "";
     			stringPeak = "Peak:" + Integer.toString(msg.arg1)
@@ -682,7 +699,7 @@ public class DetectingPointActivity extends Activity{
     };
     
 	/*=============================================================================
-	 * Name: mXMsgHandler
+	 * Name: mYMsgHandler
 	 * 
 	 * Description:
 	 * 		Process handle message	(X-axis values)	
@@ -696,26 +713,26 @@ public class DetectingPointActivity extends Activity{
     	{
 
     		mProgress.dismiss();
-    		if(msg.what == MSG_DETECT)
+    		if(msg.what == MSG_DETECT_Y)
     		{
     			
 	    		mDetectImpactTitleView.setText("Detecting process: count = " 
 	    										+ Integer.toString(msg.arg1));
     		}
-    		else if(msg.what == MSG_DETECT_DONE)
+    		else if(msg.what == MSG_DETECT_DONE_Y)
     		{
     			/*
     			 * Save the elapsed time to the output file
     			 */
     			mEndTimeMillis = System.currentTimeMillis();
     			String stringTimeDiff = getTimeDifference(mStartTimeMillis, mEndTimeMillis);
-    			writeImpactString(stringTimeDiff);
+    			writeEventStringToFile(stringTimeDiff);
     			
     			//writeObjectToFile();
     			displayImpactPoint(stringTimeDiff);
-    			closeImpactOutStream();
+    			closeFileOutStrem();
     		}
-    		else if(msg.what == MSG_IMPACT)
+    		else if(msg.what == MSG_IMPACT_Y)
     		{
     			String stringImpact = "";
     			stringImpact = "- Peak:" + Integer.toString(msg.arg1) 
@@ -724,15 +741,16 @@ public class DetectingPointActivity extends Activity{
     			mDetectImpactResultView.append(stringImpact);
     			
     			// Write impact information to a file
-    			writeImpactString(stringImpact);    			
+    			writeEventStringToFile(stringImpact);    			
     			
     		}
-    		else if(msg.what == MSG_PEAK)
+    		else if(msg.what == MSG_PEAK_Y)
     		{
     			String stringPeak = "";
     			stringPeak = "+ Peak:" + Integer.toString(msg.arg1)
     								+ ", Time: " + Integer.toString(msg.arg2) + "\n";
     			
+    			writeEventStringToFile(stringPeak);	// Added (2012.04.13)
     			mDetectImpactResultView.append(stringPeak);	// Debug: changsu
     		}
     	}
@@ -819,8 +837,18 @@ public class DetectingPointActivity extends Activity{
     	}
     	
     }
-    
-    public void writeImpactString(String string) 
+	/*=============================================================================
+	 * Name: writeEventStringToFile
+	 * 
+	 * Description:
+	 * 		Write events to the output file.
+	 * 		This function is called by Handler when a thread send a message. 		
+	 * 				
+	 * 		 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/    
+    public void writeEventStringToFile(String string) 
     {
     	try
     	{
@@ -831,8 +859,17 @@ public class DetectingPointActivity extends Activity{
     		Log.e("Debug", "Error: " + e.getMessage());
     	}
     }
-    
-    public void closeImpactOutStream()
+	/*=============================================================================
+	 * Name: closeFileOutStrem
+	 * 
+	 * Description:
+	 * 		Close the output stream file
+	 * 		This function is called by Handler. 		
+	 * 		 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/        
+    public void closeFileOutStrem()
     {
     	try 
     	{
