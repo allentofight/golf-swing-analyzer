@@ -392,10 +392,65 @@ public class DetectingPointActivity extends Activity{
         		Log.i("Detect", "Filelist: " + fileNameList[i]);
         	}
         	
-        	insertFileNameToSpinner(fileNameList);
+        	String[] sortedFileNameList = new String[fileNameList.length]; 
+        	sortedFileNameList = doNaturalSorting(fileNameList);
+
+        	//insertFileNameToSpinner(fileNameList);
+        	insertFileNameToSpinner(sortedFileNameList);
     	}
     	
     }
+    
+	/*=============================================================================
+	 * Name: doNaturalSorting
+	 * 
+	 * Description:
+	 * 		Display filenames according to the file number
+	 * 		Example) j4_acc_out.txt -> j8_acc_out.txt -> j9_acc_out.txt -> 
+	 * 				... -> j113_acc_out.txt
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+    public String[] doNaturalSorting(String[] array)
+    {	
+		String tmp = "";
+		
+		String s1 = "";
+		String s2 = "";
+		int i1, i2;		
+		
+		for(int i=0; i< (array.length-1); i++)
+		{
+		
+			for(int j=0; j<= (array.length-2); j++)
+			{
+			
+				/*
+				s1 = array[j].substring(1, array[j].lastIndexOf("_"));
+				s2 = array[j+1].substring(1, array[j+1].lastIndexOf("_"));
+				*/
+				// File names are different from ConvertDataActivity's files.
+				s1 = array[j].substring(1, array[j].indexOf("_"));
+				s2 = array[j+1].substring(1, array[j+1].indexOf("_"));
+
+				i1 = Integer.parseInt(s1);
+				i2 = Integer.parseInt(s2);
+				
+				Log.i("Detect", "s1:" + s1 + ", s2:" + s2);
+				
+				if(i1 > i2)
+				{
+					tmp = array[j];
+					array[j] = array[j+1];
+					array[j+1] = tmp;				
+				}				
+			}
+		}
+
+    	return array;
+    }
+
 	/*=============================================================================
 	 * Name: insertFileNameToSpinner
 	 * 

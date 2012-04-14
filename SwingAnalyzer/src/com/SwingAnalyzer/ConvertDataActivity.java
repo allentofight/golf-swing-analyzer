@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,9 +53,8 @@ public class ConvertDataActivity extends Activity{
 	Button mConvertingButton;
 	Button mExitButton;
 	
-	TextView mResultTextView;
-	TextView mImpactTextView;
-	TextView mImpactTitleTextView;
+	TextView mResultTextView;	
+	
 	
 	ProgressDialog mProgress;
 	
@@ -69,9 +69,10 @@ public class ConvertDataActivity extends Activity{
         mConvertingButton = (Button)findViewById(R.id.converting_button);        
         mConvertingButton.setOnClickListener(mClickListener);
         
+        mExitButton = (Button)findViewById(R.id.exit_button);
+        mExitButton.setOnClickListener(mClickListener);
+        
         mResultTextView = (TextView)findViewById(R.id.result_text);
-        mImpactTextView = (TextView)findViewById(R.id.impactpoint_text);
-        mImpactTitleTextView = (TextView)findViewById(R.id.impact_title);
         
         initVariables();        
       
@@ -117,6 +118,9 @@ public class ConvertDataActivity extends Activity{
 			case R.id.converting_button:
 				startConvertProcess(v.getContext());				
 				break;
+			case R.id.exit_button:
+				System.exit(0);
+				break;
 			}
 		}
 		
@@ -140,10 +144,6 @@ public class ConvertDataActivity extends Activity{
         
         mResultTextView.setText("");
         
-        mImpactTitleTextView.setText("Impact point: Criteria: > " + IMPACT_MAX 
-        								+ " or < " + IMPACT_MIN + "\n");
-        
-        mImpactTextView.setText("");
         
         mSwingAccelArray = new ArrayList<AccelerationData>();
     }
@@ -169,21 +169,31 @@ public class ConvertDataActivity extends Activity{
     		makeOutputDir(stringSdPath);
     		searchFilesinSdPath(stringSdPath);
     		
-    		Log.i("Debug", "Filename: " + mSelectedFile);
+    		Log.i("Convert", "Filename: " + mSelectedFile);
     		mResultTextView.setText("Selected file: " + mSelectedFile);
     	}
     	else
     		mSelectedFile = "";
     }
-    
+	/*=============================================================================
+	 * Name: makeOutputDir
+	 * 
+	 * Description:
+	 * 		Make a output directory for writing output files
+	 * 		(/data/acceldata)		
+	 * 		
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	    
     public void makeOutputDir(String dir)
     {
     	File outputDir = new File(dir + ACCELERATION_DIR);
     	
     	if(outputDir.mkdir() == true)
-    		Log.i("Debug", "mkdir is successful: " + dir + ACCELERATION_DIR);
+    		Log.i("Convert", "mkdir is successful: " + dir + ACCELERATION_DIR);
     	else
-    		Log.i("Debug", "mkdir failed: " + dir + ACCELERATION_DIR);
+    		Log.i("Convert", "mkdir failed: " + dir + ACCELERATION_DIR);
     }
     
 	/*=============================================================================
@@ -229,16 +239,64 @@ public class ConvertDataActivity extends Activity{
     	File swingDir = new File(sdPath + GOLFSWING_DIR);
     	
     	
-    	Log.i("Debug", "PATH: " + sdPath + GOLFSWING_DIR);
+    	Log.i("Convert", "PATH: " + sdPath + GOLFSWING_DIR);
     	
     	if(swingDir.isDirectory())
     	{
         	String[] fileNameList = swingDir.list();
-        	insertFileNameToSpinner(fileNameList);
+        	
+        	
+        	String[] sortedFileNameList = new String[fileNameList.length]; 
+        	sortedFileNameList = doNaturalSorting(fileNameList);
+        	
+        	Log.i("Convert", "Sorted fileNameList: " + fileNameList);
+        	
+        	//insertFileNameToSpinner(fileNameList);
+        	insertFileNameToSpinner(sortedFileNameList);
     	}
     	
     }
+	/*=============================================================================
+	 * Name: doNaturalSorting
+	 * 
+	 * Description:
+	 * 		Display filenames according to the file number
+	 * 		Example) j4_acc.txt -> j8_acc.txt -> j9_acc.txt -> ... -> j113_acc.txt
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+    public String[] doNaturalSorting(String[] array)
+    {	
+		String tmp = "";
+		
+		String s1 = "";
+		String s2 = "";
+		int i1, i2;		
+		
+		for(int i=0; i< (array.length-1); i++)
+		{
+		
+			for(int j=0; j<= (array.length-2); j++)
+			{
+			
+				s1 = array[j].substring(1, array[j].lastIndexOf("_"));
+				s2 = array[j+1].substring(1, array[j+1].lastIndexOf("_"));
 
+				i1 = Integer.parseInt(s1);
+				i2 = Integer.parseInt(s2);
+				
+				if(i1 > i2)
+				{
+					tmp = array[j];
+					array[j] = array[j+1];
+					array[j+1] = tmp;				
+				}				
+			}
+		}
+
+    	return array;
+    }
 	/*=============================================================================
 	 * Name: insertFileNameToSpinner
 	 * 
@@ -278,7 +336,7 @@ public class ConvertDataActivity extends Activity{
 			mSelectedFile = (String)parent.getSelectedItem();		 
 			mOutputFile = "";
 			mConvertFile = "";
-			Log.i("Debug", "Selected File: " + mSelectedFile);
+			Log.i("Convert", "Selected File: " + mSelectedFile);
 			
 		}
 
@@ -352,8 +410,8 @@ public class ConvertDataActivity extends Activity{
 		
 		mOutputFile = mSdPath + ACCELERATION_DIR + outFileName;
 		
-		Log.i("Debug", "mConvertFile: " + mConvertFile);
-		Log.i("Debug", "OutputFile: " + mOutputFile);
+		Log.i("Convert", "mConvertFile: " + mConvertFile);
+		Log.i("Convert", "OutputFile: " + mOutputFile);
 		
 		initProgressDialog(context, "Converting", "Wait...");
 		
@@ -392,7 +450,7 @@ public class ConvertDataActivity extends Activity{
     		{
     			if(mFileAnalyzerThread.mFinished == true)
     			{
-    				//Log.i("Debug", "Converting is finished");
+    				//Log.i("Convert", "Converting is finished");
     				misConverted = true;
     				
         			mResultTextView.setText("Finished converting a file: " + mSelectedFile 
@@ -423,7 +481,7 @@ public class ConvertDataActivity extends Activity{
 			mOutFileStream = new FileOutputStream(mOutputFile);
 			mObjectOutputStream = new ObjectOutputStream(mOutFileStream);
 
-			Log.i("Debug", "writeObject: " + mSwingAccelArray.size());
+			Log.i("Convert", "writeObject: " + mSwingAccelArray.size());
 			
 			mObjectOutputStream.writeObject(mSwingAccelArray);
 			mObjectOutputStream.reset();				
@@ -450,7 +508,7 @@ public class ConvertDataActivity extends Activity{
 	 *=============================================================================*/    
     public void deleteArrayList()
     {
-    	Log.i("Debug", "Array size: " + mSwingAccelArray.size());
+    	Log.i("Convert", "Array size: " + mSwingAccelArray.size());
     	
     	if(mSwingAccelArray.size() > 0)
     		mSwingAccelArray.clear();    	
