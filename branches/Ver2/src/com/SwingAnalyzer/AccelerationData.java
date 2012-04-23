@@ -5,6 +5,7 @@ import java.util.*;
 
 public class AccelerationData implements Serializable{
 	int mIndex;
+	//long mTimestamp;
 	int mTimestamp;
 	float mXvalue;
 	float mYvalue;

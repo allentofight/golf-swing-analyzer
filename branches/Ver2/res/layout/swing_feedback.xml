@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#000000"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/feedback_x_textview"
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:text="X-axis" />
+
+    <TableLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:background="#000000"
+        android:orientation="horizontal" >
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/x_time1"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="  0"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time2"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="500"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time3"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="  1000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time4"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center|center_vertical"
+                android:text="1500"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time4"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center|center_vertical"
+                android:text="2000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time5"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="right|center_vertical"
+                android:text="2500  "
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/x_time6"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="right|center_vertical"
+                android:padding="2dp"
+                android:text="3000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+        </TableRow>
+    </TableLayout>
+
+    <!-- Separater -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0.5dp"
+        android:background="#FFFFFF"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <!-- X axis Image buttons -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal" 
+        android:layout_gravity="center_vertical"
+        android:layout_margin="5dp">
+
+        <ImageView
+            android:id="@+id/img_x1"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"      
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x3"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x4"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x5"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x6"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <!-- Separater -->
+
+    
+
+    <TextView
+        android:id="@+id/feedback_y_textview"
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:text="Y-axis" />
+
+    <!-- Y-axis Timestamp -->
+
+    <TableLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:background="#000000"
+        android:orientation="horizontal" >
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/y_time1"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="  0"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time2"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="500"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time3"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:text="  1000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time4"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center|center_vertical"
+                android:text="1500"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time4"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="center|center_vertical"
+                android:text="2000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time5"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="right|center_vertical"
+                android:text="2500  "
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+
+            <TextView
+                android:id="@+id/y_time6"
+                android:layout_width="30dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="right|center_vertical"
+                android:padding="2dp"
+                android:text="3000"
+                android:textColor="#ffffff"
+                android:textSize="10dp" />
+        </TableRow>
+    </TableLayout>
+
+    <!-- Separater -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0.5dp"
+        android:background="#FFFFFF"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <!-- Y axis Image buttons -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal" 
+        android:layout_margin="5dp">
+
+        <ImageView
+            android:id="@+id/img_y1"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y3"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y4"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y5"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y6"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center|center_vertical"
+            android:src="@drawable/black_button_30"/>
+    </LinearLayout>
+    
+	<LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:orientation="vertical" >
+    </LinearLayout>
+    
+    <LinearLayout
+       	android:layout_width="fill_parent"
+       	android:layout_height="0.5dp"
+       	android:background="#FFFFFF"
+       	android:orientation="vertical" >
+	</LinearLayout>
+    
+    <LinearLayout
+        android:id="@+id/layer_result"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_weight="0.89"
+        android:orientation="vertical" >
+        <LinearLayout
+        	android:layout_width="fill_parent"
+        	android:layout_height="0.5dp"
+        	android:background="#FFFFFF"
+        	android:orientation="vertical" >
+    	</LinearLayout>
+        
+        <TextView
+            android:id="@+id/feedback_result"
+            android:layout_width="fill_parent"
+            android:layout_height="60dp"
+            android:layout_weight="0.75"
+            android:text="Result" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layer_bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/x_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="X-axis"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Button
+            android:id="@+id/y_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="Y-axis"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Button
+            android:id="@+id/back_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="Back"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+    </LinearLayout>
+
+</LinearLayout>

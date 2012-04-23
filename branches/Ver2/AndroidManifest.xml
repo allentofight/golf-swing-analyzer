@@ -21,10 +21,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
         <activity android:name=".ConvertDataActivity" android:label="Convert data"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
+        
         <activity android:name=".DetectingPointActivity" android:label="Detecting points"
+            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
+        </activity>
+        
+        <activity android:name=".CollectingAccelerationData" android:label="Collecting Acceleration Data"
+            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
+        </activity>
+        
+        <activity android:name=".SwingFeedback" android:label="Swing Analysis"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
     </application>
