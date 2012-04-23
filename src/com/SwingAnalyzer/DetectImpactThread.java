@@ -198,7 +198,7 @@ class DetectImpactThread extends Thread
     	do
     	{
     		mCount++;
-    		timestamp = AccelDataList.get(i).mTimestamp;
+    		timestamp = (int)AccelDataList.get(i).mTimestamp;
     		
     		x2 = AccelDataList.get(i).mXvalue;        		
     		if(i> 0)
@@ -264,7 +264,7 @@ class DetectImpactThread extends Thread
     					*/    
     					maxValue = x2;
     					maxIndex = i;        					
-    					peakTimestamp = AccelDataList.get(i).mTimestamp;
+    					peakTimestamp = (int)AccelDataList.get(i).mTimestamp;
     					//sendMessageToHandler(MSG_PEAK, mPeakCount, timestamp);
     					
     				}

@@ -204,7 +204,7 @@ public class DetectYPointsThread extends Thread
     	do
     	{
     		mCount++;
-    		timestamp = AccelDataList.get(i).mTimestamp;
+    		timestamp = (int)AccelDataList.get(i).mTimestamp;
     		
     		y2 = AccelDataList.get(i).mYvalue;        		
     		if(i> 0)
@@ -266,7 +266,7 @@ public class DetectYPointsThread extends Thread
     					    
     					minValue = y2;
     					minIndex = i;        					
-    					negativePeakTimestamp = AccelDataList.get(i).mTimestamp;    					
+    					negativePeakTimestamp = (int)AccelDataList.get(i).mTimestamp;    					
     					sendMessageToHandler(MSG_IMPACT_Y, mNegativePeakCount, timestamp);
     					
     				}
@@ -315,7 +315,7 @@ public class DetectYPointsThread extends Thread
         				    
         				maxValue = y2;
         				maxIndex = i;        					
-        				positivePeakTimestamp = AccelDataList.get(i).mTimestamp;
+        				positivePeakTimestamp = (int)AccelDataList.get(i).mTimestamp;
         				sendMessageToHandler(MSG_PEAK_Y, mPositivePeakCount, timestamp);
         				
             			minValue = 0;

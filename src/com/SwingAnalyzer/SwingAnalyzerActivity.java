@@ -18,8 +18,9 @@ public class SwingAnalyzerActivity extends TabActivity {
         TabHost tabHost = getTabHost();
         TabHost.TabSpec spec;
 		
-		Intent intent;
 		
+		/*
+		Intent intent;
 		intent = new Intent().setClass(this, ConvertDataActivity.class);
 		spec = tabHost.newTabSpec("convert").setIndicator("Converting").setContent(intent);
 		tabHost.addTab(spec);
@@ -27,8 +28,18 @@ public class SwingAnalyzerActivity extends TabActivity {
 		intent = new Intent().setClass(this, DetectingPointActivity.class);
 		spec = tabHost.newTabSpec("detect").setIndicator("Detection").setContent(intent);
 		tabHost.addTab(spec);
+		*/
+        
+        Intent intent;
+		intent = new Intent().setClass(this, CollectingAccelerationData.class);
+		spec = tabHost.newTabSpec("collection").setIndicator("Collection").setContent(intent);
+		tabHost.addTab(spec);
 		
-		tabHost.setCurrentTab(1);
+		intent = new Intent().setClass(this, SwingFeedback.class);
+		spec = tabHost.newTabSpec("feedback").setIndicator("Feedback").setContent(intent);
+		tabHost.addTab(spec);
+		
+		tabHost.setCurrentTab(0);
 		
 		for ( int tab = 0; tab < tabHost.getTabWidget().getChildCount(); ++tab )
 		{
