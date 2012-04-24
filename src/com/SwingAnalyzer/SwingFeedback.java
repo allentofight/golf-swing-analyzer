@@ -32,17 +32,20 @@ public class SwingFeedback extends Activity{
 	 *	Message ID for X-axis 
 	 */
 	final static int MSG_DETECT_X 		= 0x01;
-	final static int MSG_PEAK_X			= 0x02;
-	final static int MSG_IMPACT_X 		= 0x03;
-	final static int MSG_DETECT_DONE_X 	= 0x04;
+	final static int MSG_PEAK_X_MAX		= 0x02;
+	final static int MSG_PEAK_X_MIN		= 0x03;
+	final static int MSG_IMPACT_X 		= 0x04;
+	final static int MSG_DETECT_DONE_X 	= 0x05;
 	
 	/*
 	 * Message ID for Y-axis
 	 */
 	final static int MSG_DETECT_Y 		= 0x10;
-	final static int MSG_PEAK_Y 		= 0x20;
-	final static int MSG_IMPACT_Y		= 0x30;
-	final static int MSG_DETECT_DONE_Y	= 0x40;
+	final static int MSG_PEAK_Y_MAX 	= 0x20;
+	final static int MSG_PEAK_Y_MIN		= 0x30;
+	final static int MSG_IMPACT_Y		= 0x40;
+	final static int MSG_DETECT_DONE_Y	= 0x50;
+	
 	
 	/*
 	 * X-axis Threshold Value
@@ -104,19 +107,35 @@ public class SwingFeedback extends Activity{
 	
 	String mResultFileName;
 	String mSDCardPath;
-	DetectPeakThread mDetectPeakThread;
 	
 	int mWhichAxis;
 	
+	private String mStartDateString;
+	private String mStartTimeString;
+
+	DetectPeakThread mDetectPeakThread;
+	
+	
+	
 	/*
-	 * Timestamps and peak values of positive and negative values 
+	 * The positive and negative peak points and timestamps of X-axis data 
 	 */
-	int mPositivePeakIndex;
-	int mPositivePeakTimestamp;
+	int mXPositivePeakIndex;
+	int mXPositivePeakTimestamp;
 	
-	int mNegativePeakIndex;
-	int mNegativePeakTimestamp;
+	int mXNegativePeakIndex;
+	int mXNegativePeakTimestamp;
+
+	/*
+	 * The positive and negative peak points and timestamps of Y-axis data 
+	 */
+
+	int mYPositivePeakIndex;
+	int mYPositivePeakTimestamp;
 	
+	int mYNegativePeakIndex;
+	int mYNegativePeakTimestamp;
+
 	ArrayList<AccelerationData> mSwingDataArrayList = null;	
 	
 	Ruler mRulerX;
@@ -168,6 +187,12 @@ public class SwingFeedback extends Activity{
 		setImageViewResource();
 		initSoundPool();
 		
+		Bundle extras = getIntent().getExtras();
+		mStartDateString = extras.getString("START_DATE");
+		mStartTimeString = extras.getString("START_TIME");
+		
+		Log.i("feedback", "Date:" + mStartDateString + ", Time:" + mStartTimeString);
+		
 		if(getResultFileName() == true)
 			readArrayListFromFile();
 	}
@@ -207,7 +232,7 @@ public class SwingFeedback extends Activity{
 				analyzeSwingFromYvalues();
 				break;
 			case R.id.back_button:
-				Intent intent = new Intent(SwingFeedback.this, SwingAnalyzerActivity.class);
+				Intent intent = new Intent(SwingFeedback.this, CollectingAccelerationData.class);
 				startActivity(intent);
 				finish();
 				break;
@@ -231,6 +256,9 @@ public class SwingFeedback extends Activity{
 		mResultFileName = "";
 		mWhichAxis = 0;
 		
+		mStartDateString = "";
+		mStartTimeString = "";
+
 		for(int i=0; i<TIME_SCALE; i++)
 		{
 			mSwingXResult[i] = 0;
@@ -554,27 +582,46 @@ public class SwingFeedback extends Activity{
     		
     		switch(msg.what)
     		{
-    		case MSG_PEAK_X:
+    		case MSG_PEAK_X_MAX:
     			findPeakTimeIndex(timestamp, mWhichAxis);
     			
-    			Log.i("feedback", "Peak X: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			mPositivePeakIndex = msg.arg1;
-    			mPositivePeakTimestamp = msg.arg2;
+    			Log.i("feedback", "+ Peak X: index=" + msg.arg1 + ", Time=" + msg.arg2);
+    			mXPositivePeakIndex = msg.arg1;
+    			mXPositivePeakTimestamp = msg.arg2;
     			
     			showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
     			break;
-    		case MSG_PEAK_Y:
+    		case MSG_PEAK_X_MIN:
+    			// Don't find the negative X peak point
+    			//findPeakTimeIndex(timestamp, mWhichAxis);
+    			Log.i("feedback", "- Peak X: index=" + msg.arg1 + ", Time=" + msg.arg2);
+    			
+    			mXNegativePeakIndex = msg.arg1;
+    			mXNegativePeakTimestamp = msg.arg2;
+    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
+    			break;
+    		case MSG_PEAK_Y_MIN:
     			findPeakTimeIndex(timestamp, mWhichAxis);
     			
-    			Log.i("feedback", "Peak Y: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			mPositivePeakIndex = msg.arg1;
-    			mPositivePeakTimestamp = msg.arg2;
+    			Log.i("feedback", "- Peak Y: index=" + msg.arg1 + ", Time=" + msg.arg2);
+    			mYNegativePeakIndex = msg.arg1;
+    			mYNegativePeakTimestamp = msg.arg2;
     			
     			showFeedbackResultText(msg.arg1, msg.arg2, msg.what);    			
     			break;
+    		case MSG_PEAK_Y_MAX:
+    			
+    			Log.i("feedback", "+ Peak Y: index=" + msg.arg1 + ", Time=" + msg.arg2);
+    			mYPositivePeakIndex = msg.arg1;
+    			mYPositivePeakTimestamp = msg.arg2;    			
+    			break;
     		case MSG_DETECT_DONE_X:
+    			// msg.arg1 = Max, msg.arg2 = Min
+    			showAllResult(msg.arg1, msg.arg2, X_AXIS_DETECTION);
     			break;
     		case MSG_DETECT_DONE_Y:
+    			// msg.arg1 = Max, msg.arg2 = Min    			
+    			showAllResult(msg.arg1, msg.arg2, Y_AXIS_DETECTION);
     			break;
     		}
     		
@@ -608,7 +655,7 @@ public class SwingFeedback extends Activity{
 				}
 				else
 				{
-					showAllResult(mPositivePeakIndex, mWhichAxis);
+					//showAllResult(mWhichAxis);
 				}
 			}
 		};
@@ -638,14 +685,14 @@ public class SwingFeedback extends Activity{
 											+ ", X:" + accel.mXvalue
 											+ ", Y:" + accel.mYvalue);
 		
-		if(msg == MSG_PEAK_X)
+		if(msg == MSG_PEAK_X_MAX)
 		{				
 			result = "X-axis Peak [Time: " + accel.mTimestamp 
 										+ ", X: " + accel.mXvalue + "]" + "\n";
 			
 			mXaxisTextView.setText(result);
 		}
-		else if(msg == MSG_PEAK_Y)
+		else if(msg == MSG_PEAK_Y_MIN)
 		{	
 			result = "Y-axis Peak [Time: " + accel.mTimestamp 
 										+ ", Y: " + accel.mYvalue + "]" + "\n";
@@ -655,31 +702,41 @@ public class SwingFeedback extends Activity{
 		//mFeedbackTextView.setText(result);
 	}
 	
-	public void showAllResult(int index, int axis)
+	public void showAllResult(int maxIndex, int minIndex, int axis)
 	{
-		String resultString = "";
+		String resultStringMax = "";
+		String resultStringMin = "";
 		
-		AccelerationData accel = new AccelerationData();
+		AccelerationData accelMax = new AccelerationData();
+		AccelerationData accelMin = new AccelerationData();
 		
-		accel = mSwingDataArrayList.get(index);
+		accelMax = mSwingDataArrayList.get(maxIndex);
+		accelMin = mSwingDataArrayList.get(minIndex);
 		
-		Log.i("feedback", "showAllResult index: " + index 
-											+ ", T:" + accel.mTimestamp 
-											+ ", X:" + accel.mXvalue
-											+ ", Y:" + accel.mYvalue);
 		if(axis == X_AXIS_DETECTION)
 		{
-			resultString = "The Peak of X " + "[Time: " + accel.mTimestamp 
-											+ ", X: " + accel.mXvalue + "]" + "\n";
+			
+			resultStringMax = "The + Peak of X " + "[Time: " + accelMax.mTimestamp 
+											+ ", X: " + accelMax.mXvalue + "]" + "\n";
+			
+			resultStringMin = "The - Peak of X " + "[Time: " + accelMin.mTimestamp 
+											+ ", X: " + accelMin.mXvalue + "]" + "\n";
+			mFeedbackTextView.append(resultStringMax);
+			mFeedbackTextView.append(resultStringMin);
 		}
 		else
 		{
-			resultString = "The Peak of Y " + "[Time: " + accel.mTimestamp 
-											+ ", Y: " + accel.mYvalue + "]" + "\n";
 			
-		}
-		mFeedbackTextView.append(resultString);
+			resultStringMin = "The - Peak of Y " + "[Time: " + accelMin.mTimestamp 
+											+ ", Y: " + accelMin.mYvalue + "]" + "\n";
+			resultStringMax = "The + Peak of Y " + "[Time: " + accelMax.mTimestamp 
+											+ ", Y: " + accelMax.mYvalue + "]" + "\n";
 
+			mFeedbackTextView.append(resultStringMin);
+			mFeedbackTextView.append(resultStringMax);
+		}
+		
+		
 	}
 	/*=============================================================================
 	 * Name: readArrayListFromFile
@@ -798,12 +855,6 @@ class Ruler extends View
 			if(i < mScale)
 			{
 				x1 = ((width/mScale) *(i+1)) + 5;
-				
-				
-				//if(x_axis2 >= width)
-				//	x_axis2 = width;
-				
-				Log.i("scale", "x:" + x + ", x2:" + x1);
 			}
 			canvas.drawLine(x, 30, x1, 30, Pnt);
 		}
@@ -816,8 +867,7 @@ class Ruler extends View
 			if(unit == 0)
 				x = MARGIN;
 			else
-				x = ((width/mScale) * unit) + MARGIN;
-			Log.i("scale", "X:" + x);
+				x = ((width/mScale) * unit) + MARGIN;			
 			
 			y = scaleSize;
 			canvas.drawLine(x, 20, x, y+textSize+20, Pnt);			

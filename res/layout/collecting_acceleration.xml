@@ -4,61 +4,47 @@
     android:layout_height="fill_parent"
     android:background="#000000"
     android:orientation="vertical" >
-	<TextView
-	    android:layout_width="fill_parent"
-	    android:layout_height="60dp"
-	    android:gravity="center|center_vertical"
-	    android:text="Golf Swing Analyzer"
-	    android:textAppearance="?android:attr/textAppearanceLarge">	    
-	</TextView>
-	<Button
-	    android:id="@+id/start_button"
-	    android:layout_width="120dp"
-	    android:layout_height="100dp"
-	    android:layout_gravity="center"
-	    android:gravity="center|center_vertical"
-	    android:text="Start"
-	    android:textAppearance="?android:attr/textAppearanceLarge">	    
-	</Button>
-
-	<TextView
-	    android:id="@+id/time_text_view"
-	    android:layout_width="fill_parent"
-	    android:layout_height="60dp"
-	    android:gravity="center|center_vertical"
-	    android:text="3 second"	    
-	    android:textColor="#FFFFFF" 
-	    android:textSize="30px"/>
 
-	<TextView
-	    android:id="@+id/count_text_view"
-	    android:layout_width="fill_parent"
-	    android:layout_height="40dp"
-	    android:gravity="center|center_vertical"
-	    android:text="Saved data :" />
-	
-	<TextView
-	    android:id="@+id/result_text_view"
-	    android:layout_width="fill_parent"
-	    android:gravity="center_vertical"
-	    android:layout_height="30dp"
-	    android:text="Acceleration data" />
-	
-	<ScrollView
+    <TextView
         android:layout_width="fill_parent"
-        android:layout_height="match_parent" >
-      
-      <LinearLayout
-    	android:orientation="vertical"
-    	android:layout_width="fill_parent"
-    	android:layout_height="100dp">
+        android:layout_height="60dp"
+        android:gravity="center|center_vertical"
+        android:text="Golf Swing Analyzer"
+        android:textAppearance="?android:attr/textAppearanceLarge" >
+    </TextView>
+
+    <ImageButton
+        android:id="@+id/start_button"
+        android:layout_width="216dp"
+        android:layout_height="205dp"
+        android:layout_weight="1.95"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:background="#000000"
+        android:src="@drawable/press_button" />
         
     <TextView
-        android:id="@+id/event_text_view"
+        android:id="@+id/time_text_view"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"        
-        android:text="" 
-        android:textAppearance="?android:attr/textAppearanceSmall"/>
+        android:layout_height="60dp"
+        android:gravity="center|center_vertical"
+        android:text="3 seconds left."
+        android:textColor="#FFFFFF"
+        android:textSize="30px" />    
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:orientation="vertical" >        
     </LinearLayout>
-	</ScrollView>
- </LinearLayout>
+    
+    <Button
+        android:id="@+id/skip_button"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:layout_gravity="center"        
+        android:gravity="center|center_vertical"
+        android:text="Skip"
+        android:textAppearance="?android:attr/textAppearanceLarge" >
+    </Button>
+</LinearLayout>

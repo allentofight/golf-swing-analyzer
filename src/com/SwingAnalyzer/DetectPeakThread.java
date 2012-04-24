@@ -14,17 +14,19 @@ public class DetectPeakThread extends Thread{
 	 *	Message ID for X-axis 
 	 */
 	final static int MSG_DETECT_X 		= 0x01;
-	final static int MSG_PEAK_X			= 0x02;
-	final static int MSG_IMPACT_X 		= 0x03;
-	final static int MSG_DETECT_DONE_X 	= 0x04;
+	final static int MSG_PEAK_X_MAX		= 0x02;
+	final static int MSG_PEAK_X_MIN		= 0x03;
+	final static int MSG_IMPACT_X 		= 0x04;
+	final static int MSG_DETECT_DONE_X 	= 0x05;
 	
 	/*
 	 * Message ID for Y-axis
 	 */
 	final static int MSG_DETECT_Y 		= 0x10;
-	final static int MSG_PEAK_Y 		= 0x20;
-	final static int MSG_IMPACT_Y		= 0x30;
-	final static int MSG_DETECT_DONE_Y	= 0x40;
+	final static int MSG_PEAK_Y_MAX 	= 0x20;
+	final static int MSG_PEAK_Y_MIN		= 0x30;
+	final static int MSG_IMPACT_Y		= 0x40;
+	final static int MSG_DETECT_DONE_Y	= 0x50;
 	
 	/*
 	 * X-axis Threshold Value
@@ -52,8 +54,11 @@ public class DetectPeakThread extends Thread{
 	ArrayList<AccelerationData> mSwingArrayList = null;
 
 	
-	int mPeakIndex;
-	int mPeakTimestamp;
+	int mMaxPeakIndex;
+	int mMinPeakIndex;
+	
+	int mMaxPeakTimestamp;
+	int mMinPeakTimestamp;
 	
 	int mAxis;	// X-axis or Y-axis
 	int mCount;
@@ -88,15 +93,17 @@ public class DetectPeakThread extends Thread{
 		
 	}
 	*/
-	public DetectPeakThread(ArrayList<AccelerationData>array, Handler handler, int axis) {
-		// TODO Auto-generated constructor stub
-		
-		//mInputFileName = filename;
+	public DetectPeakThread(ArrayList<AccelerationData>array, Handler handler, int axis) 
+	{		
 		mHandler = handler;
 		
 		mAxis = axis;
-		mPeakIndex = 0;
-		mPeakTimestamp = 0;
+		
+		mMaxPeakIndex = 0;
+		mMinPeakIndex = 0;
+		
+		mMaxPeakTimestamp = 0;
+		mMinPeakTimestamp = 0;
 		
 		mCount = 0;
 		
@@ -128,13 +135,13 @@ public class DetectPeakThread extends Thread{
 		{
 			//detectXPeakPoint();
 			detectMaxMinFromX();
-			sendMessageToHandler(MSG_DETECT_DONE_X, mPeakIndex, 0);
+			sendMessageToHandler(MSG_DETECT_DONE_X, mMaxPeakIndex, mMinPeakIndex);
 		}
 		else
 		{
 			//detectYPeakPoint();
 			detectMaxMinFromY();
-			sendMessageToHandler(MSG_DETECT_DONE_Y, mPeakIndex, 0);
+			sendMessageToHandler(MSG_DETECT_DONE_Y, mMaxPeakIndex, mMinPeakIndex);
 		}
 	}
 	
@@ -197,9 +204,21 @@ public class DetectPeakThread extends Thread{
 										+ ", T:" + minTimestamp
 										+ ", X:" + minValue);
 		
-		sendMessageToHandler(MSG_PEAK_X, maxIndex, maxTimestamp);
+		mMaxPeakIndex = maxIndex; mMaxPeakTimestamp = maxTimestamp;
+		mMinPeakIndex = minIndex; mMinPeakTimestamp = minTimestamp;
+
+		sendMessageToHandler(MSG_PEAK_X_MAX, maxIndex, maxTimestamp);
+		sendMessageToHandler(MSG_PEAK_X_MIN, minIndex, minTimestamp);
 	}
-	
+	/*=============================================================================
+	 * Name: detectMaxMinFromY
+	 * 
+	 * Description:
+	 * 		Detect the maximum and minimum points from the Y-axis data 
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
 	public void detectMaxMinFromY()
 	{
 		float maxValue, minValue;
@@ -250,14 +269,19 @@ public class DetectPeakThread extends Thread{
 										+ ", T:" + minTimestamp
 										+ ", Y:" + minValue);
 		
-		//sendMessageToHandler(MSG_PEAK_Y, maxIndex, maxTimestamp);
-		sendMessageToHandler(MSG_PEAK_Y, minIndex, minTimestamp);
+		mMaxPeakIndex = maxIndex; mMaxPeakTimestamp = maxTimestamp;
+		mMinPeakIndex = minIndex; mMinPeakTimestamp = minTimestamp;
+		
+		sendMessageToHandler(MSG_PEAK_Y_MIN, minIndex, minTimestamp);
+		sendMessageToHandler(MSG_PEAK_Y_MAX, maxIndex, maxTimestamp);
 	}
 	/*=============================================================================
 	 * Name: detectXPeakPoint
 	 * 
 	 * Description:
-	 * 		Detect peak point from the golf swing X-axis data 
+	 * 		Detect peak point from the golf swing X-axis data with the predefined threshold
+	 * 		- X_THRESHOLD_MAX = 10;
+	 * 		- X_THRESHOLD_MIN = -10;
 	 * 
 	 * Return:
 	 * 		None
@@ -355,8 +379,8 @@ public class DetectPeakThread extends Thread{
     					    
     					maxValue = x2;
     					    
-    					mPeakIndex = i;
-    					mPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
+    					mMaxPeakIndex = i;
+    					mMaxPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
     				}
     			}        			
     		}	
@@ -380,14 +404,14 @@ public class DetectPeakThread extends Thread{
         			
         			isPeakFound = false;
         			
-        			Log.i("detectpeak", "MSG_PEAK_X: " + mPeakIndex + ", T:" + mPeakTimestamp);
-        			sendMessageToHandler(MSG_PEAK_X, mPeakIndex, mPeakTimestamp);
+        			Log.i("detectpeak", "MSG_PEAK_X: " + mMaxPeakIndex + ", T:" + mMaxPeakTimestamp);
+        			sendMessageToHandler(MSG_PEAK_X_MAX, mMaxPeakIndex, mMaxPeakTimestamp);
 
         			
         			maxValue = 0;
         			maxIndex = 0;
-        			mPeakIndex = 0;
-        			mPeakTimestamp = 0;
+        			mMaxPeakIndex = 0;
+        			mMaxPeakTimestamp = 0;
     			}
     		}
     		
@@ -413,14 +437,196 @@ public class DetectPeakThread extends Thread{
 	 * Name: detectYPeakPoint
 	 * 
 	 * Description:
-	 * 		Detect peak point from the golf swing Y-axis data 
-	 * 
+	 * 		Detect peak point from the golf swing Y-axis data with threshold
+	 * 		- Y_THRESHOLD_MAX = 5
+	 * 		- Y_THRESHOLD_MIN = -10
 	 * Return:
 	 * 		None
 	 *=============================================================================*/    				
 	public void detectYPeakPoint()
 	{
-		
+    	boolean isFound = false;
+    	float y1, y2, y3;
+    	int i=0;
+    	int impactIndex = 0;
+    	int size;
+    	boolean isIncreasing, isDecreasing, isPeakFound, isZero;
+    	int timestamp = 0;
+    	
+    	// For detecting the positive peak point
+    	float maxValue = 0;
+    	int maxIndex = 0;
+    	
+    	// For detecting the negative peak point
+    	float minValue = 0;
+    	int minIndex = 0;
+    	
+    	int negativePeakTimestamp = 0;
+    	int positivePeakTimestamp = 0;
+    	
+    	y1 = y2 = y3 = 0;
+    	
+    	size = mSwingArrayList.size();
+    	isIncreasing = isDecreasing = isPeakFound = isZero = false;  
+    	
+    	mCount = 0;
+    	
+    	/*********************************************************  
+    	 *  
+    	 * 	    Y-axis Analysis
+    	 * 	                     Step 4
+    	 * 	5 ---------------------/\----- THRESHOLD_HI(5)
+    	 * 	                      /  \
+    	 *  0 -----------\-------/----\--- 
+    	 *          Step1 \    _/Step 3
+    	 * -10 ------------\--/---------   THRESHOLD_LOW (-10)
+    	 *                  \/    
+    	 *                Step 2
+    	 *********************************************************/
+    	do
+    	{
+    		mCount++;
+    		timestamp = (int)mSwingArrayList.get(i).mTimestamp;
+    		
+    		y2 = mSwingArrayList.get(i).mYvalue;        		
+    		if(i> 0)
+    			y1 = mSwingArrayList.get(i-1).mYvalue;
+    		if(i < size-1)
+    			y3 = mSwingArrayList.get(i+1).mYvalue;
+    		
+    		if((y2 < Y_THRESHOLD_MIN) && (i < size-1))
+    		{
+        		/*****************************************
+        		 *  Step 1: Decreasing point
+        		 *  
+        		 *  	1) value < THRESHOLD_LOW(-10)
+        		 *   	2) y1 > y2 > y3 (Not equal condition among y1, y2 and y3) 
+        		 *****************************************/
+    			if((y1 >= y2) && (y2 >= y3))	// Not equal condition
+    			{
+    				isDecreasing = true;
+        			if(y3 < minValue)
+        			{
+            			minValue = y3;
+            			minIndex = i;
+            			
+        				Log.i("DetectY", "MinValue T:" + timestamp + ", minValue: " + minValue 
+        						+ ", y2:" + y2 + ", y1:" + y1);
+        				        				
+        			}
+
+    			}
+    		
+        		/*****************************************
+        		 *  Step 2: The negative peak point
+        		 *  
+        		 *  	1) y2 < THRESHOLD_LOW
+        		 *   	2) (y2 <= y3) && (y2 <= y1)
+        		 *   	 
+        		 *****************************************/
+    			if((y2 <= y3) && (y2 <= y1))
+    			{
+        			// If the same values exist, skip and continue the loop
+    				if(y2 == y3)
+    				{	i++;
+    					continue;
+    				}    			
+    			}
+    			// The same values exist(between y[i] and y[i-1].
+    			if((y2 < y3) && (y2 <= y1))
+    			{
+    				if(y2 <= minValue)
+    				{
+    					isPeakFound = true;	// or Impact point (??): changsu
+    					//mNegativePeakCount++;
+    					//mImpactCount++;
+    					
+    					//mYImpactPointArray.add(mSwingArrayList.get(i));
+    					
+    					Log.i("DetectY", "Negative Peak Time: " + mSwingArrayList.get(i).mTimestamp
+    							+ ", y: " + y2 + ", Min:" + minValue);
+    					    
+    					minValue = y2;
+    					minIndex = i;        					
+    					negativePeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;    					
+    					sendMessageToHandler(MSG_PEAK_Y_MIN, minIndex, negativePeakTimestamp);
+    					
+    				}
+    			}        			
+    		}	
+    		// Step 3
+    		/*****************************************
+    		 *  Step 3: The increasing point (value > 0)
+    		 *  
+    		 *  	1) (y2 >= 0) && ((y3 >= 0) || (x3 < 0))
+    		 *   	2) (y2 > y1) && (y3 > y2)
+    		 *****************************************/       			
+    		if((isPeakFound) && (y2 > Y_THRESHOLD_MAX))
+    		{
+  			
+    			if((y3 >= y2) && (y2 >= y1))        				
+    			{
+    				isIncreasing = true;
+    				if(y3 > maxValue)
+    				{
+    					maxValue = y3;
+    					maxIndex = i;
+    					Log.i("DetectY", "MaxValue T:" + timestamp + "maxValue: " + y3);
+    				}
+    			}
+    			
+    			// For the positive peak point
+    			if((y2 >= y3) && (y2 >= y1))
+    			{
+    				if(y2 == y3)
+    				{	i++;
+    					continue;
+    				}
+    			}
+        			// The same values exist.
+        		if((y2 > y3) && (y2 >= y1))
+        		{
+        		 
+        			if(y2 >= maxValue)
+        			{
+        				//isPeakFound = true;
+        				//mPositivePeakCount++;
+        				
+        				Log.i("DetectY", "Positive Peak Time: " + mSwingArrayList.get(i).mTimestamp
+        							+ ", y: " + y2 + ", Max:" + maxValue);
+        				    
+        				maxValue = y2;
+        				maxIndex = i;        					
+        				positivePeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
+        				sendMessageToHandler(MSG_PEAK_Y_MAX, maxIndex, positivePeakTimestamp);
+        				
+            			minValue = 0;
+            			minIndex = 0;
+            			maxValue = 0;
+            			maxIndex = 0;
+            			isPeakFound = false;
+
+        			}
+        		}        			
+        	}	
+    		    		
+			try 
+			{
+				Thread.sleep(1);
+			} 
+			catch(InterruptedException e)
+			{
+				System.out.println(e.getMessage());
+			}
+			
+			// To display the counter processed 
+			sendMessageToHandler(MSG_DETECT_Y, mCount, 0);
+    		i++;
+    		
+    	}while(i <= size-1);
+    	
+    	
+
 	}
 	/*=============================================================================
 	 * Name: clearArrayList

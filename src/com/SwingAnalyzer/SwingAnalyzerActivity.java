@@ -39,11 +39,15 @@ public class SwingAnalyzerActivity extends TabActivity {
 		spec = tabHost.newTabSpec("feedback").setIndicator("Feedback").setContent(intent);
 		tabHost.addTab(spec);
 		
+		intent = new Intent().setClass(this, StatisticsActivity.class);
+		spec = tabHost.newTabSpec("statistics").setIndicator("Statistics").setContent(intent);
+		tabHost.addTab(spec);
+		
 		tabHost.setCurrentTab(0);
 		
 		for ( int tab = 0; tab < tabHost.getTabWidget().getChildCount(); ++tab )
 		{
-			tabHost.getTabWidget().getChildAt(tab).getLayoutParams().height = 40;
+			tabHost.getTabWidget().getChildAt(tab).getLayoutParams().height = 46;
 		}	
 
 	}
