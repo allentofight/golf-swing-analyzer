@@ -8,11 +8,19 @@ import java.util.Collections;
 import java.util.List;
 
 import android.app.*;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.*;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.*;
 
@@ -64,10 +72,10 @@ public class SwingFeedback extends Activity{
 	/*
 	 * Timeout and time scale to calculate
 	 */
-	final static int TIME_SCALE = 6;
+	final static int TIME_SCALE = 10;
 	final static int COLLECTION_TIME = (3*1000);
 	final static int TIME_INTERVAL = (COLLECTION_TIME / TIME_SCALE);	
-	final static int TIMEOUT = 3*1000;
+	final static int TIMEOUT = COLLECTION_TIME;
 	
 	/*
 	 * Peak point
@@ -78,11 +86,11 @@ public class SwingFeedback extends Activity{
 	ImageView mXImages[] = new ImageView[TIME_SCALE];
 	ImageView mYImages[] = new ImageView[TIME_SCALE];
 	
-	int mXImageViewIds[] = {R.id.img_x1, R.id.img_x2, R.id.img_x3, 
-							R.id.img_x4, R.id.img_x5, R.id.img_x6};
+	int mXImageViewIds[] = {R.id.img_x1, R.id.img_x2, R.id.img_x3, R.id.img_x4, R.id.img_x5, 
+							R.id.img_x6, R.id.img_x7, R.id.img_x8, R.id.img_x9, R.id.img_x10};
 	
-	int mYImageViewIds[] = {R.id.img_y1, R.id.img_y2, R.id.img_y3,
-							R.id.img_y4, R.id.img_y5, R.id.img_y6};
+	int mYImageViewIds[] = {R.id.img_y1, R.id.img_y2, R.id.img_y3, R.id.img_y4, R.id.img_y5, 
+							R.id.img_y6, R.id.img_y7, R.id.img_y8, R.id.img_y9, R.id.img_y10};
 
 	int mSwingXResult[] = new int[TIME_SCALE];
 	int mSwingYResult[] = new int[TIME_SCALE];
@@ -111,6 +119,8 @@ public class SwingFeedback extends Activity{
 	
 	ArrayList<AccelerationData> mSwingDataArrayList = null;	
 	
+	Ruler mRulerX;
+	Ruler mRulerY;
 	/*
 	 * Widgets 
 	 */
@@ -126,6 +136,18 @@ public class SwingFeedback extends Activity{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.swing_feedback);
+		
+		/*
+		 * Draw X-axis time scales
+		 */
+		mRulerX = (Ruler)findViewById(R.id.ruler_x);		
+		mRulerX.setScale(TIME_SCALE, COLLECTION_TIME);
+		
+		/*
+		 * Draw Y-axis time scales
+		 */
+		mRulerY = (Ruler)findViewById(R.id.ruler_y);
+		mRulerY.setScale(TIME_SCALE, COLLECTION_TIME);
 		
 		mXAnalysisButton = (Button)findViewById(R.id.x_button);
 		mXAnalysisButton.setOnClickListener(mClickListener);
@@ -691,6 +713,120 @@ public class SwingFeedback extends Activity{
 		}
 
 	}
-	
-
 }
+
+/*=============================================================================
+ * Class Name: Ruler
+ * 
+ * Description:
+ * 		Draw lines and texts for time scales
+ * 		Derived from View class	
+ * 
+ * Return:
+ * 		None
+ *=============================================================================*/     		
+
+class Ruler extends View
+{
+	int mScale=0;		
+	int mInterval = 0;
+	final static int MARGIN = 5;
+	
+	public Ruler(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
+		// TODO Auto-generated constructor stub
+	}
+	
+	public Ruler(Context context, AttributeSet attrs){
+		super(context, attrs);
+	}
+	
+	public Ruler(Context context) {
+		super(context);
+	}
+	
+	public void setScale(int scale, int collection_time) {
+		mScale = scale;
+		mInterval = collection_time / mScale;
+		Log.i("scale", "mInterval:" + mInterval);
+		
+		invalidate();
+	}
+	
+	protected void onDraw(Canvas canvas)
+	{
+		
+		int x = 0;
+		int x1 = 0;
+		int y = 0;
+		int width = 0;
+		int height = 0;
+		int textSize = 0;
+		int scaleSize = 0;
+				
+		String text = "";
+		
+		
+		canvas.drawColor(Color.BLACK);
+		Paint Pnt = new Paint();
+		Pnt.setColor(Color.WHITE);
+		Pnt.setTextAlign(Paint.Align.CENTER);
+		
+		Resources res = getResources();
+		DisplayMetrics dm = res.getDisplayMetrics();
+		
+		// Textsize = 10dp
+		textSize = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, dm);
+		Pnt.setTextSize(textSize);
+		
+		scaleSize = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, dm);	
+		
+		width = getWidth() - 20;		
+		height = getHeight();
+		//width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, getWidth()-20, dm);
+		//height = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, getHeight(), dm);
+		Log.i("scale", "Width:" + width + ", Height:" + height);
+		
+		for(int i=0; i< mScale; i++)
+		{
+			Pnt.setAntiAlias(false);
+			if(i==0)
+				x = MARGIN;
+			else
+				x = ((width/mScale) * i) + MARGIN;
+			
+			if(i < mScale)
+			{
+				x1 = ((width/mScale) *(i+1)) + 5;
+				
+				
+				//if(x_axis2 >= width)
+				//	x_axis2 = width;
+				
+				Log.i("scale", "x:" + x + ", x2:" + x1);
+			}
+			canvas.drawLine(x, 30, x1, 30, Pnt);
+		}
+		
+		// (mScale+1) is needed to draw "|"
+		for(int unit=0; unit <= mScale; unit++)
+		{
+			Pnt.setAntiAlias(false);
+			
+			if(unit == 0)
+				x = MARGIN;
+			else
+				x = ((width/mScale) * unit) + MARGIN;
+			Log.i("scale", "X:" + x);
+			
+			y = scaleSize;
+			canvas.drawLine(x, 20, x, y+textSize+20, Pnt);			
+			
+			Pnt.setAntiAlias(true);
+			text = "" + (mInterval * unit);			
+				
+			canvas.drawText(text, x, y, Pnt);			
+		}
+		
+	}
+}	

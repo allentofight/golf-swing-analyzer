@@ -221,7 +221,7 @@ public class DetectPeakThread extends Thread{
 		do
 		{
 			
-			y2 = mSwingArrayList.get(i).mXvalue;
+			y2 = mSwingArrayList.get(i).mYvalue;
 			timestamp = mSwingArrayList.get(i).mTimestamp;
 			
 			
@@ -244,13 +244,14 @@ public class DetectPeakThread extends Thread{
 		
 		Log.i("detectpeak", "Max index:" + maxIndex 
 										+ ", T:" + maxTimestamp 
-										+ ", X:" + maxValue);
+										+ ", Y:" + maxValue);
 		
 		Log.i("detectpeak", "Min index:" + minIndex 
 										+ ", T:" + minTimestamp
-										+ ", X:" + minValue);
+										+ ", Y:" + minValue);
 		
-		sendMessageToHandler(MSG_PEAK_Y, maxIndex, maxTimestamp);
+		//sendMessageToHandler(MSG_PEAK_Y, maxIndex, maxTimestamp);
+		sendMessageToHandler(MSG_PEAK_Y, minIndex, minTimestamp);
 	}
 	/*=============================================================================
 	 * Name: detectXPeakPoint

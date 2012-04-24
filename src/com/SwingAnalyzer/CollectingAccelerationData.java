@@ -146,8 +146,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 
 	public void onSensorChanged(SensorEvent event) {
 		// TODO Auto-generated method stub
-		SensorEvent rotate_event = null;
-		
+				
 		if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
 		{			
 			// Only if Start button is clicked, then collect acceleration data
