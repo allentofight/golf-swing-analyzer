@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 import android.app.*;
@@ -54,15 +55,16 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	long mStartTimeMillis;
 	long mEndTimeMillis;
 	
+	private String mStartDateString;
+	private String mStartTimeString;
 
 	/*
 	 * Widgets
 	 */
-	Button mStartButton;
-	TextView mTimeTextView;
-	TextView mCountTextView;
-	TextView mEventTextView;
+	ImageButton mStartButton;
+	Button mSkipButton;
 	
+	TextView mTimeTextView;
 	
 	private ArrayList<AccelerationData> mSwingDataArrayList;
 	
@@ -71,24 +73,22 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.collecting_acceleration);
 		
-		mStartButton = (Button)findViewById(R.id.start_button);
+		mStartButton = (ImageButton)findViewById(R.id.start_button);
 		mStartButton.setOnClickListener(mClickListener);
 		
+		mSkipButton = (Button)findViewById(R.id.skip_button);
+		mSkipButton.setOnClickListener(mClickListener);
+		
 		mTimeTextView = (TextView)findViewById(R.id.time_text_view);
-		mCountTextView = (TextView)findViewById(R.id.count_text_view);
-		mEventTextView = (TextView)findViewById(R.id.event_text_view);
 		
-		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);		
 		
-		//mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 		mWindowManager = (WindowManager)getSystemService(WINDOW_SERVICE);
 		
 		mDisplay = mWindowManager.getDefaultDisplay();
 		
 		initMemberVariables();
 		makeOutputFolder();
-		
-		
 		
 	}
 
@@ -131,6 +131,11 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				clearArrayList();
 				startCollectingData();
 				break;
+			case R.id.skip_button:
+				Intent intent = new Intent(CollectingAccelerationData.this, SwingFeedback.class);
+				startActivity(intent);
+				finish();				
+				break;
 			default:
 				break;
 			}
@@ -170,6 +175,10 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	public void startCollectingData()
 	{
 		isRecording = true;
+		
+		mStartDateString = getDateString();
+		mStartTimeString = getTimeString();
+		
 		if(makeBeepSound() == true)	
 		{
 			mStartTimeMillis = System.currentTimeMillis();
@@ -197,8 +206,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		
 		float[] values = event.values;
 
-		// 방향을 고려해야 함
-		//long timeInMillis = (event.timestamp - System.nanoTime()) / 1000000L;
+		// 방향을 고려해야 함		
 		long timeInMillis = System.currentTimeMillis();
 
 		accelData.mIndex = mAccelerationCount++;
@@ -283,8 +291,6 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	    	
 	public boolean makeBeepSound()
 	{
-		
-		
 		if(mSoundPool.play(mSoundId, 1, 1, 0, 0, 1) != 0)
 			isSoundPlayed = true;
 		else
@@ -321,9 +327,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			outFile.close();
 			
 			Log.i("collect", "Swing Data ArrayList count: " + mSwingDataArrayList.size());
-			displaySavedCount(mSwingDataArrayList.size());
-			
-			displayAccelerationData();		// For debugging
+			//displaySavedCount(mSwingDataArrayList.size());
 			
 		}
 		catch(Exception e)
@@ -347,7 +351,6 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		{
 			int wait = 0;
 			
-			
 			public void handleMessage(Message msg)
 			{
 				if(wait < TIMEOUT && isSoundPlayed == true)
@@ -369,6 +372,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 						Thread.sleep(1000);
 						Intent intent = new Intent(CollectingAccelerationData.this, 
 													SwingFeedback.class);
+						intent.putExtra("START_DATE", mStartDateString);
+						intent.putExtra("START_TIME", mStartTimeString);
+						
 						startActivity(intent);
 						finish();
 
@@ -403,6 +409,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mStartTimeMillis = 0;
 		mEndTimeMillis = 0;
 		
+		mStartDateString = "";
+		mStartTimeString = "";
+		
 		mSwingDataArrayList = new ArrayList<AccelerationData>();
 		
 		mSoundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
@@ -433,8 +442,6 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
         	mSDCardPath = Environment.MEDIA_UNMOUNTED;        	
         	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
         }
-        
-    	
     }
 	/*=============================================================================
 	 * Name: makeOutputDir
@@ -455,8 +462,6 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     		Log.i("Convert", "mkdir is successful: " + dir + ACCELERATION_DIR);
     	else
     		Log.i("Convert", "mkdir failed: " + dir + ACCELERATION_DIR);
-    	
-    	
     }
 	/*=============================================================================
 	 * Name: displaySecond
@@ -473,9 +478,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     {
     	int second = 0;
     	
-    	second = (TIMEOUT_SEC + 1) - (time/1000);
+    	second = (TIMEOUT_SEC) - (time/1000);
     	String timeString = Integer.toString(second);
-    	mTimeTextView.setText(timeString + " second");
+    	mTimeTextView.setText(timeString + " seconds left.");
     }
 	/*=============================================================================
 	 * Name: displaySavedCount
@@ -492,9 +497,10 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	String timeDiff = "";
     	
     	timeDiff = getTimeDifference(mStartTimeMillis, mEndTimeMillis);
-    	
+    	/*
     	mCountTextView.setText("Saved number is " + Integer.toString(num)
     							+ "," + timeDiff);
+    	*/
     }
 	/*=============================================================================
 	 * Name: displayAccelerationData
@@ -522,11 +528,12 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     					Float.toString(accelData.mYvalue) + "," +
     					Float.toString(accelData.mZvalue) + "\n";
     	
-    		mEventTextView.append(string);
+    		Log.i("collect", "SwingData:" + string);
     		
     	}
 
     }
+    
 	/*=============================================================================
 	 * Name: getTimeDifference
 	 * 
@@ -560,10 +567,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	            
     public void clearTextView()
     {
-    	mTimeTextView.setText("3 second");
-    	mCountTextView.setText("Saved Number is ");
-    	mEventTextView.setText("");
+    	mTimeTextView.setText("3 seconds left.");
     }
+    
 	/*=============================================================================
 	 * Name: clearArrayList
 	 * 
@@ -580,8 +586,17 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			mSwingDataArrayList.clear();
     }
     
-   
-    
+	/*=============================================================================
+	 * Name: writeOutputTextFile
+	 * 
+	 * Description:
+	 * 		Write golf swing data which was collected by an accelerometer to a text file
+	 * 		- For analyzing the swing data with Excel
+	 * 		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	                
     public void writeOutputTextFile()
     {
     	String textFileName = "";
@@ -639,7 +654,61 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				e.printStackTrace();
 			}
     	}
-    	
-    	
     }
+    
+	/*=============================================================================
+	 * Name: getDateString
+	 * 
+	 * Description:
+	 * 		Get the current year, month and date
+	 * 		Return a string of date like "yyyy-mm-dd" (ISO 2014)
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	                
+    public String getDateString()
+    {
+    	String stringDate = "";
+    	
+    	Calendar today = Calendar.getInstance();
+    	
+    	stringDate = (today.get(Calendar.YEAR) + "-" 
+    				+ (today.get(Calendar.MONTH) + 1) + "-"
+    				+ today.get(Calendar.DATE));
+    	
+    	return stringDate;
+    }
+    
+	/*=============================================================================
+	 * Name: getTimeString
+	 * 
+	 * Description:
+	 * 		Get the current hour, minute and second
+	 * 		Return a string of time like "hh:mm:ss" (ISO 8601)
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	                
+    public String getTimeString()
+    {
+    	String stringTime = "";
+    	
+    	int hour, min, sec;
+    	
+    	hour = min = sec = 0;
+    	
+    	Calendar today = Calendar.getInstance();
+    	
+    	hour = today.get(Calendar.HOUR_OF_DAY);    	
+    	stringTime += hour + ":";
+    	
+    	min = today.get(Calendar.MINUTE);
+    	stringTime += min + ":";
+    	
+    	sec = today.get(Calendar.SECOND);
+    	stringTime += sec;
+    	
+    	return stringTime;
+    }
+    
 }
