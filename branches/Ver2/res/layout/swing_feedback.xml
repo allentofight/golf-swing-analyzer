@@ -270,21 +270,21 @@
         android:layout_height="50dp"
         android:orientation="horizontal" >
         <Button
-            android:id="@+id/x_button"
+            android:id="@+id/result_button"
             android:layout_width="80dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
             android:layout_weight="0.05"
-            android:text="X-axis"
+            android:text="Result"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <Button
-            android:id="@+id/y_button"
+            android:id="@+id/stats_button"
             android:layout_width="80dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
             android:layout_weight="0.05"
-            android:text="Y-axis"
+            android:text="Statistics"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <Button

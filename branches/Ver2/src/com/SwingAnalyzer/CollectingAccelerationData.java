@@ -131,8 +131,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				clearArrayList();
 				startCollectingData();
 				break;
-			case R.id.skip_button:
-				Intent intent = new Intent(CollectingAccelerationData.this, SwingFeedback.class);
+			case R.id.skip_button:				
+				Intent intent = new Intent(CollectingAccelerationData.this, 
+											StatisticsActivity.class);
 				startActivity(intent);
 				finish();				
 				break;
@@ -370,13 +371,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 					
 					try {
 						Thread.sleep(1000);
-						Intent intent = new Intent(CollectingAccelerationData.this, 
-													SwingFeedback.class);
-						intent.putExtra("START_DATE", mStartDateString);
-						intent.putExtra("START_TIME", mStartTimeString);
-						
-						startActivity(intent);
-						finish();
+						goFeedbackActivity();
 
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
@@ -389,6 +384,24 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mTimerHandler.sendEmptyMessage(0);
 	}
 	
+	private void goFeedbackActivity()
+	{
+		Intent intent = new Intent(CollectingAccelerationData.this, 
+									SwingFeedback.class);
+		
+		intent.putExtra("START_DATE", mStartDateString);
+		intent.putExtra("START_TIME", mStartTimeString);
+
+		startActivity(intent);
+		finish();
+
+	}
+	
+	private void getDateTimeString()
+	{
+		mStartDateString = getDateString();
+		mStartTimeString = getTimeString();
+	}
 	/*=============================================================================
 	 * Name: initMemberVariables
 	 * 
