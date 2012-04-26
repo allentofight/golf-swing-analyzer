@@ -40,11 +40,11 @@
     
     <Button
         android:id="@+id/skip_button"
-        android:layout_width="100dp"
+        android:layout_width="120dp"
         android:layout_height="70dp"
         android:layout_gravity="center"        
         android:gravity="center|center_vertical"
-        android:text="Skip"
+        android:text="Statistics"
         android:textAppearance="?android:attr/textAppearanceLarge" >
     </Button>
 </LinearLayout>

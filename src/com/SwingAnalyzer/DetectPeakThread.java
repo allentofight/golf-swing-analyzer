@@ -28,6 +28,7 @@ public class DetectPeakThread extends Thread{
 	final static int MSG_IMPACT_Y		= 0x40;
 	final static int MSG_DETECT_DONE_Y	= 0x50;
 	
+	final static int MSG_DETECT_DONE_ALL	= 0x111;
 	/*
 	 * X-axis Threshold Value
 	 */
@@ -63,36 +64,6 @@ public class DetectPeakThread extends Thread{
 	int mAxis;	// X-axis or Y-axis
 	int mCount;
 	
-/*
- * AccelerationData class
- * 
-	int mIndex;
-	int mTimestamp;
-	float mXvalue;
-	float mYvalue;
-	float mZvalue;	
-	
-*/
-	/*
-	public DetectPeakThread(String filename, Handler handler, int axis) {
-		// TODO Auto-generated constructor stub
-		
-		mInputFileName = filename;
-		mHandler = handler;
-		
-		mAxis = axis;
-		mPeakIndex = 0;
-		mPeakTimestamp = 0;
-		
-		mCount = 0;
-		
-		mSwingArrayList = new ArrayList<AccelerationData>();
-		
-		if(mSwingArrayList.size() > 0)
-			mSwingArrayList.clear();
-		
-	}
-	*/
 	public DetectPeakThread(ArrayList<AccelerationData>array, Handler handler, int axis) 
 	{		
 		mHandler = handler;
@@ -111,12 +82,66 @@ public class DetectPeakThread extends Thread{
 		
 		mSwingArrayList = array;
 	}
-	
+
+	public DetectPeakThread(ArrayList<AccelerationData>array, Handler handler) 
+	{		
+		mHandler = handler;
+		
+		mMaxPeakIndex = 0;
+		mMinPeakIndex = 0;
+		
+		mMaxPeakTimestamp = 0;
+		mMinPeakTimestamp = 0;
+		
+		mCount = 0;
+		
+		mSwingArrayList = new ArrayList<AccelerationData>();
+		
+		mSwingArrayList = array;
+	}
+
 	public void run()
 	{
-		startDetectingPeakPoint(mAxis);
+		//startDetectingPeakPoint();
+		detectAllPeakPoints();
 	}
-	
+	/*=============================================================================
+	 * Name: detectAllPeakPoints
+	 * 
+	 * Description:
+	 * 		When the DetectImpactThread starts, this function executes first.		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
+	public void detectAllPeakPoints()
+	{
+		/*
+		 *  Detection of X-axis data
+		 */
+		detectMaxMinFromX();
+		sendMessageToHandler(MSG_DETECT_DONE_X, mMaxPeakIndex, mMinPeakIndex);
+		
+		try {
+			Thread.sleep(10);
+		} catch(InterruptedException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		/*
+		 *  Detection of Y-axis data
+		 */
+		detectMaxMinFromY();
+		sendMessageToHandler(MSG_DETECT_DONE_Y, mMaxPeakIndex, mMinPeakIndex);
+		
+		try {
+			Thread.sleep(10);
+		} catch(InterruptedException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		sendMessageToHandler(MSG_DETECT_DONE_ALL, 0, 0);
+	}
 	/*=============================================================================
 	 * Name: startDetectingPeakPoint
 	 * 
@@ -143,6 +168,7 @@ public class DetectPeakThread extends Thread{
 			detectMaxMinFromY();
 			sendMessageToHandler(MSG_DETECT_DONE_Y, mMaxPeakIndex, mMinPeakIndex);
 		}
+		sendMessageToHandler(MSG_DETECT_DONE_ALL, 0, 0);
 	}
 	
 	/*=============================================================================
