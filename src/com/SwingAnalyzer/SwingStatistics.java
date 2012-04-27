@@ -1,3 +1,13 @@
+/*-----------------------------------------------------------------------------------------
+  File:   SwingStatistics.java
+
+  Author: Jung Chang Su
+  -----------------------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+    
+  
+  *----------------------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 /* Table: table_acceleration
@@ -84,33 +94,86 @@ public class SwingStatistics
 		this.y_min_timestamp = ymin_time;
 	}
 
-	
+	/*=============================================================================
+	 * Name: setID
+	 * 
+	 * Description:
+	 * 		Set the id with the argument
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
 	public void setID(int id)
 	{
 		this.id = id;
 	}
 	
+	/*=============================================================================
+	 * Name: getID
+	 * 
+	 * Description:
+	 * 		Return the id value
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/	
 	public int getID()
 	{
 		return this.id;
 	}
-	
+
+	/*=============================================================================
+	 * Name: setDateTime
+	 * 
+	 * Description:
+	 * 		Set the date and time strings with the arguments
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	
 	public void setDateTime(String date, String time)
 	{
 		this.date = date;
 		this.time = time;
 	}
-	
+
+	/*=============================================================================
+	 * Name: getDate
+	 * 
+	 * Description:
+	 * 		Return the date string
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	
 	public String getDate()
 	{
 		return this.date;
 	}
-	
+
+	/*=============================================================================
+	 * Name: getTime
+	 * 
+	 * Description:
+	 * 		Return the time string
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	
 	public String getTime()
 	{
 		return this.time;
 	}
 	
+	/*=============================================================================
+	 * Name: setXPeakPoint
+	 * 
+	 * Description:
+	 * 		Set the peak points and timestamps of X-axis
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
 	public void setXPeakPoint(String max, String max_time, String min, String min_time)
 	{
 		
@@ -119,7 +182,16 @@ public class SwingStatistics
 		this.x_min = min;
 		this.x_min_timestamp = min_time;
 	}
-	
+
+	/*=============================================================================
+	 * Name: setYPeakPoint
+	 * 
+	 * Description:
+	 * 		Set the peak points and timestamps of Y-axis
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
 	public void setYPeakPoint(String max, String max_time, String min, String min_time)
 	{
 		this.y_max = max;
@@ -128,42 +200,113 @@ public class SwingStatistics
 		this.y_min_timestamp = min_time;		
 	}
 	
+	/*=============================================================================
+	 * Name: getXPositivePeak
+	 * 
+	 * Description:
+	 * 		Return the positive peak point of X-axis
+	 * 
+	 * Return:
+	 * 		float
+	 *=============================================================================*/		
 	public float getXPositivePeak()
 	{
 		return Float.parseFloat(this.x_max);
 	}
 	
+	/*=============================================================================
+	 * Name: getXNegativePeak
+	 * 
+	 * Description:
+	 * 		Return the negative peak point of X-axis
+	 * 
+	 * Return:
+	 * 		float
+	 *=============================================================================*/			
 	public float getXNegativePeak()
 	{
 		return Float.parseFloat(this.x_min);
 	}
-
+	
+	/*=============================================================================
+	 * Name: getYPositivePeak
+	 * 
+	 * Description:
+	 * 		Return the positive peak point of Y-axis
+	 * 
+	 * Return:
+	 * 		float
+	 *=============================================================================*/		
 	public float getYPositivePeak()
 	{
 		return Float.parseFloat(this.y_max);
 	}
 	
+	/*=============================================================================
+	 * Name: getYNegativePeak
+	 * 
+	 * Description:
+	 * 		Return the negative peak point of Y-axis
+	 * 
+	 * Return:
+	 * 		float
+	 *=============================================================================*/			
 	public float getYNegativePeak()
 	{
 		return Float.parseFloat(this.y_min);
 	}
 	
-	// Timestamps of Positive and negative peak points
+	/*=============================================================================
+	 * Name: getXPositivePeakTime
+	 * 
+	 * Description:
+	 * 		Return the timestamp of the positive peak point of X-axis
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/		
 	public int getXPositivePeakTime()
 	{
 		return Integer.parseInt(this.x_max_timestamp);
 	}
-	
+
+	/*=============================================================================
+	 * Name: getXNegativePeakTime
+	 * 
+	 * Description:
+	 * 		Return the timestamp of the negative peak point of X-axis
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/		
 	public int getXNegativePeakTime()
 	{
 		return Integer.parseInt(this.x_min_timestamp);
 	}
 	
+	/*=============================================================================
+	 * Name: getYPositivePeakTime
+	 * 
+	 * Description:
+	 * 		Return the timestamp of the positive peak point of Y-axis
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/		
 	public int getYPositivePeakTime()
 	{
 		return Integer.parseInt(this.y_max_timestamp);
 	}
 	
+	/*=============================================================================
+	 * Name: getYNegativePeakTime
+	 * 
+	 * Description:
+	 * 		Return the timestamp of the negative peak point of Y-axis
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/			
 	public int getYNegativePeakTime()
 	{
 		return Integer.parseInt(this.y_min_timestamp);

@@ -1,3 +1,13 @@
+/*-----------------------------------------------------------------------------------------
+  File:   SwingFeedback.java
+
+  Author: Jung Chang Su
+  -----------------------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+    
+  
+  *----------------------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 import java.io.File;
@@ -111,7 +121,8 @@ public class SwingFeedback extends Activity{
 	
 	private String mStartDateString;
 	private String mStartTimeString;
-
+	private boolean mSwingStarted;
+	
 	DetectPeakThread mDetectPeakThread;
 	
 	/* 
@@ -192,6 +203,8 @@ public class SwingFeedback extends Activity{
 		initSoundPool();
 		
 		Bundle extras = getIntent().getExtras();
+		
+		mSwingStarted = extras.getBoolean("START_SWING");
 		mStartDateString = extras.getString("START_DATE");
 		mStartTimeString = extras.getString("START_TIME");
 		
@@ -230,9 +243,9 @@ public class SwingFeedback extends Activity{
 				analyzeSwingData();
 				break;
 			case R.id.stats_button:
-			
-				//mWhichAxis = Y_AXIS;				
-				//analyzeSwingFromYvalues();
+				//Intent intent1 = new Intent(SwingFeedback.this, StatisticsActivity.class);
+				startActivity(new Intent(SwingFeedback.this, StatisticsActivity.class));
+				finish();
 				break;
 			case R.id.back_button:
 				Intent intent = new Intent(SwingFeedback.this, CollectingAccelerationData.class);
@@ -261,7 +274,8 @@ public class SwingFeedback extends Activity{
 		
 		mStartDateString = "";
 		mStartTimeString = "";
-
+		mSwingStarted = false;
+		
 		for(int i=0; i<TIME_SCALE; i++)
 		{
 			mSwingXResult[i] = 0;

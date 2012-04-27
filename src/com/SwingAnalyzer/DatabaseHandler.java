@@ -1,3 +1,15 @@
+/*-----------------------------------------------------------------------------------------
+  File:   DatabaseHandler.java
+
+  Author: Jung Chang Su
+  -----------------------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+  This source provides some functions to manage a database table such as insertion, 
+  deletion, update and reading all items from the database.  
+  
+  *----------------------------------------------------------------------------------------*/
+
 package com.SwingAnalyzer;
 
 import java.util.ArrayList;
@@ -15,6 +27,19 @@ public class DatabaseHandler extends SQLiteOpenHelper
 	private static final int DATABASE_VERSION = 1;
 	private static final String DATABASE_NAME = "swingdata";
 	private static final String TABLE_SWINGSTATS = "swingstats";
+	
+    /* 
+     * TABLE_SWINGSTATS: swingstats
+     * 
+     *     1      2      3       4       5       6       7      8        9      10      11
+     * 	+-----+------+------+-------+-------+-------+-------+-------+-------+-------+-------+
+     * 	| ID  | DATE | TIME | X-MAX | X-MAX | X-MIN | X-MIN | Y-MAX | Y-MAX | Y-MIN | Y-MIN |
+     * 	|     |      |      |       | _TIME |       | _TIME |       | _TIME |       | _TIME |
+     * 	+-----+------+------+-------+-------+-------+-------+-------+-------+-------+-------+
+     * 	| INT | TEXT | TEXT | TEXT  | TEXT  |  TEXT | TEXT  | TEXT  | TEXT  | TEXT  | TEXT  |
+     *  +-----+------+------+-------+-------+-------+-------+-------+-------+-------+-------+
+     * 
+     */
 	
 	// The name of columns
 	private static final String ID = "id";
@@ -56,13 +81,7 @@ public class DatabaseHandler extends SQLiteOpenHelper
 	
 	public DatabaseHandler(Context context)
 	{
-		//SQLiteOpenHelper (Context context, 
-		//					String name, 
-		//					SQLiteDatabase.CursorFactory factory, 
-		//					int version); 
-
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
-		
 	}
 	
 	public void onCreate(SQLiteDatabase db) {
@@ -144,17 +163,10 @@ public class DatabaseHandler extends SQLiteOpenHelper
 	 *=============================================================================*/     		
 	public SwingStatistics getSwingStats(int id)
 	{
-		SwingStatistics swingStats = null;
-		String [] columns = new String[]{ID, DATE, TIME, 
-										X_MAX, X_MAX_TIME,
-										};
+		SwingStatistics swingStats = null;		
 		
 		SQLiteDatabase db = this.getReadableDatabase();
 		
-		/* public Cursorquery(String table, String[] columns,
-		 * 					  String selection, String[] selectionArgs, 
-		 * 					  String groupBy, String having, String orderBy, String limit)
-		 */
 
 		Cursor cursor = db.query(TABLE_SWINGSTATS, mAllColumns, 
 								ID + " =? ", new String[] {String.valueOf(id)},
@@ -277,7 +289,15 @@ public class DatabaseHandler extends SQLiteOpenHelper
 		return db.update(TABLE_SWINGSTATS,	values, ID + " =? ", 
 						new String[] {String.valueOf(swingStats.getID())});
 	}
-	
+	/*=============================================================================
+	 * Name: deleteSwingStats
+	 * 
+	 * Description:
+	 * 		Delete one row which is matched with the given ID from the database 
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/
 	public void deleteSwingStats(SwingStatistics swingStats)
 	{
 		SQLiteDatabase db = this.getWritableDatabase();
