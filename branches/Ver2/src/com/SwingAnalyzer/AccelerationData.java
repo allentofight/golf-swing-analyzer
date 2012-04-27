@@ -1,3 +1,14 @@
+/*-----------------------------------------------------------------------------------------
+  File:   AccelerationData.java
+
+  Author: Jung Chang Su
+  -----------------------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+    
+  
+  *----------------------------------------------------------------------------------------*/
+
 package com.SwingAnalyzer;
 
 import java.io.Serializable;
@@ -5,15 +16,14 @@ import java.util.*;
 
 public class AccelerationData implements Serializable{
 	int mIndex;
-	//long mTimestamp;
 	int mTimestamp;
 	float mXvalue;
 	float mYvalue;
 	float mZvalue;	
 	
-	//public ArrayList<AccelerationData> mImpactArrayList;
-	//public ArrayList<AccelerationData> mPeakArrayList;
-	//public ArrayList<AccelerationData> mYCriticalArrayList;
+	static String mSwingStartDate = "";
+	static String mSwingStartTime = "";
+	static boolean mEnabledCollection = false;
 	
 	AccelerationData()
 	{
@@ -21,34 +31,11 @@ public class AccelerationData implements Serializable{
 		mTimestamp = 0;
 		
 		mXvalue = mYvalue = mZvalue = 0;
-		
-		initAllArrayList();
+		mSwingStartDate = "";
+		mSwingStartTime = "";
 	}
 	
-	public void initAllArrayList()
-	{
-		
-		//mImpactArrayList = new ArrayList<AccelerationData>();
-		//mPeakArrayList = new ArrayList<AccelerationData>();
-		//mYCriticalArrayList = new ArrayList<AccelerationData>();
-	}
 	
-	public void clearAllArrayList()
-	{
-		/*
-		if(mAccelerationArray.size() > 0)
-			mAccelerationArray.clear();
-		
-		if(mImpactArrayList.size() > 0)
-			mImpactArrayList.clear();
-		
-		if(mPeakArrayList.size() > 0)
-			mPeakArrayList.clear();
-		
-		if(mYCriticalArrayList.size()>0)
-			mYCriticalArrayList.clear();
-		*/
-	}
 	/*=================================================================
 	 * Return the maximum value from an array
 	 *=================================================================*/
@@ -64,14 +51,45 @@ public class AccelerationData implements Serializable{
 	 *=================================================================*/	
 	public float getMinValue()
 	{
-		float minValue = 0;
-		
+		float minValue = 0;		
 		
 		return minValue;
 	}
 	
-	public void addData(AccelerationData data)
+	public static void setSwingStartDate(String date)
 	{
-		
+		mSwingStartDate = date;		
+	}
+	
+	public static void setSwingStartTime(String time)
+	{
+		mSwingStartTime = time;
+	}
+	
+	public static String getSwingStartDate()
+	{
+		return mSwingStartDate;
+	}
+	
+	public static String getSwingStartTime()
+	{
+		return mSwingStartTime;
+	}
+	
+	public static void setEnabledSwing(boolean enabled)
+	{
+		mEnabledCollection = enabled;
+	}
+	
+	public static boolean getEnabledSwing()
+	{
+		return mEnabledCollection;
+	}
+	
+	public static void setSwingStaticVariables(String date, String time, boolean enabled)
+	{
+		mSwingStartDate = date;
+		mSwingStartTime = time;
+		mEnabledCollection = enabled;
 	}
 }

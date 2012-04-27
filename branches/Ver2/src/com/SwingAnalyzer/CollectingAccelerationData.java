@@ -1,3 +1,13 @@
+/*-----------------------------------------------------------------------------------------
+  File:   CollectingAccelerationData.java
+
+  Author: Jung Chang Su
+  -----------------------------------------------------------------------------------------
+  Copyright (C) 2012 SICS.
+  
+    
+  
+  *----------------------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 import java.io.File;
@@ -177,8 +187,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	{
 		isRecording = true;
 		
-		mStartDateString = getDateString();
-		mStartTimeString = getTimeString();
+		getDateTimeString();
+		//mStartDateString = getDateString();
+		//mStartTimeString = getTimeString();
 		
 		if(makeBeepSound() == true)	
 		{
@@ -389,6 +400,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		Intent intent = new Intent(CollectingAccelerationData.this, 
 									SwingFeedback.class);
 		
+		intent.putExtra("START_SWING", true);
 		intent.putExtra("START_DATE", mStartDateString);
 		intent.putExtra("START_TIME", mStartTimeString);
 
@@ -400,7 +412,10 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	private void getDateTimeString()
 	{
 		mStartDateString = getDateString();
+		AccelerationData.setSwingStartDate(mStartDateString);
+		
 		mStartTimeString = getTimeString();
+		AccelerationData.setSwingStartTime(mStartTimeString);
 	}
 	/*=============================================================================
 	 * Name: initMemberVariables
