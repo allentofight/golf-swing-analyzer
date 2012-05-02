@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#000000"
+    android:orientation="vertical" >
+    
+	
+    <TextView
+       	android:id="@+id/feedback_x_textview"
+       	android:layout_width="fill_parent"
+       	android:layout_height="40dp"
+       	android:text="X-axis" />    
+    
+    <!-- X-axis ruler -->
+    <com.SwingAnalyzer.Ruler
+	   	android:id="@+id/ruler_x"
+	   	android:layout_width="fill_parent"
+	   	android:layout_height="40dp"	   
+	   	android:orientation="vertical"/>
+    
+    <!-- X axis Image buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_gravity="center_vertical"
+        android:layout_margin="5dp"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:id="@+id/img_x1"
+            android:layout_width="20dp"
+            android:layout_height="20dp"    
+            android:layout_weight="1"        
+            android:background="#00000000"      
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x2"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x3"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x4"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x5"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_x6"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+		<ImageView
+            android:id="@+id/img_x7"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+		<ImageView
+            android:id="@+id/img_x8"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+		
+		<ImageView
+            android:id="@+id/img_x9"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+		<ImageView
+            android:id="@+id/img_x10"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>		
+    </LinearLayout>
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="0.5dp"
+        android:background="#FFFFFF"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+     <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="10dp"    
+        android:orientation="vertical" >
+    </LinearLayout>
+    
+ 	<!-- Y axis Image buttons -->    
+	<LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:orientation="vertical" > 
+    	<TextView
+        	android:id="@+id/feedback_y_textview"
+        	android:layout_width="fill_parent"
+        	android:layout_height="fill_parent"
+        	android:text="Y-axis" />
+	</LinearLayout>
+	
+	
+	<com.SwingAnalyzer.Ruler
+	   	android:id="@+id/ruler_y"
+	   	android:layout_width="fill_parent"
+	   	android:layout_height="40dp"	   
+	   	android:orientation="vertical" />
+	
+    <!-- Y axis Image buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_gravity="center_vertical"
+        android:layout_margin="5dp"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:id="@+id/img_y1"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y2"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y3"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y4"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y5"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+
+        <ImageView
+            android:id="@+id/img_y6"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+        <ImageView
+            android:id="@+id/img_y7"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+        <ImageView
+            android:id="@+id/img_y8"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+        <ImageView
+            android:id="@+id/img_y9"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>
+        <ImageView
+            android:id="@+id/img_y10"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_weight="1"
+            android:background="#00000000"
+            android:gravity="center"
+            android:src="@drawable/black_button_30"/>        
+    </LinearLayout>
+    
+    <LinearLayout
+       	android:layout_width="fill_parent"
+       	android:layout_height="0.5dp"
+       	android:background="#FFFFFF"
+       	android:orientation="vertical" >
+	</LinearLayout>
+    
+    <LinearLayout
+        android:id="@+id/layer_result"
+        android:layout_width="fill_parent"
+        android:layout_height="90dp"        
+        android:orientation="vertical" >
+        <TextView
+            android:id="@+id/feedback_result"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="Result" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layer_bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/result_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="Result"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Button
+            android:id="@+id/stats_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="Statistics"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <Button
+            android:id="@+id/back_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="0.05"
+            android:text="Back"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+    </LinearLayout>
+
+</LinearLayout>
