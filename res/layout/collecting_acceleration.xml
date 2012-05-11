@@ -4,15 +4,33 @@
     android:layout_height="fill_parent"
     android:background="#000000"
     android:orientation="vertical" >
-
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="60dp"
-        android:gravity="center|center_vertical"
-        android:text="Golf Swing Analyzer"
-        android:textAppearance="?android:attr/textAppearanceLarge" >
-    </TextView>
-
+    
+	<LinearLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="60dp"
+	    android:orientation="horizontal" >
+	    <TextView
+	        android:layout_width="260dp"
+	        android:layout_height="60dp"
+	        android:gravity="center|center_vertical"
+	        android:text="Golf Swing Analyzer"
+	        android:textAppearance="?android:attr/textAppearanceLarge" >
+	    </TextView>
+	    
+	    <ImageButton 
+			android:id="@+id/settings_button"
+		    android:layout_width="60dp"
+		    android:layout_height="60dp"
+		    android:gravity="center"
+		    android:background="#000000"
+		    android:src="@drawable/settings">
+		</ImageButton>
+    </LinearLayout>
+    
+	<LinearLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" >	
     <ImageButton
         android:id="@+id/start_button"
         android:layout_width="216dp"
@@ -22,7 +40,7 @@
         android:gravity="center_horizontal"
         android:background="#000000"
         android:src="@drawable/press_button" />
-        
+	        
     <TextView
         android:id="@+id/time_text_view"
         android:layout_width="fill_parent"
@@ -32,19 +50,33 @@
         android:textColor="#FFFFFF"
         android:textSize="30px" />    
 
+    </LinearLayout>
+    
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="20dp"
         android:orientation="vertical" >        
     </LinearLayout>
     
-    <Button
-        android:id="@+id/skip_button"
-        android:layout_width="120dp"
+    <LinearLayout 
+        android:layout_width="fill_parent"
         android:layout_height="70dp"
-        android:layout_gravity="center"        
-        android:gravity="center|center_vertical"
-        android:text="Statistics"
-        android:textAppearance="?android:attr/textAppearanceLarge" >
-    </Button>
+        android:orientation="horizontal">    
+	    <Button
+	        android:id="@+id/skip_button"
+	        android:layout_width="120dp"
+	        android:layout_height="fill_parent"
+	        android:layout_weight="1"
+	        android:layout_gravity="center"
+	        android:text="Statistics"
+	        android:textAppearance="?android:attr/textAppearanceMedium" />
+	    <Button 
+	        android:id="@+id/collection_home_button"
+	        android:layout_width="100dp"
+	        android:layout_height="fill_parent"
+	        android:layout_weight="1"
+	        android:gravity="center"
+	        android:text="Home"
+	        android:textAppearance="?android:attr/textAppearanceMedium"/>
+    </LinearLayout>
 </LinearLayout>

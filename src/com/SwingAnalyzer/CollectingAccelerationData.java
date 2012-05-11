@@ -37,7 +37,11 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	final static int TIMEOUT = (1000 * 3);		// 3 seconds timeout value
 	final static int TIMEOUT_SEC = 3;
 	
-	final static String ACCELERATION_DIR = "/data/acceldata/";
+	final static String GOLFCOLLECTED_SWING_DIR = "/data/GolfSwingAnalyzer/";
+	final static String EXTERNAL_SWING_DIR = "externalswing";
+	final static String COLLECTED_SWING_DIR = "collectedswing";
+	
+	//final static String COLLECTED_SWING_DIR = "/data/acceldata/";
 	final static String OUTPUT_FILENAME = "swing.dat";
 	final static String OUTPUT_TEXT_FILE = "swing.txt";
 	
@@ -72,7 +76,10 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 * Widgets
 	 */
 	ImageButton mStartButton;
-	Button mSkipButton;
+	ImageButton mSettingsButton;
+	
+	Button mCollectionStatsButton;
+	Button mCollectionHomeButton;
 	
 	TextView mTimeTextView;
 	
@@ -86,8 +93,14 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mStartButton = (ImageButton)findViewById(R.id.start_button);
 		mStartButton.setOnClickListener(mClickListener);
 		
-		mSkipButton = (Button)findViewById(R.id.skip_button);
-		mSkipButton.setOnClickListener(mClickListener);
+		mSettingsButton = (ImageButton)findViewById(R.id.settings_button);
+		mSettingsButton.setOnClickListener(mClickListener);
+		
+		mCollectionStatsButton = (Button)findViewById(R.id.skip_button);
+		mCollectionStatsButton.setOnClickListener(mClickListener);
+		
+		mCollectionHomeButton = (Button)findViewById(R.id.collection_home_button);
+		mCollectionHomeButton.setOnClickListener(mClickListener);
 		
 		mTimeTextView = (TextView)findViewById(R.id.time_text_view);
 		
@@ -146,6 +159,15 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 											StatisticsActivity.class);
 				startActivity(intent);
 				finish();				
+				break;
+			case R.id.collection_home_button:				
+				startActivity(new Intent(CollectingAccelerationData.this, Home.class));
+				finish();
+				break;
+			case R.id.settings_button:
+				startActivity(new Intent(CollectingAccelerationData.this, 
+								SettingsActivity.class));
+				finish();
 				break;
 			default:
 				break;
@@ -326,7 +348,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		FileOutputStream outFile = null;
 		ObjectOutputStream objectOutput = null;
 		
-		mOutputFileName = mSDCardPath + ACCELERATION_DIR + OUTPUT_FILENAME;
+		mOutputFileName = mSDCardPath + COLLECTED_SWING_DIR + OUTPUT_FILENAME;
 		
 		try
 		{
@@ -484,12 +506,12 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	    
     public void makeOutputDir(String dir)
     {
-    	File outputDir = new File(dir + ACCELERATION_DIR);
+    	File outputDir = new File(dir + COLLECTED_SWING_DIR);
     	
     	if(outputDir.mkdir() == true)
-    		Log.i("Convert", "mkdir is successful: " + dir + ACCELERATION_DIR);
+    		Log.i("Convert", "mkdir is successful: " + dir + COLLECTED_SWING_DIR);
     	else
-    		Log.i("Convert", "mkdir failed: " + dir + ACCELERATION_DIR);
+    		Log.i("Convert", "mkdir failed: " + dir + COLLECTED_SWING_DIR);
     }
 	/*=============================================================================
 	 * Name: displaySecond
@@ -636,7 +658,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	
     	if(!mSDCardPath.isEmpty())
     	{
-    		textFileName = mSDCardPath + ACCELERATION_DIR + OUTPUT_TEXT_FILE;
+    		textFileName = mSDCardPath + COLLECTED_SWING_DIR + OUTPUT_TEXT_FILE;
     		
     		try 
     		{
