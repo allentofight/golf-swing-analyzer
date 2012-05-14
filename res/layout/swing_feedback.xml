@@ -5,6 +5,12 @@
     android:background="#000000"
     android:orientation="vertical" >
     
+    <Spinner
+        android:id="@+id/feedback_swing_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" />
+  
+    
 	
     <TextView
        	android:id="@+id/feedback_x_textview"
@@ -13,8 +19,8 @@
        	android:text="X-axis" />    
     
     <!-- X-axis ruler -->
-    <com.SwingAnalyzer.Ruler
-	   	android:id="@+id/ruler_x"
+    <LinearLayout
+	   	android:id="@+id/feedback_timescale_x"
 	   	android:layout_width="fill_parent"
 	   	android:layout_height="40dp"	   
 	   	android:orientation="vertical"/>
@@ -144,8 +150,8 @@
 	</LinearLayout>
 	
 	
-	<com.SwingAnalyzer.Ruler
-	   	android:id="@+id/ruler_y"
+	<LinearLayout
+	   	android:id="@+id/feedback_timescale_y"
 	   	android:layout_width="fill_parent"
 	   	android:layout_height="40dp"	   
 	   	android:orientation="vertical" />
@@ -251,18 +257,21 @@
        	android:background="#FFFFFF"
        	android:orientation="vertical" >
 	</LinearLayout>
-    
-    <LinearLayout
-        android:id="@+id/layer_result"
+    <ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="90dp"        
-        android:orientation="vertical" >
+        android:layout_height="80dp" >        
+    	<LinearLayout
+	        android:id="@+id/layer_result"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"        
+	        android:orientation="vertical" >
         <TextView
             android:id="@+id/feedback_result"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:text="Result" />
-    </LinearLayout>
+    	</LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:id="@+id/layer_bottom"
@@ -279,13 +288,13 @@
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <Button
-            android:id="@+id/stats_button"
+            android:id="@+id/previous_swing_button"
             android:layout_width="80dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
             android:layout_weight="0.05"
-            android:text="Statistics"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:text="Previous Swing"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <Button
             android:id="@+id/back_button"

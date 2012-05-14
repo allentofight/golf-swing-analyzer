@@ -403,6 +403,8 @@ public class DetectSwingThread extends Thread{
     	}
     	else
     	{
+    		// Return the end point of a swing
+    		//mEndPointIndex = mSwingArrayList.get(arrSize).
     		sendMessageToHandler(MSG_END_POINT, -1, -1);
     	}
 
@@ -825,9 +827,14 @@ public class DetectSwingThread extends Thread{
 		}while(i> 0);
 		
 		if(isFound)
+		{
 			return startIndex;
+		}
 		else
-			return -1;
+		{
+			// If not found a start point, then return the first index
+			return 0;
+		}
 	}
 	
 	/*=============================================================================
@@ -923,8 +930,8 @@ public class DetectSwingThread extends Thread{
 
 		if(isFoundEnd == false)
 		{
-			endIndex = -1;
-			//endIndex = arrSize-1;	// The last index of mSwingArrayList
+			//endIndex = -1;
+			endIndex = arrSize-1;	// The last index of mSwingArrayList
 		}
 			
 		return endIndex;

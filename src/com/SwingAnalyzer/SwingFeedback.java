@@ -12,6 +12,7 @@ package com.SwingAnalyzer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.ObjectInputStream;
 import java.util.*;
 
@@ -19,6 +20,7 @@ import java.util.*;
 import android.app.*;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -34,11 +36,27 @@ import android.view.View;
 import android.widget.*;
 
 public class SwingFeedback extends Activity{
-	final static String ACCELERATION_DIR = "/data/acceldata/";
+	
 	final static String OUTPUT_FILENAME = "swing.dat";
+	
+	final static String GOLFSWING_DATA_DIR = "/data/GolfSwingAnalyzer";
+	final static String EXTERNAL_SWING_DIR = "/externalswing/";
+	final static String COLLECTED_SWING_DIR = "/collectedswing/";
+	
+	final static String COLLECTED_SWING_PATH = GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR;
+
+	private static final String PREFERENCE_SETTING = "settings";
+	private static final String PREF_COLLECTION_TIME = "collection_time";
+	private static final String PREF_BEEP_METHOD = "beep_method";
+	private static final String PREF_MAX_THRESHOLD = "max_threshold";
+	private static final String PREF_MIN_THRESHOLD = "min_threshold";
+
+	private static final int DEFAULT_COLLECTION_TIME = 3;
+	private static final int DEFAULT_MAX_THRESHOLD = 10;
+	private static final int DEFAULT_MIN_THRESHOLD = -5;
 
 	/*
-	 *	Message ID for X-axis 
+	 *	Message ID for detecting points from X-axis 
 	 */
 	final static int MSG_DETECT_X 		= 0x01;
 	final static int MSG_PEAK_X_MAX		= 0x02;
@@ -55,7 +73,23 @@ public class SwingFeedback extends Activity{
 	final static int MSG_IMPACT_Y		= 0x40;
 	final static int MSG_DETECT_DONE_Y	= 0x50;
 	
-	final static int MSG_DETECT_DONE_ALL	= 0x111;
+	/*
+	 * Message ID for Start point and End point
+	 */
+	final static int MSG_START_POINT	= 0x100;
+	final static int MSG_END_POINT		= 0x200;
+	
+	final static int MSG_DETECT_DONE_ALL	= 0x300;
+	
+	final static int MSG_BELOW_THRESHOLD_X	= 0x400;
+	final static int MSG_BELOW_THRESHOLD_Y	= 0x500;
+	/* 
+	 *	Message ID for converting raw data to AccelerationData format 
+	 */
+	final static int MSG_CONVERSION_DONE	= 0x600;
+	final static int MSG_CONVERSION_ERROR	= 0x601;
+	final static int MSG_CONVERTION_WORKING	= 0x602;
+
 	/*
 	 * X-axis Threshold Value
 	 */
@@ -77,9 +111,13 @@ public class SwingFeedback extends Activity{
 	/*
 	 * Button color to be displayed
 	 */
-	final static int COLOR_BLACK = 0;
-	final static int COLOR_GREEN = 1;
-	final static int COLOR_RED	 = 2;
+	/*
+	 * Button color to be displayed
+	 */
+	final static int COLOR_BLACK = 0;		// Default
+	final static int COLOR_GREEN = 1;		// 
+	final static int COLOR_RED	 = 2;		// Maximum
+	final static int COLOR_YELLOW = 3;		// Minimum
 	
 	/*
 	 * Timeout and time scale to calculate
@@ -93,7 +131,8 @@ public class SwingFeedback extends Activity{
 	 * Peak point
 	 */
 	final static int NORMAL_POINT = 0;
-	final static int PEAK_POINT = 1;
+	final static int MIN_POINT = 1;
+	final static int MAX_POINT = 2;
 	
 	ImageView mXImages[] = new ImageView[TIME_SCALE];
 	ImageView mYImages[] = new ImageView[TIME_SCALE];
@@ -109,13 +148,21 @@ public class SwingFeedback extends Activity{
 	
 	Handler mTimerHandler;
 	
-	SoundPool mSoundPool;
-	
+	/*
+	 * Sound ID
+	 */
+	SoundPool mSoundPool;	
 	int mNormalSoundId;
-	int mPeakSoundId;
+	int mMaxSoundId;
+	int mMinSoundId;
 	
+	private boolean mIsAboveThresholdX;
+	private boolean mIsAboveThresholdY;
+
 	String mResultFileName;
+	String mSwingFileName;
 	String mSDCardPath;
+	String mSelectedFile;
 	
 	int mWhichAxis;
 	
@@ -123,95 +170,110 @@ public class SwingFeedback extends Activity{
 	private String mStartTimeString;
 	private boolean mSwingStarted;
 	
-	DetectPeakThread mDetectPeakThread;
+	//DetectPeakThread mDetectPeakThread;
 	
+	DetectSwingThread mDetectSwingThread;
 	/* 
 	 * Database Handler
 	 */
 	DatabaseHandler mDatabaseHandler;
 	
 	
-	/*
-	 * The positive and negative peak points and timestamps of X-axis data 
-	 */
-	int mXPositivePeakIndex;
-	int mXPositivePeakTimestamp;
+	// Variables for the analyzed swing data
+	int mStartIndex;	// The start point of a swing
+	int mSwingStartTime;
+	int mEndIndex;		// The end point of a swing
+	int mSwingEndTime;
 	
-	int mXNegativePeakIndex;
-	int mXNegativePeakTimestamp;
-
-	/*
-	 * The positive and negative peak points and timestamps of Y-axis data 
-	 */
-
-	int mYPositivePeakIndex;
-	int mYPositivePeakTimestamp;
+	int mXMaxIndex;		// The maximum point of X-axis
+	int mXMinIndex;		// The minimum point of X-axis
+	int mYMaxIndex;		// The maximum point of Y-axis	
+	int mYMinIndex;		// The minimum point of Y-axis
 	
-	int mYNegativePeakIndex;
-	int mYNegativePeakTimestamp;
 
 	ArrayList<AccelerationData> mSwingDataArrayList = null;	
 	
-	Ruler mRulerX;
-	Ruler mRulerY;
+	SwingTimeScale mXTimeScale;
+	SwingTimeScale mYTimeScale;
+
+	//Ruler mRulerX;
+	//Ruler mRulerY;
 	/*
 	 * Widgets 
 	 */
 	Button mAnalysisButton;
-	Button mStatsButton;
+	Button mPreviousSwingButton;
 	Button mBackButton;
 	
-	TextView mXaxisTextView;
-	TextView mYaxisTextView;
+	TextView mXTextView;
+	TextView mYTextView;
 	TextView mFeedbackTextView;
 	
+	Spinner mSwingFileSpinner;
+	
+	ArrayAdapter<String> spinnerAdapter;
+	/* 
+	 * SharedPreference Values 
+	 */
+	private int mCollectionTime = 0;
+	private boolean mMusicalNoteChecked = false;
+	
+	private int mMaxThreshold = 0;		// Threshold of X-axis
+	private int mMinThreshold = 0;		// Threshold of Y-axis
+
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.swing_feedback);
 		
-		mDatabaseHandler = new DatabaseHandler(this);
-		/*
+		/*=================================================================
 		 * Draw X-axis time scales
-		 */
-		mRulerX = (Ruler)findViewById(R.id.ruler_x);		
-		mRulerX.setScale(TIME_SCALE, COLLECTION_TIME);
-		
-		/*
+		 *=================================================================*/		
+		LinearLayout layout_xscale = (LinearLayout)findViewById(R.id.feedback_timescale_x);
+		layout_xscale.addView(mXTimeScale = new SwingTimeScale(this));
+		mXTimeScale.setScale(TIME_SCALE, COLLECTION_TIME);
+
+		/*=================================================================
 		 * Draw Y-axis time scales
-		 */
-		mRulerY = (Ruler)findViewById(R.id.ruler_y);
-		mRulerY.setScale(TIME_SCALE, COLLECTION_TIME);
+		 *=================================================================*/		
+		LinearLayout layout_yscale = (LinearLayout)findViewById(R.id.feedback_timescale_y);
+		layout_yscale.addView(mYTimeScale = new SwingTimeScale(this));
+		mYTimeScale.setScale(TIME_SCALE, COLLECTION_TIME);
 		
+		/*=================================================================
+		 * Create DatabaseHandler
+		 *=================================================================*/
+		mDatabaseHandler = new DatabaseHandler(this);
+		
+		/* 
+		 * Widgets
+		 */
+		mSwingFileSpinner = (Spinner)findViewById(R.id.feedback_swing_spinner);
+		mSwingFileSpinner.setOnItemSelectedListener(mItemSelectedListener);
+		
+    	spinnerAdapter = new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
+									android.R.layout.simple_spinner_item);
+
 		mAnalysisButton = (Button)findViewById(R.id.result_button);
 		mAnalysisButton.setOnClickListener(mClickListener);
 		
-		mStatsButton = (Button)findViewById(R.id.stats_button);
-		mStatsButton.setOnClickListener(mClickListener);
+		mPreviousSwingButton = (Button)findViewById(R.id.previous_swing_button);
+		mPreviousSwingButton.setOnClickListener(mClickListener);
 		
 		mBackButton = (Button)findViewById(R.id.back_button);
 		mBackButton.setOnClickListener(mClickListener);
 		
-		mXaxisTextView = (TextView)findViewById(R.id.feedback_x_textview);
-		mYaxisTextView = (TextView)findViewById(R.id.feedback_y_textview);
+		mXTextView = (TextView)findViewById(R.id.feedback_x_textview);
+		mYTextView = (TextView)findViewById(R.id.feedback_y_textview);
 		mFeedbackTextView = (TextView)findViewById(R.id.feedback_result);
 		
-		mNormalSoundId = mPeakSoundId = 0;
 		
 		initMemberVariables();
 		setImageViewResource();
 		initSoundPool();
+		readPreferenceValues();
 		
-		Bundle extras = getIntent().getExtras();
-		
-		mSwingStarted = extras.getBoolean("START_SWING");
-		mStartDateString = extras.getString("START_DATE");
-		mStartTimeString = extras.getString("START_TIME");
-		
-		Log.i("feedback", "Date:" + mStartDateString + ", Time:" + mStartTimeString);
-		
-		if(getResultFileName() == true)
-			readArrayListFromFile();
+		//searchSwingFiles();
 	}
 
 	@Override
@@ -232,6 +294,7 @@ public class SwingFeedback extends Activity{
 	protected void onResume() {
 		// TODO Auto-generated method stub
 		super.onResume();
+		searchSwingFiles();
 	}
 
 	Button.OnClickListener mClickListener = new View.OnClickListener() {
@@ -242,10 +305,8 @@ public class SwingFeedback extends Activity{
 			case R.id.result_button:
 				analyzeSwingData();
 				break;
-			case R.id.stats_button:
-				//Intent intent1 = new Intent(SwingFeedback.this, StatisticsActivity.class);
-				startActivity(new Intent(SwingFeedback.this, StatisticsActivity.class));
-				finish();
+			case R.id.previous_swing_button:
+				
 				break;
 			case R.id.back_button:
 				Intent intent = new Intent(SwingFeedback.this, CollectingAccelerationData.class);
@@ -256,6 +317,183 @@ public class SwingFeedback extends Activity{
 			
 		}
 	};
+	
+	private AdapterView.OnItemSelectedListener mItemSelectedListener = new AdapterView.OnItemSelectedListener()
+	{
+
+		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) 
+		{
+			mSelectedFile = (String)parent.getSelectedItem();
+			Log.i("feedback", "Selected File: " + mSelectedFile);
+		}
+
+		public void onNothingSelected(AdapterView<?> arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	};
+
+    /*=============================================================================
+	 * Name: searchSwingFiles
+	 * 
+	 * Description:
+	 * 		Check whether a SD card is mounted or not.
+	 * 		Search for swing raw data files under a specific folder
+	 * 		("/mnt/sdcard/data/GolfSwingAnalyzer/collectedswing/")
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
+	public void searchSwingFiles()
+	{
+    	String stringSdPath = "";
+    	
+    	stringSdPath = getSDPathName();
+    	
+    	if(stringSdPath != Environment.MEDIA_UNMOUNTED)
+    	{
+    		searchFilesinSdPath(stringSdPath + GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR);    		
+    	}
+    	else
+    		mSelectedFile = "";
+	}
+	
+    /*=============================================================================
+	 * Name: getSDPathName
+	 * 
+	 * Description:
+	 * 		Check whether a SD card is mounted or not		
+	 * 		If mounted, return the absolute SD card path name
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	
+    public String getSDPathName()
+    {
+        String ext = Environment.getExternalStorageState();
+        String sdPath = "";
+        if(ext.equals(Environment.MEDIA_MOUNTED))
+        {
+        	sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        	//mSdPath = sdPath;
+        }
+        else
+        {
+        	sdPath = Environment.MEDIA_UNMOUNTED;
+        	
+        	//mSdPath = "";
+        	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
+        }
+        
+    	return sdPath;
+    }
+    
+    /*=============================================================================
+	 * Name: searchFilesinSdPath
+	 * 
+	 * Description:
+	 * 		Get golf swing file names in the specific folder 
+	 * 		- (/mnt/sdcare/data/GolfSwingAnalyzer/externalswing)		
+	 * 		Input those file names to a Spinner widget
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+    public void searchFilesinSdPath(String swingDataPath)
+    {
+    	File swingDir = new File(swingDataPath);    	
+    	
+    	Log.i("feedback", "Collected Swing Dir Path: " + swingDataPath);
+    	
+    	if(swingDir.isDirectory())
+    	{
+        	String[] fileNameList = swingDir.list(new FilenameFilter()
+        	{
+        		public boolean accept(File dir, String name)
+        		{
+        			return name.endsWith("dat");
+        		}
+        	});
+        	
+        	
+        	String[] sortedFileNameList = new String[fileNameList.length];
+        	sortedFileNameList = doNaturalSorting(fileNameList);
+
+        	insertFileNameToSpinner(sortedFileNameList);
+    	}
+    	
+    }
+	/*=============================================================================
+	 * Name: doNaturalSorting
+	 * 
+	 * Description:
+	 * 		Display filenames according to the file number
+	 * 		Example) swing_05134.dat 
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+    private String[] doNaturalSorting(String[] array)
+    {	
+		String tmp = "";
+		
+		String s1 = "";
+		String s2 = "";
+		int i1, i2;		
+		int indexOfDash = 0;
+		
+		
+		for(int i=0; i< (array.length-1); i++)
+		{
+		
+			for(int j=0; j<= (array.length-2); j++)
+			{
+				indexOfDash = array[j].indexOf("_");
+				s1 = array[j].substring(indexOfDash+1, array[j].indexOf("."));
+				s2 = array[j+1].substring(indexOfDash+1, array[j+1].indexOf("."));
+
+				i1 = Integer.parseInt(s1);
+				i2 = Integer.parseInt(s2);
+				
+				if(i1 < i2)
+				{
+					tmp = array[j];
+					array[j] = array[j+1];
+					array[j+1] = tmp;				
+				}				
+			}
+		}
+		
+    	return array;
+    }
+
+	/*=============================================================================
+	 * Name: insertFileNameToSpinner
+	 * 
+	 * Description:
+	 * 		Insert file names to a Spinner widget		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+    private void insertFileNameToSpinner(String[] filenames)
+    {
+    	/*
+    	ArrayAdapter<String> spinnerAdapter = 
+    						new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
+    											android.R.layout.simple_spinner_item,
+    											filenames);
+    	*/
+    	for(int i = 0; i < filenames.length; i++)
+    	{
+    		spinnerAdapter.add(filenames[i]);
+    	}
+    	spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    	mSwingFileSpinner.setAdapter(spinnerAdapter);
+    }
+
+
 	/*=============================================================================
 	 * Name: initMemberVariables
 	 * 
@@ -270,6 +508,9 @@ public class SwingFeedback extends Activity{
 		mSwingDataArrayList = new ArrayList<AccelerationData>();
 		
 		mResultFileName = "";
+		mSwingFileName = "";
+		mSelectedFile = "";
+		
 		mWhichAxis = 0;
 		
 		mStartDateString = "";
@@ -284,6 +525,30 @@ public class SwingFeedback extends Activity{
 		
 		mFeedbackTextView.setText("");
 	}
+	
+	/*=============================================================================
+	 * Name: readPreferenceValues
+	 * 
+	 * Description:
+	 * 		Read setting values which are stored in the shared preferences
+	 * 		- COLLECTION_TIME
+	 * 		- MAX_THRESHOLD
+	 * 		- MIN_THRESHOLD
+	 * 		- BEEP_METHOD
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
+	private void readPreferenceValues()
+	{
+		SharedPreferences pref = getSharedPreferences(PREFERENCE_SETTING, MODE_PRIVATE);
+		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
+		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
+		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
+		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, false);
+		
+	}
+
 	/*=============================================================================
 	 * Name: clearSwingResult
 	 * 
@@ -318,23 +583,30 @@ public class SwingFeedback extends Activity{
 	{
 		boolean isFound = false;
         String ext = Environment.getExternalStorageState();
+        String resultFile = "";
+        
+        if(mSelectedFile.isEmpty())
+        {
+        	return false;
+        }
         
         if(ext.equals(Environment.MEDIA_MOUNTED))
         {
         	mSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath();  
-        	String fileName = mSDCardPath + ACCELERATION_DIR + OUTPUT_FILENAME;
         	
-        	File file = new File(fileName);
+        	resultFile = mSDCardPath + COLLECTED_SWING_PATH + mSelectedFile;
+        	
+        	File file = new File(resultFile);
         	
         	if(file.exists())
         	{
-        		mResultFileName = fileName;
+        		mResultFileName = resultFile;
         		isFound = true;
         		Log.i("feedback", "ResultFileName: " + mResultFileName);
         	}
         	else
         	{
-        		mResultFileName = "";
+        		resultFile = "";
         		isFound = false;
         		Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
         	}
@@ -365,7 +637,9 @@ public class SwingFeedback extends Activity{
 		resetIconColor(Y_AXIS);
 		clearSwingResult();
 		
-		if(getResultFileName() == false)
+		if(getResultFileName() == true)
+			readArrayListFromFile();
+		else
 		{
 			Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
 			return;
@@ -373,17 +647,125 @@ public class SwingFeedback extends Activity{
 		
 		if(!mResultFileName.isEmpty())
 		{
+			mDetectSwingThread = new DetectSwingThread(FeedbackHandler,
+														(ArrayList)mSwingDataArrayList,
+														mMaxThreshold, mMinThreshold);
+			mDetectSwingThread.setDaemon(true);
+			mDetectSwingThread.start();
+			/*
 			mDetectPeakThread = new DetectPeakThread(mSwingDataArrayList, 
 													FeedbackHandler);
 			
 			mDetectPeakThread.setDaemon(true);
 			mDetectPeakThread.start();
+			*/
 		}
 		else
 		{
 			Toast.makeText(this, "The file name does not exist", Toast.LENGTH_LONG).show();
 		}		
 	}
+	
+	/*=============================================================================
+	 * Name: startSwingFeedback
+	 * 
+	 * Description:
+	 * 		1. Prepare the feedback of a real swing 
+	 * 		2. Check the timeslot of each critical points' index 		  	
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/ 	
+	public void startSwingFeedback()
+	{
+		int mXMaxTime = 0;
+		int mXMinTime = 0;
+		int mYMaxTime = 0;
+		int mYMinTime = 0;
+		
+		float mXMaxValue = 0;
+		float mYMinValue = 0;
+		
+		if(mStartIndex == -1|| mEndIndex == -1)
+		{
+			if(mStartIndex == -1)
+				showErrorDialog("Error", "Cannot detect a start point");
+			else
+				showErrorDialog("Error", "Cannot detect an end point");
+		}
+		else
+		{
+			mSwingStartTime = mSwingDataArrayList.get(mStartIndex).mTimestamp;
+			mSwingEndTime = mSwingDataArrayList.get(mEndIndex).mTimestamp;
+
+			mXMaxTime = mSwingDataArrayList.get(mXMaxIndex).mTimestamp;			
+			mXMaxValue = mSwingDataArrayList.get(mXMaxIndex).mXvalue;
+			
+			mXMinTime = mSwingDataArrayList.get(mXMinIndex).mTimestamp;
+			
+			// Draw lines and text
+			mXTimeScale.setFeedbackScale(TIME_SCALE, mSwingStartTime, mSwingEndTime);
+			mYTimeScale.setFeedbackScale(TIME_SCALE, mSwingStartTime, mSwingEndTime);
+			
+			/*
+			 * When only the maximum value of X-axis is greater than Threshold(10),
+			 * find a peak point.
+			 */
+			if((int)mXMaxValue >= mMaxThreshold)
+			{
+				mIsAboveThresholdX = true;
+				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMaxTime, X_AXIS, MAX_POINT);
+				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMinTime, X_AXIS, MIN_POINT);
+			}
+			else
+			{
+				mIsAboveThresholdX = false;
+			}
+			
+			mYMaxTime = mSwingDataArrayList.get(mYMaxIndex).mTimestamp;
+			mYMinTime = mSwingDataArrayList.get(mYMinIndex).mTimestamp;
+			mYMinValue = mSwingDataArrayList.get(mYMinIndex).mYvalue;
+			
+			/*
+			 * When only the maximum value of Y-axis is less than Threshold(-5),
+			 * find a peak point.
+			 */
+			if((int)mYMinValue <= mMinThreshold)
+			{
+				mIsAboveThresholdY = true;
+				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMaxTime, Y_AXIS, MAX_POINT);
+				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMinTime, Y_AXIS, MIN_POINT);
+			}
+			else
+			{
+				mIsAboveThresholdY = false;
+			}
+			
+			/*
+			 * Display color and make beep sounds according to the values
+			 */
+			displayAnalysisResult();
+		}
+	}
+
+	/*=============================================================================
+	 * Name: showErrorDialog
+	 * 
+	 * Description:
+	 * 		Show an alert dialog when an error happens
+	 *=============================================================================*/	
+	public void showErrorDialog(String title, String message)
+	{
+		AlertDialog.Builder alertDlg 
+		= new AlertDialog.Builder(SwingFeedback.this);
+	
+		alertDlg.setTitle(title);
+		alertDlg.setMessage(message);
+		alertDlg.setIcon(R.drawable.golf_analyzer_icon);
+		alertDlg.setPositiveButton("Close", null);
+		alertDlg.show();
+	}
+
 	/*=============================================================================
 	 * Name: setImageViewResource
 	 * 
@@ -416,8 +798,10 @@ public class SwingFeedback extends Activity{
 	{
 		mSoundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
 		
-		mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);
-		mPeakSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
+		mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);		
+		mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
+		mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
+
 	}
 	
 	/*=============================================================================
@@ -444,7 +828,11 @@ public class SwingFeedback extends Activity{
 				break;
 			case COLOR_RED:
 				mXImages[index].setImageResource(R.drawable.red_button_30);
-				mSoundPool.play(mPeakSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
+				break;
+			case COLOR_YELLOW:
+				mXImages[index].setImageResource(R.drawable.yellow_button_30);
+				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
 			}
 		}
@@ -461,7 +849,11 @@ public class SwingFeedback extends Activity{
 				break;
 			case COLOR_RED:				
 				mYImages[index].setImageResource(R.drawable.red_button_30);
-				mSoundPool.play(mPeakSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
+				break;
+			case COLOR_YELLOW:
+				mYImages[index].setImageResource(R.drawable.yellow_button_30);
+				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
 			}
 
@@ -476,27 +868,44 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/		
-	public void findPeakTimeIndex(int timestamp, int axis)
+	/*=============================================================================
+	 * Name: findPeakTimeIndex
+	 * 
+	 * Description:
+	 * 		Find an index using a given timestamp
+	 * 		type: MAX_POINT, MIN_POINT
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
+	public void findPeakTimeIndex(int start, int end, int timestamp, int axis, int type)
 	{	
 		int index = 0;
+		int interval = 0;
 		
 		if(timestamp == 0)
 			timestamp = 1;
 		
-		index = timestamp/TIME_INTERVAL;
+		interval = (end - start)/TIME_SCALE;
+		Log.i("realswing", "interval:" + interval);
+		
+		if(timestamp >= start)
+			index = (timestamp - start)/interval;
+		else
+			index = 0;
 		
 		if(index >= TIME_SCALE)
 			index = (TIME_SCALE-1);
 		
-		Log.i("feedback", "findPeakTime Index: " + index + ", Time:" + timestamp);
 		
 		if(axis == X_AXIS)
 		{
-			mSwingXResult[index] = PEAK_POINT;
+			Log.i("realswing", "X Type:" + type + ", Index: " + index + ", Time:" + timestamp);
+			mSwingXResult[index] = type;
 		}
 		else
 		{
-			mSwingYResult[index] = PEAK_POINT;
+			Log.i("realswing", "Y Type:" + type + ", Index: " + index + ", Time:" + timestamp);
+			mSwingYResult[index] = type;
 		}		
 	}
 	/*=============================================================================
@@ -512,15 +921,19 @@ public class SwingFeedback extends Activity{
 	{
 		if(axis == X_AXIS)
 		{
-			if(mSwingXResult[index] == PEAK_POINT)
+			if(mSwingXResult[index] == MAX_POINT)
 				displayResultWithSoundIcon(index, COLOR_RED, X_AXIS);
+			else if(mSwingXResult[index] == MIN_POINT)
+				displayResultWithSoundIcon(index, COLOR_YELLOW, X_AXIS);
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, X_AXIS);
 		}
 		else
 		{
-			if(mSwingYResult[index] == PEAK_POINT)
+			if(mSwingYResult[index] == MAX_POINT)
 				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
+			else if(mSwingYResult[index] == MIN_POINT)
+				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);			
 		}
@@ -557,55 +970,66 @@ public class SwingFeedback extends Activity{
     {
     	public void handleMessage(Message msg)
     	{
-    		
-    		int timestamp = msg.arg2;
+    		String handlerText = "";
+    		float value = 0;
     		
     		switch(msg.what)
     		{
-    		case MSG_PEAK_X_MAX:
-    			findPeakTimeIndex(timestamp, X_AXIS);
-    			
-    			//Log.i("feedback", "+ Peak X: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			mXPositivePeakIndex = msg.arg1;
-    			mXPositivePeakTimestamp = msg.arg2;
-    			
-    			showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
+    		case MSG_START_POINT:
+    			mStartIndex = msg.arg1;
+    			handlerText = "START_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;
+    			displayResultText(handlerText);
+    			break;
+    		case MSG_END_POINT:
+    			mEndIndex = msg.arg1;
+    			handlerText = "END_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;
+    			displayResultText(handlerText);
+    			break;
+    		
+    		case MSG_PEAK_X_MAX:    			
+    			mXMaxIndex = msg.arg1;    	
+    			value = mSwingDataArrayList.get(mXMaxIndex).mXvalue;
+    			handlerText = "X_MAX: Time:" + msg.arg2 + ", X=" + value;    			
+    			mXTextView.setText(handlerText);    			
+    			displayResultText(handlerText);  
+    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
     			break;
     		case MSG_PEAK_X_MIN:
-    			// Don't find the negative X peak point
+    			mXMinIndex = msg.arg1;
+    			value = mSwingDataArrayList.get(mXMinIndex).mXvalue;
+    			handlerText = "X_MIN: Time:" + msg.arg2 + ", X=" + value;
+    			displayResultText(handlerText);
     			
-    			//Log.i("feedback", "- Peak X: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			
-    			mXNegativePeakIndex = msg.arg1;
-    			mXNegativePeakTimestamp = msg.arg2;
-    			
-    			break;
-    		case MSG_PEAK_Y_MIN:
-    			findPeakTimeIndex(timestamp, Y_AXIS);
-    			
-    			//Log.i("feedback", "- Peak Y: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			mYNegativePeakIndex = msg.arg1;
-    			mYNegativePeakTimestamp = msg.arg2;
-    			
-    			showFeedbackResultText(msg.arg1, msg.arg2, msg.what);    			
+    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
     			break;
     		case MSG_PEAK_Y_MAX:
-    			
-    			//Log.i("feedback", "+ Peak Y: index=" + msg.arg1 + ", Time=" + msg.arg2);
-    			mYPositivePeakIndex = msg.arg1;
-    			mYPositivePeakTimestamp = msg.arg2;    			
+    			mYMaxIndex = msg.arg1;
+    			value = mSwingDataArrayList.get(mYMaxIndex).mYvalue;
+    			handlerText = "Y_MAX: Time:" + msg.arg2 + ", Y=" + value;
+    			displayResultText(handlerText);
+    			break;    			
+    		case MSG_PEAK_Y_MIN:
+    			mYMinIndex = msg.arg1;    			
+    			value = mSwingDataArrayList.get(mYMinIndex).mYvalue;
+    			handlerText = "Y_MIN: Time:" + msg.arg2 + ", Y=" + value;
+    			mYTextView.setText(handlerText);
+    			displayResultText(handlerText);
+
+    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);    			
     			break;
     		case MSG_DETECT_DONE_X:
-    			// msg.arg1 = Max, msg.arg2 = Min
-    			showAllResult(msg.arg1, msg.arg2, X_AXIS);
+    			handlerText = "DETECT_DONE_X";
+    			displayResultText(handlerText);
     			break;
     		case MSG_DETECT_DONE_Y:
-    			// msg.arg1 = Max, msg.arg2 = Min    			
-    			showAllResult(msg.arg1, msg.arg2, Y_AXIS);
+    			handlerText = "DETECT_DONE_Y";
+    			displayResultText(handlerText);
     			break;
     		case MSG_DETECT_DONE_ALL:
-    			Log.i("feedback", "MSG_DETECT_DONE_ALL");
-    			displayAnalysisResult();
+    			handlerText = "DETECT_DONE_ALL";
+    			displayResultText(handlerText);
+    			
+    			startSwingFeedback();
     			addFeedbackToDatabase();
     			break;
     		}
@@ -613,7 +1037,6 @@ public class SwingFeedback extends Activity{
     	}
     };
 	
-  
 	/*=============================================================================
 	 * Name: displayAnalysisResult
 	 * 
@@ -645,12 +1068,35 @@ public class SwingFeedback extends Activity{
 						showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
 					
 					timeIndex++;
-				}				
+				}
+				else
+				{
+					if(mIsAboveThresholdX == false && mIsAboveThresholdY == true)
+					{
+						showErrorDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
+					}
+					else if(mIsAboveThresholdX == true && mIsAboveThresholdY == false)
+					{
+						showErrorDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
+					}
+					else if(mIsAboveThresholdX == false && mIsAboveThresholdY == false)
+					{
+						showErrorDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
+										+ mMaxThreshold + ", Min=" + mMinThreshold + ")");
+					}
+
+				}
 			}
 		};
 		
 		mTimerHandler.sendEmptyMessage(0);
 	}
+	
+    public void displayResultText(String text)
+    {
+    	mFeedbackTextView.append(text + "\n");
+    	Log.i("feedback", text);
+    }
 	
 	/*=============================================================================
 	 * Name: showFeedbackResultText
@@ -679,13 +1125,13 @@ public class SwingFeedback extends Activity{
 			result = "X-axis Peak [Time: " + accel.mTimestamp 
 										+ ", X: " + accel.mXvalue + "]" + "\n";
 			
-			mXaxisTextView.setText(result);
+			mXTextView.setText(result);
 		}
 		else if(msg == MSG_PEAK_Y_MIN)
 		{	
 			result = "Y-axis Peak [Time: " + accel.mTimestamp 
 										+ ", Y: " + accel.mYvalue + "]" + "\n";
-			mYaxisTextView.setText(result);
+			mYTextView.setText(result);
 		}
 
 		//mFeedbackTextView.setText(result);
@@ -787,19 +1233,19 @@ public class SwingFeedback extends Activity{
 		date = mStartDateString;
 		time = mStartTimeString;
 		
-		element = mSwingDataArrayList.get(mXPositivePeakIndex);
+		element = mSwingDataArrayList.get(mXMaxIndex);
 		x_max = String.valueOf(element.mXvalue);
 		x_max_time = String.valueOf(element.mTimestamp);
 		
-		element = mSwingDataArrayList.get(mXNegativePeakIndex);
+		element = mSwingDataArrayList.get(mXMinIndex);
 		x_min = String.valueOf(element.mXvalue);
 		x_min_time = String.valueOf(element.mTimestamp);
 		
-		element = mSwingDataArrayList.get(mYPositivePeakIndex);
+		element = mSwingDataArrayList.get(mYMaxIndex);
 		y_max = String.valueOf(element.mYvalue);
 		y_max_time = String.valueOf(element.mTimestamp);
 		
-		element = mSwingDataArrayList.get(mYNegativePeakIndex);
+		element = mSwingDataArrayList.get(mYMinIndex);
 		y_min = String.valueOf(element.mYvalue);
 		y_min_time = String.valueOf(element.mTimestamp);
 		
