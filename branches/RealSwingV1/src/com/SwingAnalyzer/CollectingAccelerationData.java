@@ -37,16 +37,21 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	final static int TIMEOUT = (1000 * 3);		// 3 seconds timeout value
 	final static int TIMEOUT_SEC = 3;
 	
-	final static String GOLFCOLLECTED_SWING_DIR = "/data/GolfSwingAnalyzer/";
-	final static String EXTERNAL_SWING_DIR = "externalswing";
-	final static String COLLECTED_SWING_DIR = "collectedswing";
+	final static String GOLFSWING_DATA_DIR = "/data/GolfSwingAnalyzer";
+	final static String EXTERNAL_SWING_DIR = "/externalswing/";
+	final static String COLLECTED_SWING_DIR = "/collectedswing/";
 	
-	//final static String COLLECTED_SWING_DIR = "/data/acceldata/";
-	final static String OUTPUT_FILENAME = "swing.dat";
-	final static String OUTPUT_TEXT_FILE = "swing.txt";
+	final static String COLLECTED_SWING_PATH = GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR;
+	
+	final static String OUTPUT_FILENAME = "swing";
+	final static String OUTPUT_FILE_EXT = ".dat";
+	
+	final static String OUTPUT_TEXT_FILE = "swing";
+	final static String OUTPUT_TEXTFILE_EXT = ".txt";
 	
 	final static float GRAVITY = 9.81f;
 	
+	final static int DELETE_FILE_DATE = 7;
 	/*
 	 * Class member variables
 	 */
@@ -57,13 +62,18 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	boolean isRecording;
 	boolean isSoundPlayed;
 	
-	Handler mTimerHandler;
+	Handler mCollectingDataHandler;
+	Handler mCountDownTimer;
 	
 	String mSDCardPath;
 	String mOutputFileName;
 	
 	SoundPool mSoundPool;
-	int mSoundId;
+	int mOneSoundId;
+	int mTwoSoundId;
+	int mThreeSoundId;
+	
+	int mBeepSoundId;
 	int mAccelerationCount;
 	
 	long mStartTimeMillis;
@@ -72,13 +82,14 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	private String mStartDateString;
 	private String mStartTimeString;
 
+	private String mDateTimeString;
 	/*
 	 * Widgets
 	 */
 	ImageButton mStartButton;
 	ImageButton mSettingsButton;
 	
-	Button mCollectionStatsButton;
+	Button mFeedbackScreenButton;
 	Button mCollectionHomeButton;
 	
 	TextView mTimeTextView;
@@ -93,11 +104,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mStartButton = (ImageButton)findViewById(R.id.start_button);
 		mStartButton.setOnClickListener(mClickListener);
 		
-		mSettingsButton = (ImageButton)findViewById(R.id.settings_button);
-		mSettingsButton.setOnClickListener(mClickListener);
-		
-		mCollectionStatsButton = (Button)findViewById(R.id.skip_button);
-		mCollectionStatsButton.setOnClickListener(mClickListener);
+	
+		mFeedbackScreenButton = (Button)findViewById(R.id.feedback_button);
+		mFeedbackScreenButton.setOnClickListener(mClickListener);
 		
 		mCollectionHomeButton = (Button)findViewById(R.id.collection_home_button);
 		mCollectionHomeButton.setOnClickListener(mClickListener);
@@ -112,7 +121,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		
 		initMemberVariables();
 		makeOutputFolder();
+		initCollectionSoundPool();
 		
+		deleteFiles(DELETE_FILE_DATE,COLLECTED_SWING_PATH);
 	}
 
 	
@@ -154,19 +165,14 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				clearArrayList();
 				startCollectingData();
 				break;
-			case R.id.skip_button:				
+			case R.id.feedback_button:				
 				Intent intent = new Intent(CollectingAccelerationData.this, 
-											StatisticsActivity.class);
+											SwingFeedback.class);
 				startActivity(intent);
 				finish();				
 				break;
 			case R.id.collection_home_button:				
 				startActivity(new Intent(CollectingAccelerationData.this, Home.class));
-				finish();
-				break;
-			case R.id.settings_button:
-				startActivity(new Intent(CollectingAccelerationData.this, 
-								SettingsActivity.class));
 				finish();
 				break;
 			default:
@@ -194,6 +200,29 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			}
 		}
 	}
+	
+	/*=============================================================================
+	 * Name: initSoundPool
+	 * 
+	 * Description:
+	 * 		Initialize Sound Pool and load two sounds
+	 * 		- Normal points sound
+	 * 		- Peak point sound
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/				
+	public void initCollectionSoundPool()
+	{
+		mSoundPool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
+	
+		mOneSoundId = mSoundPool.load(this, R.raw.one, 1);
+		mTwoSoundId = mSoundPool.load(this, R.raw.two, 1);
+		mThreeSoundId = mSoundPool.load(this, R.raw.three, 1);
+		mBeepSoundId = mSoundPool.load(this, R.raw.ding, 1);
+	
+	}
+
 	/*=============================================================================
 	 * Name: startCollectingData
 	 * 
@@ -207,21 +236,12 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	    			
 	public void startCollectingData()
 	{
-		isRecording = true;
 		
-		getDateTimeString();
-		//mStartDateString = getDateString();
-		//mStartTimeString = getTimeString();
 		
-		if(makeBeepSound() == true)	
-		{
-			mStartTimeMillis = System.currentTimeMillis();
-			Log.i("collect", "Start Time: " + mStartTimeMillis);
-			
-			startTimeoutCounter();
-		}
+		mDateTimeString = getDateTimeString();
+		Log.i("collect", "mDateTimeString:" + mDateTimeString);
 		
-		Log.i("collect", "startTimeoutCounter()");
+		startCountDownTimer();
 	}
 	
 	/*=============================================================================
@@ -302,76 +322,79 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			accelData.mZvalue = values[2];
 			break;
 		}
-		
+		/*
 		Log.i("collect", "C:" + accelData.mIndex 
 						+ " T:" + accelData.mTimestamp
 						+ " X:" + accelData.mXvalue
 						+ " Y:" + accelData.mYvalue
 						+ " Z:" + accelData.mZvalue);
-		
+		*/
 		mSwingDataArrayList.add(accelData);
 		
 		
 	}
-	
 	/*=============================================================================
-	 * Name: makeBeepSound
+	 * Name: playCountDownSound
 	 * 
 	 * Description:
-	 * 		Generate a beep sound for informing start of a user		
+	 * 		Play countdown sounds (Three-Two-One)		
 	 * 
 	 * Return:
 	 * 		None
-	 *=============================================================================*/	    	
-	public boolean makeBeepSound()
+	 *=============================================================================*/
+	public void playCountDownSound(int num)
 	{
-		if(mSoundPool.play(mSoundId, 1, 1, 0, 0, 1) != 0)
-			isSoundPlayed = true;
-		else
-			isSoundPlayed = false;
-		
-		return isSoundPlayed;
+		switch(num)
+		{
+		case 4:
+			mSoundPool.play(mThreeSoundId, 1, 1, 0, 0, 1);
+			break;
+		case 3:
+			mSoundPool.play(mTwoSoundId, 1, 1, 0, 0, 1);
+			break;
+		case 2:
+			mSoundPool.play(mOneSoundId, 1, 1, 0, 0, 1);
+			break;
+		case 1:
+			mSoundPool.play(mBeepSoundId, 1, 1, 0, 0, 1);
+			
+			break;
+		}
+
 	}
 	
-	/*=============================================================================
-	 * Name: writeAccelerationDataToFile
-	 * 
-	 * Description:
-	 * 		If a time is expired, then write all data to an output file.
-	 * 		This function is called by mTimeoutHandler		
-	 * 
-	 * Return:
-	 * 		None
-	 *=============================================================================*/	    		
-	public void writeAccelerationDataToFile()
-	{
-		FileOutputStream outFile = null;
-		ObjectOutputStream objectOutput = null;
-		
-		mOutputFileName = mSDCardPath + COLLECTED_SWING_DIR + OUTPUT_FILENAME;
-		
-		try
-		{
-			outFile = new FileOutputStream(mOutputFileName);
-			objectOutput = new ObjectOutputStream(outFile);
-			
-			objectOutput.writeObject(mSwingDataArrayList);
-			objectOutput.flush();
-			objectOutput.close();
-			outFile.close();
-			
-			Log.i("collect", "Swing Data ArrayList count: " + mSwingDataArrayList.size());
-			//displaySavedCount(mSwingDataArrayList.size());
-			
-		}
-		catch(Exception e)
-		{
-			System.out.println(e.getMessage());
-		}
-	}
 	
+	public void startCountDownTimer()
+	{
+		mCountDownTimer = new Handler()
+		{
+			int count = 4;
+			int wait = 0;
+			public void handleMessage(Message msg)
+			{
+				if(wait < TIMEOUT+1000)
+				{
+					mCountDownTimer.sendEmptyMessageDelayed(1, 1000);
+					wait += 1000;
+					
+					playCountDownSound(count);
+					count--;
+				}
+				else
+				{
+					mStartTimeMillis = System.currentTimeMillis();
+					Log.i("collect", "Start Time: " + mStartTimeMillis);
+					isSoundPlayed = true;
+					isRecording = true;
+					startCollectingDataCounter();
+				}
+			}
+		};
+		
+		mCountDownTimer.sendEmptyMessage(1);
+	}
 	/*=============================================================================
-	 * Name: startTimeoutCounter
+	 * Name: startCollectingDataCounter
 	 * 
 	 * Description:
 	 * 		3 seconds Timer		
@@ -379,9 +402,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 * Return:
 	 * 		None
 	 *=============================================================================*/	    
-	public void startTimeoutCounter()
+	public void startCollectingDataCounter()
 	{
-		mTimerHandler = new Handler()
+		mCollectingDataHandler = new Handler()
 		{
 			int wait = 0;
 			
@@ -390,8 +413,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				if(wait < TIMEOUT && isSoundPlayed == true)
 				{
 					
-					mTimerHandler.sendEmptyMessageDelayed(0, 1000);
+					mCollectingDataHandler.sendEmptyMessageDelayed(0, 1000);
 					wait += 1000;
+					
 					displaySecond(wait);
 					
 				}
@@ -414,30 +438,41 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			}
 		};
 		
-		mTimerHandler.sendEmptyMessage(0);
+		mCollectingDataHandler.sendEmptyMessage(0);
 	}
 	
 	private void goFeedbackActivity()
 	{
 		Intent intent = new Intent(CollectingAccelerationData.this, 
 									SwingFeedback.class);
+		//intent.putExtra("SWING_FILE_NAME", mOutputFileName);
 		
-		intent.putExtra("START_SWING", true);
-		intent.putExtra("START_DATE", mStartDateString);
-		intent.putExtra("START_TIME", mStartTimeString);
-
 		startActivity(intent);
 		finish();
 
 	}
-	
-	private void getDateTimeString()
+	/*=============================================================================
+	 * Name: getDateTimeString
+	 * 
+	 * Description:
+	 * 		Get the start date and time for writing a result file		
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	
+	private String getDateTimeString()
 	{
+		String stringDateTime = "";
+		
 		mStartDateString = getDateString();
 		AccelerationData.setSwingStartDate(mStartDateString);
 		
 		mStartTimeString = getTimeString();
 		AccelerationData.setSwingStartTime(mStartTimeString);
+		
+		stringDateTime = mStartDateString + mStartTimeString;
+		
+		return stringDateTime;
 	}
 	/*=============================================================================
 	 * Name: initMemberVariables
@@ -453,7 +488,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		isRecording = false;
 		mSDCardPath = "";
 		mOutputFileName = "";
-		mSoundId = 0;
+		mBeepSoundId = 0;
 		mAccelerationCount = 0;
 		
 		mStartTimeMillis = 0;
@@ -464,8 +499,6 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		
 		mSwingDataArrayList = new ArrayList<AccelerationData>();
 		
-		mSoundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
-		mSoundId = mSoundPool.load(this, R.raw.ding, 1);
 	}
 	
 	/*=============================================================================
@@ -506,12 +539,12 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	    
     public void makeOutputDir(String dir)
     {
-    	File outputDir = new File(dir + COLLECTED_SWING_DIR);
+    	File outputDir = new File(dir + COLLECTED_SWING_PATH);
     	
     	if(outputDir.mkdir() == true)
-    		Log.i("Convert", "mkdir is successful: " + dir + COLLECTED_SWING_DIR);
+    		Log.i("Convert", "mkdir is successful: " + dir + COLLECTED_SWING_PATH);
     	else
-    		Log.i("Convert", "mkdir failed: " + dir + COLLECTED_SWING_DIR);
+    		Log.i("Convert", "mkdir failed: " + dir + COLLECTED_SWING_PATH);
     }
 	/*=============================================================================
 	 * Name: displaySecond
@@ -530,7 +563,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	
     	second = (TIMEOUT_SEC) - (time/1000);
     	String timeString = Integer.toString(second);
-    	mTimeTextView.setText(timeString + " seconds left.");
+    	mTimeTextView.setText("Now data is collecting.\n" + timeString + " seconds left.");
     }
 	/*=============================================================================
 	 * Name: displaySavedCount
@@ -637,6 +670,46 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     }
     
 	/*=============================================================================
+	 * Name: writeAccelerationDataToFile
+	 * 
+	 * Description:
+	 * 		If a time is expired, then write all data to an output file.
+	 * 		This function is called by mTimeoutHandler		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    		
+	public void writeAccelerationDataToFile()
+	{
+		FileOutputStream outFile = null;
+		ObjectOutputStream objectOutput = null;
+		String outFileName = "";
+		
+		mOutputFileName = OUTPUT_FILENAME +"_" + mDateTimeString + OUTPUT_FILE_EXT;		
+		outFileName = mSDCardPath + COLLECTED_SWING_PATH + mOutputFileName;
+		
+		Log.i("collect", "mOutputFileName:" + mOutputFileName);
+		try
+		{
+			outFile = new FileOutputStream(outFileName);
+			objectOutput = new ObjectOutputStream(outFile);
+			
+			objectOutput.writeObject(mSwingDataArrayList);
+			objectOutput.flush();
+			objectOutput.close();
+			outFile.close();
+			
+			Log.i("collect", "Swing Data ArrayList count: " + mSwingDataArrayList.size());
+			//displaySavedCount(mSwingDataArrayList.size());
+			
+		}
+		catch(Exception e)
+		{
+			System.out.println(e.getMessage());
+		}
+	}
+    
+	/*=============================================================================
 	 * Name: writeOutputTextFile
 	 * 
 	 * Description:
@@ -649,8 +722,9 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	                
     public void writeOutputTextFile()
     {
-    	String textFileName = "";
+    	String textOutFileName = "";
     	String content = "";
+    	String outFileName = "";
     	
     	AccelerationData element = new AccelerationData();
     	File textFile = null;
@@ -658,11 +732,15 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	
     	if(!mSDCardPath.isEmpty())
     	{
-    		textFileName = mSDCardPath + COLLECTED_SWING_DIR + OUTPUT_TEXT_FILE;
+    		outFileName = mDateTimeString + OUTPUT_TEXTFILE_EXT;
+    		 
+    		textOutFileName = mSDCardPath + COLLECTED_SWING_PATH 
+    						+ OUTPUT_FILENAME + "_" + outFileName;
     		
+    		Log.i("collect", "OutFileName" + OUTPUT_FILENAME + "_" + outFileName);
     		try 
     		{
-    			textFile = new File(textFileName);
+    			textFile = new File(textOutFileName);
 				fout = new FileOutputStream(textFile);
 				
 		    	for(int i=0; i< mSwingDataArrayList.size(); i++)
@@ -718,15 +796,33 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 *=============================================================================*/	                
     public String getDateString()
     {
+    	String stringMonthDate = "";
+    	String stringMonth = "";
     	String stringDate = "";
     	
     	Calendar today = Calendar.getInstance();
     	
+    	/*
     	stringDate = (today.get(Calendar.YEAR) + "-" 
     				+ (today.get(Calendar.MONTH) + 1) + "-"
     				+ today.get(Calendar.DATE));
+    	*/
     	
-    	return stringDate;
+    	int month = (today.get(Calendar.MONTH) +1); 
+    	if(month < 10)
+    		stringMonth = "0" + month; 
+    	else
+    		stringMonth = "" + month;
+    	
+    	int date = today.get(Calendar.DATE);
+    	if(date < 10)
+    		stringDate = "0" + date;
+    	else
+    		stringDate = "" + date;
+    	
+    	stringMonthDate = stringMonth + stringDate;
+    	
+    	return stringMonthDate;
     }
     
 	/*=============================================================================
@@ -749,16 +845,51 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	
     	Calendar today = Calendar.getInstance();
     	
-    	hour = today.get(Calendar.HOUR_OF_DAY);    	
-    	stringTime += hour + ":";
+    	hour = today.get(Calendar.HOUR_OF_DAY);
+    	if(hour < 10)
+    		stringTime += "0" + hour;
+    	else
+    		stringTime += hour;
     	
     	min = today.get(Calendar.MINUTE);
-    	stringTime += min + ":";
+    	if(min < 10)
+    		stringTime += "0" + min;
+    	else
+    		stringTime += min;    	
     	
     	sec = today.get(Calendar.SECOND);
-    	stringTime += sec;
+    	if(sec < 10)
+    		stringTime += "0" + sec;
+    	else
+    		stringTime += sec;
     	
     	return stringTime;
     }
-    
+	/*=============================================================================
+	 * Name: deleteFiles
+	 * 
+	 * Description:
+	 * 		Delete files older than the day to save memory space
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/ 
+    public void deleteFiles(int day, String dir)
+    {
+    	File directory = new File(dir);
+    	int i;
+    	if(directory.exists())
+    	{
+    		File[] listFiles = directory.listFiles();
+    		long delTime = System.currentTimeMillis() - (day * 24 * 60 * 60 * 1000);
+    		for(i=0; i< listFiles.length; i++)
+    		{
+    			if(listFiles[i].lastModified() < delTime)
+    			{
+    				Log.i("collect", "Delete file: " + listFiles[i]);
+    				listFiles[i].delete();
+    			}
+    		}
+    	}
+    }
 }

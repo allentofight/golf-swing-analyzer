@@ -17,8 +17,7 @@
 		<Button
 		    android:id="@+id/stats_home_button"
 		    android:layout_width="100dp"
-		    android:layout_height="40dp"
-		    
+		    android:layout_height="50dp"		    
 		    android:text="Home">
 		</Button>	
 	</LinearLayout>

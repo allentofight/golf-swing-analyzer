@@ -110,7 +110,7 @@ public class StatisticsActivity extends Activity{
 			{
 			case R.id.stats_home_button:
 				startActivity(new Intent(StatisticsActivity.this, 
-										CollectingAccelerationData.class));
+										Home.class));
 				finish();				
 				break;
 			}

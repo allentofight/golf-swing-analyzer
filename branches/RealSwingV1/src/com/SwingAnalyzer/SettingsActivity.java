@@ -59,6 +59,8 @@ public class SettingsActivity extends Activity{
 		mCancelButton.setOnClickListener(mClickListener);
 		
 		mMaxThresholdEditText = (EditText)findViewById(R.id.settings_threshold_hi);
+		
+		
 		mMinThresholdEditText = (EditText)findViewById(R.id.settings_threshold_low);
 		
 		ArrayAdapter<String> arrayItem = new ArrayAdapter<String>(this, 
@@ -161,6 +163,8 @@ public class SettingsActivity extends Activity{
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		
 		mMaxThresholdEditText.setText(String.valueOf(mMaxThreshold));
+		mMaxThresholdEditText.setSelection(mMaxThresholdEditText.getText().length());
+		
 		mMinThresholdEditText.setText(String.valueOf(mMinThreshold));
 		
 		if(mMusicalNotesChecked == true)

@@ -14,11 +14,13 @@ public class Home extends Activity implements View.OnClickListener{
 	final static String EXTERNAL_SWING_DIR = "/externalswing/";
 	final static String COLLECTED_SWING_DIR = "/collectedswing/";
 	
+	final static String COLLECTED_SWING_PATH = GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR;
 	/*
 	 * Widgets
 	 */
 	Button mAnalyzeSwingButton;
 	Button mCollectingDataButton;
+	Button mStatisticsButton;
 	
 	ImageButton mSettingsButton;
 	
@@ -38,6 +40,9 @@ public class Home extends Activity implements View.OnClickListener{
 		
 		mCollectingDataButton = (Button)findViewById(R.id.home_collecting_data_button);
 		mCollectingDataButton.setOnClickListener(this);
+		
+		mStatisticsButton = (Button)findViewById(R.id.home_statistics_button);
+		mStatisticsButton.setOnClickListener(this);
 		
 		mSettingsButton = (ImageButton)findViewById(R.id.home_settings_button);
 		mSettingsButton.setOnClickListener(this);
@@ -60,6 +65,10 @@ public class Home extends Activity implements View.OnClickListener{
 			break;
 		case R.id.home_settings_button:
 			startActivity(new Intent(Home.this, SettingsActivity.class));
+			finish();
+			break;
+		case R.id.home_statistics_button:
+			startActivity(new Intent(Home.this, StatisticsActivity.class));
 			finish();
 			break;
 		}
