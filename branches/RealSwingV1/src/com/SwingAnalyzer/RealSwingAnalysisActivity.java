@@ -181,18 +181,31 @@ public class RealSwingAnalysisActivity extends Activity{
 	int mSwingXResult[] = new int[TIME_SCALE];
 	int mSwingYResult[] = new int[TIME_SCALE];
 	
+	// MUSICAL_NOTE_NUM = 35
 	int mSwingStrength[] = {-14, -13, -12, -11, -10, -9, -8,	// C1 ~ B1 (7ea) 
 							-7, -6, -5, -4, -3, -2, -1,			// C2 ~ B2 (7ea) 
 							0, 1, 2, 3, 4, 5, 6,				// C3 ~ B3 (7ea) 
 							7, 8, 9, 10, 11, 12, 13,			// C4 ~ B4 (7ea) 
 							14,	15, 16, 17, 18, 19, 20};		// C5 ~ B5 (7ea)
 	
+	// MUSICAL_NOTE_NUM = 35
 	int mMusicalNoteArray[] =
 					{R.raw.c1, R.raw.d1, R.raw.e1, R.raw.f1, R.raw.g1, R.raw.a1, R.raw.b1,
 					 R.raw.c2, R.raw.d2, R.raw.e2, R.raw.f2, R.raw.g2, R.raw.a2, R.raw.b2,
 					 R.raw.c3, R.raw.d3, R.raw.e3, R.raw.f3, R.raw.g3, R.raw.a3, R.raw.b3,
 					 R.raw.c4, R.raw.d4, R.raw.e4, R.raw.f4, R.raw.g4, R.raw.a4, R.raw.b4,
 					 R.raw.c5, R.raw.d5, R.raw.e5, R.raw.f5, R.raw.g5, R.raw.a5, R.raw.b5 };
+	
+	// MUSICAL_NOTE_NUM = 35
+	int mSwingStrengthIconArray[] = 
+		{R.drawable.n14, R.drawable.n13, R.drawable.n12, R.drawable.n11, R.drawable.n10, 
+		R.drawable.n9, R.drawable.n8, R.drawable.n7, R.drawable.n6, R.drawable.n5, 
+		R.drawable.n4, R.drawable.n3, R.drawable.n2, R.drawable.n1, R.drawable.p0, 
+		R.drawable.p1, R.drawable.p2, R.drawable.p3, R.drawable.p4, R.drawable.p5, 
+		R.drawable.p6, R.drawable.p7, R.drawable.p8, R.drawable.p9, R.drawable.p10, 
+		R.drawable.p11, R.drawable.p12, R.drawable.p13, R.drawable.p14, R.drawable.p15, 
+		R.drawable.p16, R.drawable.p17, R.drawable.p18, R.drawable.p19, R.drawable.p20
+	};
 	
 	int mSoundPoolId[] = new int[MUSICAL_NOTE_NUM];
 			
@@ -209,7 +222,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * SharedPreference Values 
 	 */
 	private int mCollectionTime = 0;
-	private boolean mMusicalNoteChecked = false;
+	private boolean mMusicalNoteChecked = true;
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
@@ -240,13 +253,13 @@ public class RealSwingAnalysisActivity extends Activity{
 		mYTimeScale.setScale(TIME_SCALE, COLLECTION_TIME);
 		
 		mRealSwingResultTextView = (TextView)findViewById(R.id.realswing_result);
-		mRealSwingXTextView = (TextView)findViewById(R.id.realswing_x_textview);
+		mRealSwingXTextView = (TextView)findViewById(R.id.realswing_x_textview);		
 		mRealSwingYTextView = (TextView)findViewById(R.id.realswing_y_textview);
 		
+		readPreferenceValues();
 		initMemberVariables();
 		//searchSwingFiles();
 		
-		readPreferenceValues();
 		setImageViewResource();
 		initSoundPool();
 
@@ -386,17 +399,21 @@ public class RealSwingAnalysisActivity extends Activity{
 	 *=============================================================================*/				
 	public void initSoundPool()
 	{
-		/*
-		mSoundPool = new SoundPool(3, AudioManager.STREAM_MUSIC, 0);
-		
-		mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);
-		mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
-		mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
-		*/
-		mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
-		for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+		if(mMusicalNoteChecked)
 		{
-			mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+			{
+				mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+			}
+		}
+		else
+		{
+			mSoundPool = new SoundPool(3, AudioManager.STREAM_MUSIC, 0);
+			
+			mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);
+			mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
+			mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
 		}
 	}
 	/*=============================================================================
@@ -440,15 +457,15 @@ public class RealSwingAnalysisActivity extends Activity{
 				break;
 			case COLOR_GREEN:				
 				mYImages[index].setImageResource(R.drawable.green_button_30);
-				mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
+				//mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
 				break;
 			case COLOR_RED:				
 				mYImages[index].setImageResource(R.drawable.red_button_30);
-				mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
+				//mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
 				break;
 			case COLOR_YELLOW:
 				mYImages[index].setImageResource(R.drawable.yellow_button_30);
-				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
+				//mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
 			}
 
@@ -472,7 +489,7 @@ public class RealSwingAnalysisActivity extends Activity{
 			timestamp = 1;
 		
 		interval = (end - start)/TIME_SCALE;
-		Log.i("realswing", "interval:" + interval);
+		
 		
 		if(timestamp >= start)
 			index = (timestamp - start)/interval;
@@ -484,16 +501,15 @@ public class RealSwingAnalysisActivity extends Activity{
 		
 		
 		if(axis == X_AXIS)
-		{
-			Log.i("realswing", "X Type:" + type + ", Index: " + index + ", Time:" + timestamp);
+		{		
 			mSwingXResult[index] = type;
 		}
 		else
 		{
-			Log.i("realswing", "Y Type:" + type + ", Index: " + index + ", Time:" + timestamp);
 			mSwingYResult[index] = type;
 		}		
 	}
+	
 	/*=============================================================================
 	 * Name: showResultTimeSlot
 	 * 
@@ -505,20 +521,44 @@ public class RealSwingAnalysisActivity extends Activity{
 	 *=============================================================================*/			
 	public void showResultTimeSlot(int index, int axis)
 	{
-		int strength = 0;
-		int soundIndex = 0;
-		boolean isFound = false;
-		
 		if(axis == X_AXIS)
 		{
-			/*
 			if(mSwingXResult[index] == MAX_POINT)
 				displayResultWithSoundIcon(index, COLOR_RED, X_AXIS);
 			else if(mSwingXResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, X_AXIS);
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, X_AXIS);
-			*/
+		}
+		else
+		{
+			if(mSwingYResult[index] == MAX_POINT)
+				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
+			else if(mSwingYResult[index] == MIN_POINT)
+				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
+			else
+				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);			
+		}
+
+	}
+
+	/*=============================================================================
+	 * Name: showTimeSlotWithSoundIcon
+	 * 
+	 * Description:
+	 * 		Display each timeslot with an Icon and a beep sound
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/			
+	public void showTimeSlotWithSoundIcon(int index, int axis)
+	{
+		int strength = 0;
+		int matchedIndex = 0;
+		boolean isFound = false;
+		
+		if(axis == X_AXIS)
+		{
 			strength = mSwingXResult[index];
 			
 			if(strength < -14)
@@ -531,29 +571,23 @@ public class RealSwingAnalysisActivity extends Activity{
 				if(strength == mSwingStrength[i])
 				{
 					isFound = true;
-					soundIndex = i;
+					matchedIndex = i;
 					break;
 				}
 			}
 			if(isFound == false)
 			{
-				soundIndex = 0;
+				matchedIndex = 0;
+				Log.i("realswing", "X soundIndex=" + matchedIndex + ", isFound:" + isFound);
 			}
-			Log.i("realswing", "X soundIndex=" + soundIndex + "isFound:" + isFound);
 			
-			//mSoundPool.play(mMusicalNoteArray[soundIndex], 1, 1, 0, 0, 1);
-			mSoundPool.play(mSoundPoolId[soundIndex], 1, 1, 0, 0, 1);
+			
+			mXImages[index].setImageResource(mSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+			
 		}
 		else
 		{
-			/*
-			if(mSwingYResult[index] == MAX_POINT)
-				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
-			else if(mSwingYResult[index] == MIN_POINT)
-				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
-			else
-				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);
-			*/
 			strength = mSwingYResult[index];
 			
 			if(strength < -14)
@@ -566,18 +600,20 @@ public class RealSwingAnalysisActivity extends Activity{
 				if(strength == mSwingStrength[i])
 				{
 					isFound = true;
-					soundIndex = i;
+					matchedIndex = i;
 					break;
 				}
 			}
 			
 			if(isFound == false)
 			{
-				soundIndex = 0;
+				matchedIndex = 0;
+				Log.i("realswing", "Y soundIndex=" + matchedIndex + ", isFound:" + isFound);
 			}
-			Log.i("realswing", "Y soundIndex=" + soundIndex + "isFound:" + isFound);
 			
-			mSoundPool.play(mSoundPoolId[soundIndex], 1, 1, 0, 0, 1);
+			
+			mYImages[index].setImageResource(mSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
 
 		}
 
@@ -619,7 +655,9 @@ public class RealSwingAnalysisActivity extends Activity{
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
-		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, false);
+		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		
+		Log.i("realswing", "mMusicalNoteChecked=" + mMusicalNoteChecked);
 		
 	}
     /*=============================================================================
@@ -930,11 +968,20 @@ public class RealSwingAnalysisActivity extends Activity{
 		}
 	}
 	
+	/*=============================================================================
+	 * Name: calculateMaxValuePerTimeslot
+	 * 
+	 * Description:
+	 * 		Find a maximum value of each time slot 		  	
+	 * 		if(abs|max| < abs|min|), then add maxX = (minX)
+	 * Return:
+	 * 		None
+	 *=============================================================================*/ 	
     public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
     {
     	int interval = 0;
-    	float maxX;
-    	float maxY;    	
+    	float maxX, minX;
+    	float maxY, minY;    	
     	int timestamp = 0; 
     	int startTimestamp = 0;
     	int endTimestamp = 0;
@@ -945,6 +992,9 @@ public class RealSwingAnalysisActivity extends Activity{
     	x = y = 0;
     	maxX = mConvertedSwingList.get(sIndex).mXvalue;
     	maxY = mConvertedSwingList.get(sIndex).mYvalue;
+    	
+    	minX = maxX;
+    	minY = maxY;
     	
     	startTimestamp = mConvertedSwingList.get(sIndex).mTimestamp;
     	endTimestamp = mConvertedSwingList.get(eIndex).mTimestamp;
@@ -963,23 +1013,81 @@ public class RealSwingAnalysisActivity extends Activity{
     		
     		if((arrIndex - prevIndex) == 1)
     		{
+    			if(Math.abs(maxX) < Math.abs(minX))
+    			{
+    				Log.i("realswing", "[" + prevIndex +"] " 
+    									+ "Abs|X|: maxX=" + Math.abs(maxX) 
+    									+ " minX=" + Math.abs(minX));
+    				mSwingXResult[prevIndex] = (int)minX;
+    			}
+    			else
+    			{
+    				Log.i("realswing", "[" + prevIndex +"] " 
+							+ "Abs|X|: maxX=" + Math.abs(maxX) 
+							+ " minX=" + Math.abs(minX));
+    				
+    				mSwingXResult[prevIndex] = (int)maxX;
+    			}
+
+    			if(Math.abs(maxY) < Math.abs(minY))
+    			{
+    				Log.i("realswing","[" + prevIndex +"] " 
+    									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+    									+ " minY=" + Math.abs(minY));
+    				mSwingYResult[prevIndex] = (int)minY;
+
+    			}
+    			else
+    			{
+    				Log.i("realswing","[" + prevIndex +"] " 
+    								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+    								+ " minY=" + Math.abs(minY));
+    				mSwingYResult[prevIndex] = (int)maxY;
+    			}
+
+    			// Initialize maximum and minimum values in each time slot
     			maxX = mConvertedSwingList.get(i).mXvalue;
+    			minX = mConvertedSwingList.get(i).mXvalue;
+    			
     			maxY = mConvertedSwingList.get(i).mYvalue;
+    			minY = mConvertedSwingList.get(i).mYvalue;
     			prevIndex = arrIndex;
+    		}
+    		
+    		if(x <= minX)
+    		{
+    			minX = x;
     		}
     		
     		if(x >= maxX)
     		{
-    			maxX = x;    			 
-    			mSwingXResult[arrIndex] = (int)maxX;
+    			maxX = x;
+    		}
+    		
+    		if(y <= minY)
+    		{
+    			minY = y;
     		}
     		
     		if(y >= maxY)
     		{
     			maxY = y; 
-    			mSwingYResult[arrIndex] = (int)maxY;
     		}
     	}
+    	
+    	/* Debug
+    	 * 
+    	 */
+    	for(int j=0; j<TIME_SCALE; j++)
+    	{
+    		Log.i("realswing", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
+    	}
+
+    	for(int j=0; j<TIME_SCALE; j++)
+    	{
+    		Log.i("realswing", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
+    	}
+
     }
     
     public int getTimestampFromArrayList(int index)
@@ -1051,7 +1159,8 @@ public class RealSwingAnalysisActivity extends Activity{
     			value = mConvertedSwingList.get(mXMaxIndex).mXvalue;
     			handlerText = "X_MAX: Time:" + msg.arg2 + ", X=" + value;
     			
-    			mRealSwingXTextView.setText(handlerText);    			
+    			mRealSwingXTextView.setText(handlerText);
+    			
     			displayResultText(handlerText);
     			break;
     		case MSG_PEAK_X_MIN:
@@ -1142,9 +1251,21 @@ public class RealSwingAnalysisActivity extends Activity{
 					wait += TIME_INTERVAL;
 					
 					if(timeIndex < TIME_SCALE)
-						showResultTimeSlot(timeIndex, X_AXIS);
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithSoundIcon(timeIndex, X_AXIS);
+						else
+							showResultTimeSlot(timeIndex, X_AXIS);
+
+					}
 					else
-						showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithSoundIcon(timeIndex-TIME_SCALE, Y_AXIS);
+						else
+							showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+
+					}
 					
 					timeIndex++;
 				}

@@ -158,7 +158,7 @@ public class SettingsActivity extends Activity{
 		SharedPreferences pref = getSharedPreferences(PREFERENCE_SETTING, MODE_PRIVATE);
 		
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, 3);
-		mMusicalNotesChecked = pref.getBoolean(PREF_BEEP_METHOD, false);
+		mMusicalNotesChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		

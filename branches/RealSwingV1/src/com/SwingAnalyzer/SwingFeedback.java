@@ -134,6 +134,8 @@ public class SwingFeedback extends Activity{
 	final static int MIN_POINT = 1;
 	final static int MAX_POINT = 2;
 	
+	final static int MUSICAL_NOTE_NUM = 35;
+	
 	ImageView mXImages[] = new ImageView[TIME_SCALE];
 	ImageView mYImages[] = new ImageView[TIME_SCALE];
 	
@@ -145,6 +147,35 @@ public class SwingFeedback extends Activity{
 
 	int mSwingXResult[] = new int[TIME_SCALE];
 	int mSwingYResult[] = new int[TIME_SCALE];
+	
+	// MUSICAL_NOTE_NUM = 35
+	int mSwingStrength[] = {-14, -13, -12, -11, -10, -9, -8,	// C1 ~ B1 (7ea) 
+							-7, -6, -5, -4, -3, -2, -1,			// C2 ~ B2 (7ea) 
+							0, 1, 2, 3, 4, 5, 6,				// C3 ~ B3 (7ea) 
+							7, 8, 9, 10, 11, 12, 13,			// C4 ~ B4 (7ea) 
+							14,	15, 16, 17, 18, 19, 20};		// C5 ~ B5 (7ea)
+	
+	// MUSICAL_NOTE_NUM = 35
+	int mMusicalNoteArray[] =
+					{R.raw.c1, R.raw.d1, R.raw.e1, R.raw.f1, R.raw.g1, R.raw.a1, R.raw.b1,
+					 R.raw.c2, R.raw.d2, R.raw.e2, R.raw.f2, R.raw.g2, R.raw.a2, R.raw.b2,
+					 R.raw.c3, R.raw.d3, R.raw.e3, R.raw.f3, R.raw.g3, R.raw.a3, R.raw.b3,
+					 R.raw.c4, R.raw.d4, R.raw.e4, R.raw.f4, R.raw.g4, R.raw.a4, R.raw.b4,
+					 R.raw.c5, R.raw.d5, R.raw.e5, R.raw.f5, R.raw.g5, R.raw.a5, R.raw.b5 };
+	
+	// MUSICAL_NOTE_NUM = 35
+	int mSwingStrengthIconArray[] = 
+		{R.drawable.n14, R.drawable.n13, R.drawable.n12, R.drawable.n11, R.drawable.n10, 
+		R.drawable.n9, R.drawable.n8, R.drawable.n7, R.drawable.n6, R.drawable.n5, 
+		R.drawable.n4, R.drawable.n3, R.drawable.n2, R.drawable.n1, R.drawable.p0, 
+		R.drawable.p1, R.drawable.p2, R.drawable.p3, R.drawable.p4, R.drawable.p5, 
+		R.drawable.p6, R.drawable.p7, R.drawable.p8, R.drawable.p9, R.drawable.p10, 
+		R.drawable.p11, R.drawable.p12, R.drawable.p13, R.drawable.p14, R.drawable.p15, 
+		R.drawable.p16, R.drawable.p17, R.drawable.p18, R.drawable.p19, R.drawable.p20
+	};
+	
+	int mSoundPoolId[] = new int[MUSICAL_NOTE_NUM];
+			
 	
 	Handler mTimerHandler;
 	
@@ -202,7 +233,7 @@ public class SwingFeedback extends Activity{
 	 * Widgets 
 	 */
 	Button mAnalysisButton;
-	Button mPreviousSwingButton;
+	Button mStatDatabaseButton;
 	Button mBackButton;
 	
 	TextView mXTextView;
@@ -216,7 +247,7 @@ public class SwingFeedback extends Activity{
 	 * SharedPreference Values 
 	 */
 	private int mCollectionTime = 0;
-	private boolean mMusicalNoteChecked = false;
+	private boolean mMusicalNoteChecked = true;
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
@@ -257,9 +288,10 @@ public class SwingFeedback extends Activity{
 		mAnalysisButton = (Button)findViewById(R.id.result_button);
 		mAnalysisButton.setOnClickListener(mClickListener);
 		
-		mPreviousSwingButton = (Button)findViewById(R.id.previous_swing_button);
-		mPreviousSwingButton.setOnClickListener(mClickListener);
-		
+		/*
+		mStatDatabaseButton = (Button)findViewById(R.id.stats_db_button);
+		mStatDatabaseButton.setOnClickListener(mClickListener);
+		*/
 		mBackButton = (Button)findViewById(R.id.back_button);
 		mBackButton.setOnClickListener(mClickListener);
 		
@@ -267,11 +299,13 @@ public class SwingFeedback extends Activity{
 		mYTextView = (TextView)findViewById(R.id.feedback_y_textview);
 		mFeedbackTextView = (TextView)findViewById(R.id.feedback_result);
 		
+		readPreferenceValues();
 		
 		initMemberVariables();
 		setImageViewResource();
+		
 		initSoundPool();
-		readPreferenceValues();
+		
 		
 		//searchSwingFiles();
 	}
@@ -305,9 +339,12 @@ public class SwingFeedback extends Activity{
 			case R.id.result_button:
 				analyzeSwingData();
 				break;
-			case R.id.previous_swing_button:
-				
+/*				
+			case R.id.stats_db_button:
+				startActivity(new Intent(SwingFeedback.this, StatisticsActivity.class));
+				finish();
 				break;
+*/				
 			case R.id.back_button:
 				Intent intent = new Intent(SwingFeedback.this, CollectingAccelerationData.class);
 				startActivity(intent);
@@ -545,7 +582,9 @@ public class SwingFeedback extends Activity{
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
-		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, false);
+		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		
+		Log.i("feedback", "mMusicalNoteChecked=" + mMusicalNoteChecked);
 		
 	}
 
@@ -744,9 +783,131 @@ public class SwingFeedback extends Activity{
 			/*
 			 * Display color and make beep sounds according to the values
 			 */
+			calculateMaxValuePerTimeslot(TIME_SCALE, mStartIndex, mEndIndex);
 			displayAnalysisResult();
 		}
 	}
+	/*=============================================================================
+	 * Name: calculateMaxValuePerTimeslot
+	 * 
+	 * Description:
+	 * 		Find a maximum value of each timeslot 		  	
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/ 	
+    public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
+    {
+    	int interval = 0;
+    	float maxX, minX;
+    	float maxY, minY;    	
+    	int timestamp = 0; 
+    	int startTimestamp = 0;
+    	int endTimestamp = 0;
+    	int arrIndex = 0;
+    	int prevIndex = 0;
+    	float x, y;
+    	
+    	x = y = 0;
+    	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
+    	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
+    	
+    	minX = maxX;
+    	minY = maxY;
+
+    	startTimestamp = mSwingDataArrayList.get(sIndex).mTimestamp;
+    	endTimestamp = mSwingDataArrayList.get(eIndex).mTimestamp;
+    	
+    	interval = (endTimestamp - startTimestamp) / timescale;
+    	
+    	for(int i=sIndex; i<=eIndex; i++)
+    	{
+    		timestamp = mSwingDataArrayList.get(i).mTimestamp;
+    		x = mSwingDataArrayList.get(i).mXvalue;
+    		y = mSwingDataArrayList.get(i).mYvalue;
+    		
+    		arrIndex = (timestamp - startTimestamp) / interval;
+    		if(arrIndex >= TIME_SCALE)
+    			arrIndex = TIME_SCALE -1;
+    		
+    		if((arrIndex - prevIndex) == 1)
+    		{
+    			if(Math.abs(maxX) < Math.abs(minX))
+    			{
+    				Log.i("realswing", "[" + prevIndex +"] " 
+    									+ "Abs|X|: maxX=" + Math.abs(maxX) 
+    									+ " minX=" + Math.abs(minX));
+    				mSwingXResult[prevIndex] = (int)minX;
+    			}
+    			else
+    			{
+    				Log.i("realswing", "[" + prevIndex +"] " 
+							+ "Abs|X|: maxX=" + Math.abs(maxX) 
+							+ " minX=" + Math.abs(minX));
+    				
+    				mSwingXResult[prevIndex] = (int)maxX;
+    			}
+
+    			if(Math.abs(maxY) < Math.abs(minY))
+    			{
+    				Log.i("realswing","[" + prevIndex +"] " 
+    									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+    									+ " minY=" + Math.abs(minY));
+    				mSwingYResult[prevIndex] = (int)minY;
+
+    			}
+    			else
+    			{
+    				Log.i("realswing","[" + prevIndex +"] " 
+    								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+    								+ " minY=" + Math.abs(minY));
+    				mSwingYResult[prevIndex] = (int)maxY;
+    			}
+
+    			// Initialize maximum and minimum values in each time slot
+    			maxX = mSwingDataArrayList.get(i).mXvalue;
+    			minX = mSwingDataArrayList.get(i).mXvalue;
+    			
+    			maxY = mSwingDataArrayList.get(i).mYvalue;
+    			minY = mSwingDataArrayList.get(i).mYvalue;
+    			prevIndex = arrIndex;
+    		}
+    		
+    		if(x <= minX)
+    		{
+    			minX = x;
+    		}
+    		
+    		if(x >= maxX)
+    		{
+    			maxX = x;
+    		}
+    		
+    		if(y <= minY)
+    		{
+    			minY = y;
+    		}
+    		
+    		if(y >= maxY)
+    		{
+    			maxY = y; 
+    		}
+    	}
+    	
+    	/* Debug
+    	 * 
+    	 */
+    	for(int j=0; j<TIME_SCALE; j++)
+    	{
+    		Log.i("feedback", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
+    	}
+
+    	for(int j=0; j<TIME_SCALE; j++)
+    	{
+    		Log.i("feedback", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
+    	}
+
+    }
 
 	/*=============================================================================
 	 * Name: showErrorDialog
@@ -796,11 +957,24 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/				
 	public void initSoundPool()
 	{
-		mSoundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+		if(mMusicalNoteChecked)
+		{
+			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+			{
+				mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+			}
+
+		}
+		else
+		{
+			mSoundPool = new SoundPool(3, AudioManager.STREAM_MUSIC, 0);
+			
+			mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);		
+			mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
+			mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
+		}
 		
-		mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);		
-		mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
-		mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
 
 	}
 	
@@ -886,7 +1060,7 @@ public class SwingFeedback extends Activity{
 			timestamp = 1;
 		
 		interval = (end - start)/TIME_SCALE;
-		Log.i("realswing", "interval:" + interval);
+		Log.i("feedback", "interval:" + interval);
 		
 		if(timestamp >= start)
 			index = (timestamp - start)/interval;
@@ -899,12 +1073,12 @@ public class SwingFeedback extends Activity{
 		
 		if(axis == X_AXIS)
 		{
-			Log.i("realswing", "X Type:" + type + ", Index: " + index + ", Time:" + timestamp);
+			Log.i("feedback", "X Type:" + type + ", Index: " + index + ", Time:" + timestamp);
 			mSwingXResult[index] = type;
 		}
 		else
 		{
-			Log.i("realswing", "Y Type:" + type + ", Index: " + index + ", Time:" + timestamp);
+			Log.i("feedback", "Y Type:" + type + ", Index: " + index + ", Time:" + timestamp);
 			mSwingYResult[index] = type;
 		}		
 	}
@@ -939,6 +1113,84 @@ public class SwingFeedback extends Activity{
 		}
 
 	}
+	
+	/*=============================================================================
+	 * Name: showTimeSlotWithSoundIcon
+	 * 
+	 * Description:
+	 * 		Display each timeslot with an Icon and a beep sound
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/			
+	public void showTimeSlotWithSoundIcon(int index, int axis)
+	{
+		int strength = 0;
+		int matchedIndex = 0;
+		boolean isFound = false;
+		
+		if(axis == X_AXIS)
+		{
+			strength = mSwingXResult[index];
+			
+			if(strength < -14)
+				strength = -14;
+			else if(strength > 20)
+				strength = 20;
+			
+			for(int i=0; i<MUSICAL_NOTE_NUM; i++)
+			{
+				if(strength == mSwingStrength[i])
+				{
+					isFound = true;
+					matchedIndex = i;
+					break;
+				}
+			}
+			if(isFound == false)
+			{
+				matchedIndex = 0;
+				Log.i("feedback", "X soundIndex=" + matchedIndex + ", isFound:" + isFound);
+			}
+			
+			
+			mXImages[index].setImageResource(mSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+			
+		}
+		else
+		{
+			strength = mSwingYResult[index];
+			
+			if(strength < -14)
+				strength = -14;
+			else if(strength > 20)
+				strength = 20;
+			
+			for(int i=0; i<MUSICAL_NOTE_NUM; i++)
+			{
+				if(strength == mSwingStrength[i])
+				{
+					isFound = true;
+					matchedIndex = i;
+					break;
+				}
+			}
+			
+			if(isFound == false)
+			{
+				matchedIndex = 0;
+				Log.i("feedback", "Y soundIndex=" + matchedIndex + ", isFound:" + isFound);
+			}
+			
+			
+			mYImages[index].setImageResource(mSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+
+		}
+
+	}
+
 	/*=============================================================================
 	 * Name: resetIconColor
 	 * 
@@ -1063,9 +1315,21 @@ public class SwingFeedback extends Activity{
 					wait += TIME_INTERVAL;
 					
 					if(timeIndex < TIME_SCALE)
-						showResultTimeSlot(timeIndex, X_AXIS);
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithSoundIcon(timeIndex, X_AXIS);
+						else
+							showResultTimeSlot(timeIndex, X_AXIS);
+						
+					}
 					else
-						showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithSoundIcon(timeIndex-TIME_SCALE, Y_AXIS);
+						else
+							showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+						
+					}
 					
 					timeIndex++;
 				}
@@ -1207,6 +1471,88 @@ public class SwingFeedback extends Activity{
 	}
 	
 	/*=============================================================================
+	 * Name: getDateString
+	 * 
+	 * Description:
+	 * 		Get the current year, month and date
+	 * 		Return a string of date like "yyyy-mm-dd" (ISO 2014)
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	                
+    public String getDateString()
+    {
+    	String stringMonthDate = "";
+    	String stringMonth = "";
+    	String stringDate = "";
+    	
+    	Calendar today = Calendar.getInstance();
+    	
+    	/*
+    	stringDate = (today.get(Calendar.YEAR) + "-" 
+    				+ (today.get(Calendar.MONTH) + 1) + "-"
+    				+ today.get(Calendar.DATE));
+    	*/
+    	
+    	int month = (today.get(Calendar.MONTH) +1); 
+    	if(month < 10)
+    		stringMonth = "0" + month; 
+    	else
+    		stringMonth = "" + month;
+    	
+    	int date = today.get(Calendar.DATE);
+    	if(date < 10)
+    		stringDate = "0" + date;
+    	else
+    		stringDate = "" + date;
+    	
+    	stringMonthDate = stringMonth + stringDate;
+    	
+    	return stringMonthDate;
+    }
+    
+	/*=============================================================================
+	 * Name: getTimeString
+	 * 
+	 * Description:
+	 * 		Get the current hour, minute and second
+	 * 		Return a string of time like "hh:mm:ss" (ISO 8601)
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	                
+    public String getTimeString()
+    {
+    	String stringTime = "";
+    	
+    	int hour, min, sec;
+    	
+    	hour = min = sec = 0;
+    	
+    	Calendar today = Calendar.getInstance();
+    	
+    	hour = today.get(Calendar.HOUR_OF_DAY);
+    	if(hour < 10)
+    		stringTime += "0" + hour + ":";
+    	else
+    		stringTime += hour + ":";
+    	
+    	min = today.get(Calendar.MINUTE);
+    	if(min < 10)
+    		stringTime += "0" + min + ":";
+    	else
+    		stringTime += min + ":";    	
+    	
+    	sec = today.get(Calendar.SECOND);
+    	if(sec < 10)
+    		stringTime += "0" + sec;
+    	else
+    		stringTime += sec;
+    	
+    	return stringTime;
+    }
+
+	/*=============================================================================
 	 * Name: addFeedbackToDatabase
 	 * 
 	 * Description:
@@ -1217,8 +1563,8 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/     			
 	public void addFeedbackToDatabase()
 	{
-		String date="";
-		String time= "";
+		String stringDate= getDateString();
+		String stringTime= getTimeString();
 		String x_max = "";
 		String x_max_time = "";
 		String x_min = "";
@@ -1230,8 +1576,8 @@ public class SwingFeedback extends Activity{
 
 		AccelerationData element = new AccelerationData();
 
-		date = mStartDateString;
-		time = mStartTimeString;
+		//date = mStartDateString;
+		//time = mStartTimeString;
 		
 		element = mSwingDataArrayList.get(mXMaxIndex);
 		x_max = String.valueOf(element.mXvalue);
@@ -1249,13 +1595,13 @@ public class SwingFeedback extends Activity{
 		y_min = String.valueOf(element.mYvalue);
 		y_min_time = String.valueOf(element.mTimestamp);
 		
-		Log.i("feedback", "addSwingStats: date:" + date + ", time:" + time);
-		Log.i("feedback", "x_max:" + x_max + ", x_max_time:" + x_max_time);
-		Log.i("feedback", "x_min:" + x_min + ", x_min_time:" + x_min_time);
-		Log.i("feedback", "y_max:" + y_max + ", y_max_time:" + y_max_time);
-		Log.i("feedback", "y_min:" + y_min + ", y_min_time:" + y_min_time);
+		Log.i("feedback", "addSwingStats: date: " + stringDate + ", time:" + stringTime);
+		Log.i("feedback", "x_max: " + x_max + ", time: " + x_max_time);
+		Log.i("feedback", "x_min: " + x_min + ", time: " + x_min_time);
+		Log.i("feedback", "y_max: " + y_max + ", time: " + y_max_time);
+		Log.i("feedback", "y_min: " + y_min + ", time: " + y_min_time);
 		
-		SwingStatistics swing = new SwingStatistics(date, time, 
+		SwingStatistics swing = new SwingStatistics(stringDate, stringTime, 
 												x_max, x_max_time, x_min, x_min_time,
 												y_max, y_max_time, y_min, y_min_time);
 		
@@ -1265,109 +1611,3 @@ public class SwingFeedback extends Activity{
 	
 }
 
-/*=============================================================================
- * Class Name: Ruler
- * 
- * Description:
- * 		Draw lines and texts for time scales
- * 		Derived from View class	
- * 
- * Return:
- * 		None
- *=============================================================================*/     		
-
-class Ruler extends View
-{
-	int mScale=0;		
-	int mInterval = 0;
-	final static int MARGIN = 5;
-	
-	public Ruler(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		// TODO Auto-generated constructor stub
-	}
-	
-	public Ruler(Context context, AttributeSet attrs){
-		super(context, attrs);
-	}
-	
-	public Ruler(Context context) {
-		super(context);
-	}
-	
-	public void setScale(int scale, int collection_time) {
-		mScale = scale;
-		mInterval = collection_time / mScale;
-		Log.i("scale", "mInterval:" + mInterval);
-		
-		invalidate();
-	}
-	
-	protected void onDraw(Canvas canvas)
-	{
-		
-		int x = 0;
-		int x1 = 0;
-		int y = 0;
-		int width = 0;
-		int height = 0;
-		int textSize = 0;
-		int scaleSize = 0;
-				
-		String text = "";
-		
-		
-		canvas.drawColor(Color.BLACK);
-		Paint Pnt = new Paint();
-		Pnt.setColor(Color.WHITE);
-		Pnt.setTextAlign(Paint.Align.CENTER);
-		
-		Resources res = getResources();
-		DisplayMetrics dm = res.getDisplayMetrics();
-		
-		// Textsize = 10dp
-		textSize = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, dm);
-		Pnt.setTextSize(textSize);
-		
-		scaleSize = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10, dm);	
-		
-		width = getWidth() - 20;		
-		height = getHeight();
-		Log.i("scale", "Width:" + width + ", Height:" + height);
-		
-		for(int i=0; i< mScale; i++)
-		{
-			Pnt.setAntiAlias(false);
-			if(i==0)
-				x = MARGIN;
-			else
-				x = ((width/mScale) * i) + MARGIN;
-			
-			if(i < mScale)
-			{
-				x1 = ((width/mScale) *(i+1)) + 5;
-			}
-			canvas.drawLine(x, 30, x1, 30, Pnt);
-		}
-		
-		// (mScale+1) is needed to draw "|"
-		for(int unit=0; unit <= mScale; unit++)
-		{
-			Pnt.setAntiAlias(false);
-			
-			if(unit == 0)
-				x = MARGIN;
-			else
-				x = ((width/mScale) * unit) + MARGIN;			
-			
-			y = scaleSize;
-			canvas.drawLine(x, 20, x, y+textSize+20, Pnt);			
-			
-			Pnt.setAntiAlias(true);
-			text = "" + (mInterval * unit);			
-				
-			canvas.drawText(text, x, y, Pnt);			
-		}
-		
-	}
-}	

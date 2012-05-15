@@ -307,4 +307,23 @@ public class DatabaseHandler extends SQLiteOpenHelper
 		
 		db.close();
 	}
+	
+	/*=============================================================================
+	 * Name: deleteSwingTable
+	 * 
+	 * Description:
+	 * 		Delete the swing data table(TABLE_SWINGSTATS) 
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	
+	public void deleteSwingTable()
+	{
+		String selectQuery = "SELECT * FROM " + TABLE_SWINGSTATS;
+		SQLiteDatabase db = this.getWritableDatabase();		
+		Cursor cursor = db.rawQuery(selectQuery, null);
+
+		db.delete(TABLE_SWINGSTATS, null, null);
+		cursor.requery();
+	}
 }

@@ -286,16 +286,6 @@
             android:layout_weight="0.05"
             android:text="Result"
             android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <Button
-            android:id="@+id/previous_swing_button"
-            android:layout_width="80dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="0.05"
-            android:text="Previous Swing"
-            android:textAppearance="?android:attr/textAppearanceSmall" />
-
         <Button
             android:id="@+id/back_button"
             android:layout_width="80dp"
