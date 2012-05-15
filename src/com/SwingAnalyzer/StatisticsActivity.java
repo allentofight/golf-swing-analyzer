@@ -47,6 +47,8 @@ public class StatisticsActivity extends Activity{
 	
 	LinearLayout mChartLayout;
 	
+	Button mStatsDeleteAllButton;
+	Button mStatsBackButton;
 	Button mStatsHomeButton;
 	
 	protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +57,10 @@ public class StatisticsActivity extends Activity{
 		setContentView(R.layout.statistics);
 		
 		mContext = getApplicationContext();
+		
+		mStatsDeleteAllButton = (Button)findViewById(R.id.stats_delete_all_button);
+		mStatsDeleteAllButton.setOnClickListener(mClickListener);
+		
 		
 		mStatsHomeButton = (Button)findViewById(R.id.stats_home_button);
 		mStatsHomeButton.setOnClickListener(mClickListener);
@@ -87,15 +93,7 @@ public class StatisticsActivity extends Activity{
 		 */
 		if(mChartView == null)
 		{
-			mChartLayout = (LinearLayout)findViewById(R.id.chart);
-			
-			XYMultipleSeriesRenderer renderer = getBarChartRenderer();
-			setChartSettings(renderer);
-			
-			mChartView = ChartFactory.getBarChartView(mContext, addBarChartDataset(), 
-								renderer, BarChart.Type.DEFAULT);
-	
-			mChartLayout.addView(mChartView);
+			createBarChartWithData();
 		}
 		else
 		{
@@ -108,14 +106,31 @@ public class StatisticsActivity extends Activity{
 		public void onClick(View v) {
 			switch(v.getId())
 			{
+			case R.id.stats_delete_all_button:
+				deleteAllDataFromDB();
+				mChartView.repaint();
+				break;
 			case R.id.stats_home_button:
-				startActivity(new Intent(StatisticsActivity.this, 
-										Home.class));
+				startActivity(new Intent(StatisticsActivity.this, Home.class));
 				finish();				
 				break;
 			}
 		}
 	};
+	
+	public void createBarChartWithData()
+	{
+		mChartLayout = (LinearLayout)findViewById(R.id.chart);
+		
+		XYMultipleSeriesRenderer renderer = getBarChartRenderer();
+		setChartSettings(renderer);
+		
+		mChartView = ChartFactory.getBarChartView(mContext, addBarChartDataset(), 
+							renderer, BarChart.Type.DEFAULT);
+
+		mChartLayout.addView(mChartView);
+
+	}
 	/*=============================================================================
 	 * Name: readSwingStatisticsData
 	 * 
@@ -142,6 +157,14 @@ public class StatisticsActivity extends Activity{
         	
         	Log.d("db", log);
         }
+	}
+	
+	public void deleteAllDataFromDB()
+	{
+		mDatabaseHandler.deleteSwingTable();
+		startActivity(getIntent()); 
+		finish();
+		
 	}
 	/*=============================================================================
 	 * Name: addBarChartDataset
