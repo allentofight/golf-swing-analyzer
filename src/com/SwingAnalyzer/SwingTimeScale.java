@@ -19,11 +19,14 @@ import android.view.*;
 
 public class SwingTimeScale extends View{
 	final static int MARGIN = 5;
+	final static int TIME_SCALE = 10;
 	
 	int mScale=0;		
 	int mInterval = 0;
 	int mStart = 0;
 	int mEnd = 0;
+	
+	int mMaxTextValue[] = new int[TIME_SCALE];
 	
 	public SwingTimeScale(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
@@ -38,11 +41,15 @@ public class SwingTimeScale extends View{
 		super(context);
 	}
 	
-	public void setScale(int scale, int collection_time) {
+	public void setScale(int scale, int collection_time) 
+	{
 		mScale = scale;
 		mInterval = collection_time / mScale;
 		mStart = 0;
 		mEnd = collection_time;
+	
+		for(int i=0; i<TIME_SCALE; i++)
+			mMaxTextValue[i] = 0;
 		
 		invalidate();
 	}
@@ -55,8 +62,21 @@ public class SwingTimeScale extends View{
 		
 		mInterval = (mEnd - mStart) / mScale;
 		
+		for(int i=0; i<TIME_SCALE; i++)
+			mMaxTextValue[i] = 0;
+		
 		Log.i("timescale", "Scale:" + mScale + ", Interval:" + mInterval 
 							+ ", Start:" + mStart + ", End:" + mEnd);
+		invalidate();
+	}
+	
+	public void drawMaxValueText(int[] maxTextValue)
+	{
+		for(int i=0; i<maxTextValue.length; i++)
+		{
+			mMaxTextValue[i] = maxTextValue[i];
+		}
+		
 		invalidate();
 	}
 	
@@ -70,9 +90,9 @@ public class SwingTimeScale extends View{
 		int height = 0;
 		int textSize = 0;
 		int scaleSize = 0;
-				
+		int interval = 0;	
 		String text = "";
-		
+		String textMaxValue = "";
 		
 		canvas.drawColor(Color.BLACK);
 		Paint Pnt = new Paint();
@@ -91,7 +111,15 @@ public class SwingTimeScale extends View{
 		width = getWidth() - 20;		
 		height = getHeight();
 		Log.i("scale", "Width:" + width + ", Height:" + height);
-		
+
+		/*=======================================================================
+		 * 
+		 *       0   300  600                         3000
+		 *       |----|----|----|----| .. --------------|
+		 *  
+		 *
+		 *  (mScale+1) is needed to draw "|"
+		 *======================================================================*/		
 		for(int i=0; i< mScale; i++)
 		{
 			Pnt.setAntiAlias(false);
@@ -108,11 +136,16 @@ public class SwingTimeScale extends View{
 		}
 		
 		/*=======================================================================
-		 * 
+		 *  Draw vertical lines("|") and values(0, 300, 600, ...)
+		 *  
 		 *       0   300  600                         3000
 		 *       |----|----|----|----| .. --------------|
 		 *  
-		 *
+		 *  Text coordination: X = ((width/mScale) * unit + MARGIN
+		 *  				   Y = 10 
+		 *  Vertical Lines:    X = ((width/mScale) * unit + MARGIN
+		 *                     Y = 40
+		 *                     
 		 *  (mScale+1) is needed to draw "|"
 		 *======================================================================*/
 		for(int unit=0; unit <= mScale; unit++)
@@ -126,6 +159,7 @@ public class SwingTimeScale extends View{
 			
 			y = scaleSize;
 			canvas.drawLine(x, 20, x, y + textSize + 20, Pnt);			
+			Log.i("scale", "| = " + x);
 			
 			Pnt.setAntiAlias(true);
 			
@@ -149,6 +183,31 @@ public class SwingTimeScale extends View{
 				else
 					canvas.drawText(text, x, y, Pnt);
 			}
+		}
+		
+		/*=======================================================================
+		 * Draw a maximum text in the middle of each time slot 
+		 * 
+		 *      
+		 *       |   1   |  10   |
+		 *       |-------|-------| .. --------------|
+		 *       5   20  35  50  65
+		 *  
+		 *  X-axis: ((width/mScale) * i)/2 + MARGIN = 20, 50, 80
+		 *  Y-axis: 25
+		 *======================================================================*/
+		for(int j=0; j < mScale; j++)
+		{
+			interval = ((width/mScale) * (j+1)) + MARGIN;
+			
+			x = interval - 15;
+			y = 25;
+			
+			Log.i("scale", "Max X :" + x);
+			
+			Pnt.setAntiAlias(true);
+			textMaxValue = Integer.toString(mMaxTextValue[j]);			
+			canvas.drawText(textMaxValue, x, y, Pnt);
 		}
 		
 	}
