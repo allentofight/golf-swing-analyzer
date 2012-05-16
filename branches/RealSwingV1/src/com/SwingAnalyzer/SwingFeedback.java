@@ -148,6 +148,12 @@ public class SwingFeedback extends Activity{
 	int mSwingXResult[] = new int[TIME_SCALE];
 	int mSwingYResult[] = new int[TIME_SCALE];
 	
+	/*
+	 * For display the absolute maximum vales into the scale
+	 */
+	int mSwingXAccelTextResult[] = new int[TIME_SCALE];
+	int mSwingYAccelTextResult[] = new int[TIME_SCALE];
+
 	// MUSICAL_NOTE_NUM = 35
 	int mSwingStrength[] = {-14, -13, -12, -11, -10, -9, -8,	// C1 ~ B1 (7ea) 
 							-7, -6, -5, -4, -3, -2, -1,			// C2 ~ B2 (7ea) 
@@ -604,6 +610,10 @@ public class SwingFeedback extends Activity{
 		{
 			mSwingXResult[i] = 0;
 			mSwingYResult[i] = 0;
+			
+			mSwingXAccelTextResult[i] = 0;
+			mSwingYAccelTextResult[i] = 0;
+			
 		}
 		
 		mFeedbackTextView.setText("");
@@ -753,8 +763,13 @@ public class SwingFeedback extends Activity{
 			if((int)mXMaxValue >= mMaxThreshold)
 			{
 				mIsAboveThresholdX = true;
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMaxTime, X_AXIS, MAX_POINT);
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMinTime, X_AXIS, MIN_POINT);
+				if(mMusicalNoteChecked == false)
+				{
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mXMaxTime, X_AXIS, MAX_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mXMinTime, X_AXIS, MIN_POINT);
+				}
 			}
 			else
 			{
@@ -772,8 +787,13 @@ public class SwingFeedback extends Activity{
 			if((int)mYMinValue <= mMinThreshold)
 			{
 				mIsAboveThresholdY = true;
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMaxTime, Y_AXIS, MAX_POINT);
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMinTime, Y_AXIS, MIN_POINT);
+				if(mMusicalNoteChecked == false)
+				{
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mYMaxTime, Y_AXIS, MAX_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mYMinTime, Y_AXIS, MIN_POINT);
+				}
 			}
 			else
 			{
@@ -784,6 +804,10 @@ public class SwingFeedback extends Activity{
 			 * Display color and make beep sounds according to the values
 			 */
 			calculateMaxValuePerTimeslot(TIME_SCALE, mStartIndex, mEndIndex);
+			
+			mXTimeScale.drawMaxValueText(mSwingXAccelTextResult);
+			mYTimeScale.drawMaxValueText(mSwingYAccelTextResult);
+			
 			displayAnalysisResult();
 		}
 	}
@@ -837,7 +861,10 @@ public class SwingFeedback extends Activity{
     				Log.i("realswing", "[" + prevIndex +"] " 
     									+ "Abs|X|: maxX=" + Math.abs(maxX) 
     									+ " minX=" + Math.abs(minX));
-    				mSwingXResult[prevIndex] = (int)minX;
+    				if(mMusicalNoteChecked == true)
+    					mSwingXResult[prevIndex] = (int)minX;
+    				
+    				mSwingXAccelTextResult[prevIndex] = (int)minX;
     			}
     			else
     			{
@@ -845,7 +872,10 @@ public class SwingFeedback extends Activity{
 							+ "Abs|X|: maxX=" + Math.abs(maxX) 
 							+ " minX=" + Math.abs(minX));
     				
-    				mSwingXResult[prevIndex] = (int)maxX;
+    				if(mMusicalNoteChecked == true)
+    					mSwingXResult[prevIndex] = (int)maxX;
+    				
+    				mSwingXAccelTextResult[prevIndex] = (int)maxX;
     			}
 
     			if(Math.abs(maxY) < Math.abs(minY))
@@ -853,15 +883,20 @@ public class SwingFeedback extends Activity{
     				Log.i("realswing","[" + prevIndex +"] " 
     									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     									+ " minY=" + Math.abs(minY));
-    				mSwingYResult[prevIndex] = (int)minY;
-
+    				if(mMusicalNoteChecked == true)
+    					mSwingYResult[prevIndex] = (int)minY;
+    				
+    				mSwingYAccelTextResult[prevIndex] = (int)minY;
     			}
     			else
     			{
     				Log.i("realswing","[" + prevIndex +"] " 
     								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     								+ " minY=" + Math.abs(minY));
-    				mSwingYResult[prevIndex] = (int)maxY;
+    				if(mMusicalNoteChecked == true)
+    					mSwingYResult[prevIndex] = (int)maxY;
+    				
+    				mSwingYAccelTextResult[prevIndex] = (int)maxY;
     			}
 
     			// Initialize maximum and minimum values in each time slot
@@ -1083,7 +1118,7 @@ public class SwingFeedback extends Activity{
 		}		
 	}
 	/*=============================================================================
-	 * Name: showResultTimeSlot
+	 * Name: showTimeSlotWithBeep
 	 * 
 	 * Description:
 	 * 		Display each timeslot with an Icon and a beep sound
@@ -1091,7 +1126,7 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/			
-	public void showResultTimeSlot(int index, int axis)
+	public void showTimeSlotWithBeep(int index, int axis)
 	{
 		if(axis == X_AXIS)
 		{
@@ -1319,7 +1354,7 @@ public class SwingFeedback extends Activity{
 						if(mMusicalNoteChecked)
 							showTimeSlotWithSoundIcon(timeIndex, X_AXIS);
 						else
-							showResultTimeSlot(timeIndex, X_AXIS);
+							showTimeSlotWithBeep(timeIndex, X_AXIS);
 						
 					}
 					else
@@ -1327,7 +1362,7 @@ public class SwingFeedback extends Activity{
 						if(mMusicalNoteChecked)
 							showTimeSlotWithSoundIcon(timeIndex-TIME_SCALE, Y_AXIS);
 						else
-							showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+							showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
 						
 					}
 					

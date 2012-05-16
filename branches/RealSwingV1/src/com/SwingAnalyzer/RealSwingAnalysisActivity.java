@@ -151,11 +151,6 @@ public class RealSwingAnalysisActivity extends Activity{
 	private boolean mIsAboveThresholdX;
 	private boolean mIsAboveThresholdY;
 	
-	// Sound ID for high pitch sound
-	int mNormalSoundId;
-	int mMaxSoundId;
-	int mMinSoundId;
-	
 
 	// Variables for the analyzed swing data
 	int mStartIndex;	// The start point of a swing
@@ -180,6 +175,12 @@ public class RealSwingAnalysisActivity extends Activity{
 
 	int mSwingXResult[] = new int[TIME_SCALE];
 	int mSwingYResult[] = new int[TIME_SCALE];
+	
+	/*
+	 * For display the absolute maximum vales into the scale
+	 */
+	int mSwingXAccelTextResult[] = new int[TIME_SCALE];
+	int mSwingYAccelTextResult[] = new int[TIME_SCALE];
 	
 	// MUSICAL_NOTE_NUM = 35
 	int mSwingStrength[] = {-14, -13, -12, -11, -10, -9, -8,	// C1 ~ B1 (7ea) 
@@ -214,6 +215,12 @@ public class RealSwingAnalysisActivity extends Activity{
 	
 	SoundPool mSoundPool;
 	
+	// Sound IDs for Beep sound setting 
+	int mNormalSoundId;
+	int mMaxSoundId;
+	int mMinSoundId;
+	
+
 	
 	List<AccelerationData> mRealSwingDataList = null;
 	List<AccelerationData> mConvertedSwingList = null;
@@ -363,6 +370,9 @@ public class RealSwingAnalysisActivity extends Activity{
 		{
 			mSwingXResult[i] = 0;
 			mSwingYResult[i] = 0;
+			
+			mSwingXAccelTextResult[i] = 0;
+			mSwingYAccelTextResult[i] = 0;
 		}
 		
 		clearResultText();
@@ -436,7 +446,7 @@ public class RealSwingAnalysisActivity extends Activity{
 				break;
 			case COLOR_GREEN:
 				mXImages[index].setImageResource(R.drawable.green_button_30);
-				//mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
 				break;
 			case COLOR_RED:
 				mXImages[index].setImageResource(R.drawable.red_button_30);
@@ -444,7 +454,7 @@ public class RealSwingAnalysisActivity extends Activity{
 				break;
 			case COLOR_YELLOW:
 				mXImages[index].setImageResource(R.drawable.yellow_button_30);
-				//mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
 			}
 		}
@@ -457,15 +467,15 @@ public class RealSwingAnalysisActivity extends Activity{
 				break;
 			case COLOR_GREEN:				
 				mYImages[index].setImageResource(R.drawable.green_button_30);
-				//mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mNormalSoundId, 1, 1, 0, 0, 1);
 				break;
 			case COLOR_RED:				
 				mYImages[index].setImageResource(R.drawable.red_button_30);
-				//mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mMaxSoundId, 1, 1, 0, 0, 1);
 				break;
 			case COLOR_YELLOW:
 				mYImages[index].setImageResource(R.drawable.yellow_button_30);
-				//mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
+				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
 			}
 
@@ -511,7 +521,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	}
 	
 	/*=============================================================================
-	 * Name: showResultTimeSlot
+	 * Name: showTimeSlotWithBeep
 	 * 
 	 * Description:
 	 * 		Display each timeslot with an Icon and a beep sound
@@ -519,7 +529,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/			
-	public void showResultTimeSlot(int index, int axis)
+	public void showTimeSlotWithBeep(int index, int axis)
 	{
 		if(axis == X_AXIS)
 		{
@@ -543,7 +553,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	}
 
 	/*=============================================================================
-	 * Name: showTimeSlotWithSoundIcon
+	 * Name: showTimeSlotWithMusicalNotes
 	 * 
 	 * Description:
 	 * 		Display each timeslot with an Icon and a beep sound
@@ -551,7 +561,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/			
-	public void showTimeSlotWithSoundIcon(int index, int axis)
+	public void showTimeSlotWithMusicalNotes(int index, int axis)
 	{
 		int strength = 0;
 		int matchedIndex = 0;
@@ -932,8 +942,13 @@ public class RealSwingAnalysisActivity extends Activity{
 			if((int)mXMaxValue >= mMaxThreshold)
 			{
 				mIsAboveThresholdX = true;
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMaxTime, X_AXIS, MAX_POINT);
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMinTime, X_AXIS, MIN_POINT);
+				if(mMusicalNoteChecked == false)
+				{
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mXMaxTime, X_AXIS, MAX_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mXMinTime, X_AXIS, MIN_POINT);
+				}
 			}
 			else
 			{
@@ -951,8 +966,14 @@ public class RealSwingAnalysisActivity extends Activity{
 			if((int)mYMinValue <= mMinThreshold)
 			{
 				mIsAboveThresholdY = true;
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMaxTime, Y_AXIS, MAX_POINT);
-				findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mYMinTime, Y_AXIS, MIN_POINT);
+				if(mMusicalNoteChecked == false)
+				{
+					// Make a different beep sound in the max peak and the min peak point
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mYMaxTime, Y_AXIS, MAX_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
+										mYMinTime, Y_AXIS, MIN_POINT);
+				}
 			}
 			else
 			{
@@ -964,7 +985,13 @@ public class RealSwingAnalysisActivity extends Activity{
 			 */
 			// Calculate each time slots maximum values
 			calculateMaxValuePerTimeslot(TIME_SCALE, mStartIndex, mEndIndex);
+			
+			mXTimeScale.drawMaxValueText(mSwingXAccelTextResult);
+			mYTimeScale.drawMaxValueText(mSwingYAccelTextResult);
+			
 			displayAnalysisResult();
+			
+			// Display absolute value in scale
 		}
 	}
 	
@@ -1018,7 +1045,10 @@ public class RealSwingAnalysisActivity extends Activity{
     				Log.i("realswing", "[" + prevIndex +"] " 
     									+ "Abs|X|: maxX=" + Math.abs(maxX) 
     									+ " minX=" + Math.abs(minX));
-    				mSwingXResult[prevIndex] = (int)minX;
+    				if(mMusicalNoteChecked == true)
+    					mSwingXResult[prevIndex] = (int)minX;
+    				
+    				mSwingXAccelTextResult[prevIndex] = (int)minX;
     			}
     			else
     			{
@@ -1026,7 +1056,10 @@ public class RealSwingAnalysisActivity extends Activity{
 							+ "Abs|X|: maxX=" + Math.abs(maxX) 
 							+ " minX=" + Math.abs(minX));
     				
-    				mSwingXResult[prevIndex] = (int)maxX;
+    				if(mMusicalNoteChecked == true)
+    					mSwingXResult[prevIndex] = (int)maxX;
+    				
+    				mSwingXAccelTextResult[prevIndex] = (int)maxX;
     			}
 
     			if(Math.abs(maxY) < Math.abs(minY))
@@ -1034,7 +1067,11 @@ public class RealSwingAnalysisActivity extends Activity{
     				Log.i("realswing","[" + prevIndex +"] " 
     									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     									+ " minY=" + Math.abs(minY));
-    				mSwingYResult[prevIndex] = (int)minY;
+    				
+    				if(mMusicalNoteChecked == true)
+    					mSwingYResult[prevIndex] = (int)minY;
+    				
+    				mSwingYAccelTextResult[prevIndex] = (int)minY;
 
     			}
     			else
@@ -1042,7 +1079,11 @@ public class RealSwingAnalysisActivity extends Activity{
     				Log.i("realswing","[" + prevIndex +"] " 
     								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     								+ " minY=" + Math.abs(minY));
-    				mSwingYResult[prevIndex] = (int)maxY;
+    				
+    				if(mMusicalNoteChecked == true)
+    					mSwingYResult[prevIndex] = (int)maxY;
+    				
+    				mSwingYAccelTextResult[prevIndex] = (int)maxY;
     			}
 
     			// Initialize maximum and minimum values in each time slot
@@ -1253,17 +1294,17 @@ public class RealSwingAnalysisActivity extends Activity{
 					if(timeIndex < TIME_SCALE)
 					{
 						if(mMusicalNoteChecked)
-							showTimeSlotWithSoundIcon(timeIndex, X_AXIS);
+							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
 						else
-							showResultTimeSlot(timeIndex, X_AXIS);
+							showTimeSlotWithBeep(timeIndex, X_AXIS);
 
 					}
 					else
 					{
 						if(mMusicalNoteChecked)
-							showTimeSlotWithSoundIcon(timeIndex-TIME_SCALE, Y_AXIS);
+							showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
 						else
-							showResultTimeSlot(timeIndex-TIME_SCALE, Y_AXIS);
+							showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
 
 					}
 					
