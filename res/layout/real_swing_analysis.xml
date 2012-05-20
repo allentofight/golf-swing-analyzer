@@ -46,7 +46,8 @@
        	android:id="@+id/realswing_x_textview"
        	android:layout_width="fill_parent"
        	android:layout_height="30dp"
-       	android:text="X-axis" />    
+       	android:text="X-axis" 
+       	android:textColor="#ffffff"/>    
     
     <!-- X-axis ruler -->
     <LinearLayout
@@ -176,7 +177,8 @@
         	android:id="@+id/realswing_y_textview"
         	android:layout_width="fill_parent"
         	android:layout_height="fill_parent"
-        	android:text="Y-axis" />
+        	android:text="Y-axis" 
+        	android:textColor="#ffffff"/>
 	</LinearLayout>
 	
 	

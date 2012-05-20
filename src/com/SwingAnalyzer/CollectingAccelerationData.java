@@ -30,6 +30,17 @@ import android.view.*;
 import android.widget.*;
 
 public class CollectingAccelerationData extends Activity implements SensorEventListener{
+	private static final String PREFERENCE_SETTING = "settings";
+	private static final String PREF_COLLECTION_TIME = "collection_time";
+	private static final String PREF_BEEP_METHOD = "beep_method";
+	private static final String PREF_MAX_THRESHOLD = "max_threshold";
+	private static final String PREF_MIN_THRESHOLD = "min_threshold";
+	private static final String PREF_PHONE_FRONT_PLACEMENT = "placement";
+	
+	private static final int DEFAULT_COLLECTION_TIME 	= 3;
+	private static final int DEFAULT_MAX_THRESHOLD 		= 5;
+	private static final int DEFAULT_MIN_THRESHOLD 		= -5;
+	
 
 	/*
 	 * Constant variables
@@ -83,6 +94,17 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	private String mStartTimeString;
 
 	private String mDateTimeString;
+	
+	/* 
+	 * SharedPreference Values 
+	 */
+	private int mCollectionTime = 0;
+	private boolean mMusicalNoteChecked = true;
+	
+	private int mMaxThreshold = 0;		// Threshold of X-axis
+	private int mMinThreshold = 0;		// Threshold of Y-axis
+	private boolean mPhoneFrontPlaced = false;
+
 	/*
 	 * Widgets
 	 */
@@ -101,6 +123,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.collecting_acceleration);
 		
+		readPreferenceValues();
 		mStartButton = (ImageButton)findViewById(R.id.start_button);
 		mStartButton.setOnClickListener(mClickListener);
 		
@@ -200,7 +223,37 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 			}
 		}
 	}
-	
+	/*=============================================================================
+	 * Name: readPreferenceValues
+	 * 
+	 * Description:
+	 * 		Read setting values which are stored in the shared preferences
+	 * 		- COLLECTION_TIME
+	 * 		- MAX_THRESHOLD
+	 * 		- MIN_THRESHOLD
+	 * 		- BEEP_METHOD
+	 * 		- PHONE_FRONT_PLACEMENT
+	 * Return:
+	 * 		None
+	 *=============================================================================*/		
+	private void readPreferenceValues()
+	{
+		SharedPreferences pref = getSharedPreferences(PREFERENCE_SETTING, MODE_PRIVATE);
+		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
+		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
+		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
+		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
+		
+		Log.i("setting", "==== readPreferenceValues ====");
+		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNoteChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
+
+	}
+
 	/*=============================================================================
 	 * Name: initSoundPool
 	 * 
@@ -271,8 +324,52 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		
 		switch(dispRotation)
 		{
+		/*
+		 *	 Attached to the front part of a body (Chest)
+		 *		. accelData.mXvalue = values[0]
+		 * 	           ^
+		 *             | +y       
+		 *          +-----+
+		 *          |O    |
+		 *          |     |
+		 *    <---  |Back | ---> : () : sensor coordinate values
+		 *   -x     |     |  +x
+		 *          +-----+
+		 *            | -y
+		 *            V
+ 
+		 * 
+		 *     
+		 *     
+		 *     Attached to the back part of a body (Waist)
+		 * 
+		 * 		. accelData.mXvalue = -values[0]
+		 * 		. X-axis values should be converted to negative values
+		 * 
+		 * 	           ^
+		 *             | +y(-y)       
+		 *          +-----+
+		 *          |     |
+		 *          |     |
+		 *    <---  |_____| ---> : () : sensor coordinate values
+		 *   +x     |  O  |  -x
+		 *          +-----+
+		 *            | -y(+y)
+		 *            V
+		 */
+		
 		case Surface.ROTATION_0:
-			accelData.mXvalue = values[0];
+			if(mPhoneFrontPlaced == true)
+			{
+				accelData.mXvalue = values[0];
+			}
+			else
+			{
+				// When a smart phone is attached to the back part of a body (Waist)
+				// X values should be changed.
+				accelData.mXvalue = -values[0];
+			}
+			
 			accelData.mYvalue = values[1] - GRAVITY;
 			accelData.mZvalue = values[2];
 			break;
