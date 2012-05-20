@@ -5,9 +5,23 @@
   -----------------------------------------------------------------------------------------
   Copyright (C) 2012 SICS.
   
-  Detect some critical points from one golf swing data such as the start, end, positive peak and
-  negative peak points.
-  
+  Detect some critical points from one golf swing data such as 
+  a Start, an End, a Max peak and a Min peak points.
+      	
+   (Not a minimum value of a swing)
+    	      	  
+    	         (Max Peak)
+    	  		      /\
+    	  		     /  \ 
+    	  	        /    \          /\
+    	  	       /      \        /  \
+    	  0 ------/--------\------/----\--------/\/\/\/\/\--------
+    	     (Start point)  \    /      \      /  (End point)
+    	                     \  /        \    /
+    	                      \/          \  /
+    	  			       (Min Peak)      \/
+    	                              Minimum point(Not consider)
+
   *----------------------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
@@ -17,6 +31,8 @@ import android.os.*;
 import android.util.Log;
 
 public class DetectSwingThread extends Thread{
+	final static int PEAK_DETECTION_FAIL = -1;
+	final static int PEAK_DETECTION_SUCCESS = 0;
 	/*
 	 *	Message ID for X-axis 
 	 */
@@ -119,8 +135,7 @@ public class DetectSwingThread extends Thread{
 	}
 	
 	public void run()
-	{
-		//startDetectingPeakPoint();
+	{	
 		detectAllPeakPoints();
 	}
 	/*=============================================================================
@@ -128,21 +143,44 @@ public class DetectSwingThread extends Thread{
 	 * 
 	 * Description:
 	 * 		When the DetectImpactThread starts, this function executes first.		
-	 * 
+	 *    	Detect 4 points from a golf swing (Not considered a minimum value of a swing)
+	 *    	- a Start point
+	 *    	- a End point
+	 *    	- a Positive Peak point
+	 *    	- a Negative Peak point
+	 *    	
+    	      	  
+    	         (Max Peak)
+    	  		      /\
+    	  		     /  \ 
+    	  	        /    \          /\
+    	  	       /      \        /  \
+    	  0 ------/--------\------/----\--------/\/\/\/\/\--------
+    	     (Start point)  \    /      \      /  (End point)
+    	                     \  /        \    /
+    	                      \/          \  /
+    	  			       (Min Peak)      \/
+    	                              Minimum point(Not consider)
+
 	 * Return:
 	 * 		None
 	 *=============================================================================*/
 	public void detectAllPeakPoints()
 	{
-		/*
+		int result = 0;
+		/*===========================================================================
 		 *  Detecting critical points of X-axis data
 		 *  1. Using threshold 				=> detectXPointsUsingThreshold()
 		 *  2. Using Maximum/Minimum values => detectXPointsUsingMaxMin()
-		 */
+		 *===========================================================================*/
+		result = detectXPointUsingThreshold();
+		if(result == PEAK_DETECTION_FAIL)
+		{
+			sendMessageToHandler(MSG_DETECT_DONE_ALL, -1, -1);
+			return;
+		}
 		
-		//detectXPointsUsingThreshold();
-		detectXPointsUsingMaxMin();
-		//sendMessageToHandler(MSG_DETECT_DONE_X, 0, 0);
+		//detectXPointsUsingMaxMin();
 		
 		try {
 			Thread.sleep(10);
@@ -153,11 +191,9 @@ public class DetectSwingThread extends Thread{
 		/*
 		 *  Detection of Y-axis data
 		 */
+		
 		//detectYPointsUsingThreshold();
 		detectYPointsUsingMaxMin();
-		//sendMessageToHandler(MSG_DETECT_DONE_Y, 0, 0);
-		
-	
 		
 		sendMessageToHandler(MSG_DETECT_DONE_ALL, 0, 0);
 	}
@@ -167,247 +203,68 @@ public class DetectSwingThread extends Thread{
 	 * Name: detectXPointsUsingThreshold
 	 * 
 	 * Description:
-	 * 		Detect peak point from the golf swing X-axis data with the defined threshold
+	 * 		Detect 4 critical points from an X-axis data with the defined threshold
 	 * 		- X_THRESHOLD_MAX = 10;
 	 * 		- X_THRESHOLD_MIN = -10;
 	 * 
 	 * Return:
 	 * 		None
-	 *=============================================================================*/    			
-	public void detectXPointsUsingThreshold()
+	 *=============================================================================*/   
+	public int detectXPointUsingThreshold()
 	{
-		int i = 0;
-		
-		float x1, x2, x3;
-		int dx1, dx2, dx3;
-		int timestamp = 0;
-		int arrSize = 0;
-		int maxIndex = 0;
-		int minIndex = 0;
-		float maxValue, minValue;
-		boolean isPeakFound = false;
-		
-		x1 = x2 = x3 = 0;
-		dx1 = dx2 = dx3 = 0;
-		
-		maxValue = minValue = 0;
-		
-		mCount = 0;
-		arrSize = mSwingArrayList.size();
-		
-		
-    	/*********************************************************  
-    	 *         Step2
-    	 * 		      /\
-    	 * 		     /  \  Step 3
-    	 * 	        /    \
-    	 * 	Step 1 /      \
-    	 *0 ---------------\------/- 
-    	 *                  \    /
-    	 *            Step4  \  /
-    	 *                    \/
-    	 * 					Step 5
-    	 *********************************************************/
-    	do
-    	{
-    		mCount++;
-    		timestamp = mSwingArrayList.get(i).mTimestamp;
-    		
-    		x2 = mSwingArrayList.get(i).mXvalue;        		
-    		if(i> 0)
-    			x1 = mSwingArrayList.get(i-1).mXvalue;
-    		if(i < arrSize-1)
-    			x3 = mSwingArrayList.get(i+1).mXvalue;
-    		
-
-    		if((x2 > X_THRESHOLD_MAX) && (i < arrSize-1))
-    		{
-        		/*****************************************
-        		 *  Step 1: Increasing point
-        		 *  
-        		 *  	1) value > IMPACT_HI_VALUE
-        		 *   	2) x3 > x2 > x1
-        		 *****************************************/
-    			
-    			if((x3 >= x2) && (x2 >= x1))
-    			{
-    				
-        			if(x3 > maxValue)
-        			{
-            			maxValue = x3;
-            			maxIndex = i;
-            			/*
-        				Log.i("Debug", "T:" + timestamp + ", maxValue: " + maxValue 
-        						+ ", x3:" + x3 + ", x2:" + x2 + ", x1:" + x1);
-        				*/
-        			}
-
-    			}
-        		/*****************************************
-        		 *  Step 2: The peak point
-        		 *  
-        		 *  	1) x2 > IMPACT_HI_VALUE
-        		 *   	2) (x2 > x3) && (x2 > x1)
-        		 *****************************************/   
-    			if((x2 >= x3) && (x2 >= x1))
-    			{
-    				if(x2 == x3)
-    				{	i++;
-    					continue;
-    				}    				
-    			}
-    			// The same values exist.
-    			if((x2 > x3) && (x2 >= x1))
-    			{
-    				// In some case, the peak values are the same in the different timestamp. 
-    				if(x2 >= maxValue)
-    				{
-    					isPeakFound = true;
-    					
-    					Log.i("detectswing", "Peak Time: " + mSwingArrayList.get(i).mTimestamp
-    							+ ", x: " + x2 + ", Max:" + maxValue);
-    					    
-    					maxValue = x2;
-    					    
-    					mMaxPeakIndex = i;
-    					mMaxPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
-    				}
-    			}        			
-    		}	
-    		// Step 3
-    		/*****************************************
-    		 *  Step 3: The decreasing point (value > 0)
-    		 *  
-    		 *  	1) (x2 >= 0) && ((x3 >= 0) || (x3 < 0))
-    		 *   	2) (x1 > x2) && (x2 > x3)
-    		 *****************************************/       			
-    		if((isPeakFound) && (x2 >= 0))
-    		{
-    			
-        		/*****************************************
-        		 *  Step 4: The decreasing point (value < 0)
-        		 *  
-        		 *  	1) (x1 >= 0) && (x2 >= 0) && ((x3 <= 0)
-        		 *   	2) (x1 > x2) && (x2 > x3)
-        		 *****************************************/
-    			if((x2 >= 0) && (x3 <= 0))
-    			{
-        			
-        			//isPeakFound = false;
-        			
-        			Log.i("detectswing", "MSG_PEAK_X: " + mMaxPeakIndex 
-        									+ ", T:" + mMaxPeakTimestamp + ", X:" + maxValue);
-        			//sendMessageToHandler(MSG_PEAK_X_MAX, mMaxPeakIndex, mMaxPeakTimestamp);        			
-        			maxValue = 0;
-        			maxIndex = 0;
-    			}
-    		}
-    		/*****************************************
-    		 *  Step 5: The negative peak point (value < 0)
-    		 *  
-    		 *  	1) (x1 < 0) && (x2 < 0) && ((x3 < 0)
-    		 *   	2) (x1 >= x2) && (x2 <= x3)
-    		 *****************************************/       			
-    		if((isPeakFound) && (x2 < 0) && (x1 < 0) && (x3 < 0))
-    		{
-    			dx1 = (int)Math.round((double)x1);
-    			dx2 = (int)Math.round((double)x2);
-    			dx3 = (int)Math.round((double)x3);
-    			
-    			if(x2 <= minValue)
-    			{
-    				minValue = x2;
-    				minIndex = i;
-    			}
-
-    			//if((dx1 >= dx2) && (dx2 < dx3))
-    			if((dx1 >= dx2) && (dx2 > dx3))
-    			{
-    				if(x2 <= minValue)
-    				{
-    					minValue = x2;
-    					minIndex = i;
-    				}
-
-    			}
-    			if((dx1 > dx2) && (dx2 < dx3))
-    			{
-    				
-    				mMinPeakIndex = i;
-    				mMinPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
-    				
-        			Log.i("detectswing", "MSG_PEAK_X_MIN: " + mMinPeakIndex 
-        									+ ", T:" + mMinPeakTimestamp + ", X:" + x2);
-        			//sendMessageToHandler(MSG_PEAK_X_MIN, mMinPeakIndex, mMinPeakTimestamp);        			
-        			
-        			break;
-        			
-    			}
-    			
-    			if(dx2 == dx3)
-    			{
-    				i++;
-    				continue;
-    			}
-    		}
-    		
-			try 
-			{
-				Thread.sleep(1);
-			} 
-			catch(InterruptedException e)
-			{
-				System.out.println(e.getMessage());
-			}
+	    
+		mMaxPeakIndex = detectXMaxPeakPoint();
+		if(mMaxPeakIndex == PEAK_DETECTION_FAIL)
+		{
+			return PEAK_DETECTION_FAIL;
+		}
+		else
+		{
+			mMaxPeakTimestamp = mSwingArrayList.get(mMaxPeakIndex).mTimestamp;
 			
-			
-    		i++;
-    		
-    	}while(i <= (arrSize-1));
-
-    	if(isPeakFound == false)
-    	{
-    		Log.e("detectswing", "Peak points are not found.");
-    		sendMessageToHandler(MSG_PEAK_X_MAX, -1, -1);
-    		sendMessageToHandler(MSG_PEAK_X_MIN, -1, -1);
-    	}
-    	
-    	/*=======================================================================
-    	 * Detect a start point from a swing data
-    	 *=======================================================================*/
-    	mStartPointIndex = findSwingStartPoint(mMaxPeakIndex);
-    	if(mStartPointIndex != -1)
-    	{
-    		mStartTimestamp = mSwingArrayList.get(mStartPointIndex).mTimestamp;
-    		sendMessageToHandler(MSG_START_POINT, mStartPointIndex, mStartTimestamp);
-    	}
-    	else
-    	{
-    		sendMessageToHandler(MSG_START_POINT, -1, -1);
-    	}
-    	
-    	/*=======================================================================
-    	 * Send MSG_PEAK_X_MAX, MSG_PEAK_X_MIN message to a handler
-    	 *=======================================================================*/    	
-    	sendMessageToHandler(MSG_PEAK_X_MAX, mMaxPeakIndex, mMaxPeakTimestamp);
-    	sendMessageToHandler(MSG_PEAK_X_MIN, mMinPeakIndex, mMinPeakTimestamp);
-    	
-    	/*=======================================================================
-    	 * Detect an end point from a swing data
-    	 *=======================================================================*/
-    	mEndPointIndex = findSwingEndPoint(mMaxPeakIndex);
-    	if(mEndPointIndex != -1)
-    	{
-    		mEndTimestamp = mSwingArrayList.get(mEndPointIndex).mTimestamp;
-    		sendMessageToHandler(MSG_END_POINT, mEndPointIndex, mEndTimestamp);
-    	}
-    	else
-    	{
-    		// Return the end point of a swing
-    		//mEndPointIndex = mSwingArrayList.get(arrSize).
-    		sendMessageToHandler(MSG_END_POINT, -1, -1);
-    	}
-
+			/*=============================================================================
+	    	 * Detect a minimum peak point from a swing data (Not a minimum value of a swing)
+	    	 *============================================================================*/
+	    	mMinPeakIndex = detectXMinPeakPoint(mMaxPeakIndex);
+	    	mMinPeakTimestamp = mSwingArrayList.get(mMinPeakIndex).mTimestamp;
+	    	/*=======================================================================
+	    	 * Detect a start point from a swing data
+	    	 *=======================================================================*/
+	    	mStartPointIndex = findSwingStartPoint(mMaxPeakIndex);
+	    	if(mStartPointIndex != -1)
+	    	{
+	    		mStartTimestamp = mSwingArrayList.get(mStartPointIndex).mTimestamp;
+	    		sendMessageToHandler(MSG_START_POINT, mStartPointIndex, mStartTimestamp);
+	    	}
+	    	else
+	    	{
+	    		sendMessageToHandler(MSG_START_POINT, -1, -1);
+	    	}
+	    	
+	    	/*=======================================================================
+	    	 * Send MSG_PEAK_X_MAX, MSG_PEAK_X_MIN message to a handler
+	    	 *=======================================================================*/    	
+	    	sendMessageToHandler(MSG_PEAK_X_MAX, mMaxPeakIndex, mMaxPeakTimestamp);
+	    	sendMessageToHandler(MSG_PEAK_X_MIN, mMinPeakIndex, mMinPeakTimestamp);
+	    	
+	    	/*=======================================================================
+	    	 * Detect an end point from a swing data
+	    	 *=======================================================================*/
+	    	mEndPointIndex = findSwingEndPoint(mMaxPeakIndex);
+	    	if(mEndPointIndex != -1)
+	    	{
+	    		mEndTimestamp = mSwingArrayList.get(mEndPointIndex).mTimestamp;
+	    		sendMessageToHandler(MSG_END_POINT, mEndPointIndex, mEndTimestamp);
+	    	}
+	    	else
+	    	{
+	    		// Return the end point of a swing
+	    		//mEndPointIndex = mSwingArrayList.get(arrSize).
+	    		sendMessageToHandler(MSG_END_POINT, -1, -1);
+	    	}
+		}
+		
+		return PEAK_DETECTION_SUCCESS;
 	}
 	
 	/*=============================================================================
@@ -504,6 +361,151 @@ public class DetectSwingThread extends Thread{
 	
 	}
 	
+	/*=============================================================================
+	 * Name: detectXMaxPeakPoint
+	 * 
+	 * Description:
+	 * 		Detect a maximum peak point from X-axis data
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	
+	public int detectXMaxPeakPoint()
+	{
+		int i = 0;		
+		int x1, x2, x3;
+		
+		int arrSize = 0;
+		int maxIndex = 0;
+		int maxValue = 0;
+		boolean isPeakFound = false;
+		
+		x1 = x2 = x3 = 0;
+		
+		arrSize = mSwingArrayList.size();
+
+		do
+    	{
+    		
+    		x2 = getRoundDownValue(mSwingArrayList.get(i).mXvalue);        		
+    		if(i> 0)
+    			x1 = getRoundDownValue(mSwingArrayList.get(i-1).mXvalue);
+    		if(i < arrSize-1)
+    			x3 = getRoundDownValue(mSwingArrayList.get(i+1).mXvalue);
+
+    		if((x2 > mXThresholdMax))
+    		{
+    			if(x2 >= maxValue)
+    			{
+    				maxValue = x2;
+    				maxIndex = i;
+    			}
+    			
+				if(x2 == x3)
+				{	
+					i++;					
+					continue;
+				}    
+				
+    			if((x2 > x3) && (x2 >= x1))
+    			{
+    				// In some case, the peak values are the same in the different timestamp. 
+    				if(x2 >= maxValue)
+    				{
+    					isPeakFound = true;    
+    					maxValue = x2;    					    
+    					maxIndex = i;
+    					Log.i("detectswing", "isPeakFound ["+i+"]" 
+    										+ " x1=" + x1 + ", x2=" + x2 + ", x3=" + x3);
+    				}
+    			}        			
+
+    		}
+    		
+    		if((isPeakFound == true) && (x2 >= 0) && (x3 < 0))
+    		{
+   				Log.i("detectswing", "Transition Point=" + i + ", x2=" + x2 + ", x3=" + x3);
+   				break;
+    		}
+
+    		i++;
+    	}while(i<= (arrSize-1));
+    	
+    	Log.i("detectswing", "Max Peak point[" + maxIndex +"]:" + maxValue 
+    						+ "isPeakFound=" + isPeakFound);
+    	if(isPeakFound == false)
+    		return PEAK_DETECTION_FAIL;
+    	else
+    		return maxIndex;
+	}
+	
+	/*=============================================================================
+	 * Name: detectXMinPeakPoint
+	 * 
+	 * Description:
+	 * 		Detect a minimum peak point from X-axis data
+	 * Return:
+	 * 		None
+	 *=============================================================================*/
+	public int detectXMinPeakPoint(int peakIndex)
+	{
+		int i=peakIndex;		
+		int minIndex = 0;
+		int minValue = 0;
+		
+		int x1, x2, x3;
+		int arrSize = mSwingArrayList.size();
+		
+		x1 = x2 = x3 = 0;
+		
+    	do
+    	{
+    		mCount++;
+    		
+    		x2 = getRoundDownValue(mSwingArrayList.get(i).mXvalue);        		
+    		if(i> 0)
+    			x1 = getRoundDownValue(mSwingArrayList.get(i-1).mXvalue);
+    		if(i < arrSize-1)
+    			x3 = getRoundDownValue(mSwingArrayList.get(i+1).mXvalue);
+    
+    		/*****************************************
+    		 *  Step 5: The negative peak point (value < 0)
+    		 *  
+    		 *  	1) (x1 < 0) && (x2 < 0) && ((x3 < 0)
+    		 *   	2) (x1 >= x2) && (x2 <= x3)
+    		 *****************************************/       			
+    		if((x2 < 0) && (x1 < 0) && (x3 < 0))
+    		{
+   			
+    			if(x2 <= minValue)
+    			{
+    				minValue = x2;
+    				minIndex = i;
+    			}
+    			
+    			if(x2 == x3)
+    			{
+    				i++;
+    				continue;
+    			}
+    			
+    		}
+    		
+			if((x2<0) && (x3 >=0))
+			{
+				Log.i("detectswing", "Transition Point[" + i + "] x2=" + x2 + " x3=" + x3);
+				break;
+			}
+
+    		i++;
+    		
+    	}while(i <= (arrSize-1));
+		
+		Log.i("detectswing", "Min Peak point[" + minIndex +"]:" + minValue);
+
+		return minIndex;
+	}
+	
+	// Y-AXIS
 	/*=============================================================================
 	 * Name: detectYPointsUsingThreshold
 	 * 
@@ -938,6 +940,27 @@ public class DetectSwingThread extends Thread{
 	}
 	
 	/*=============================================================================
+	 * Name: getRoundDownValue
+	 * 
+	 * Description:
+	 * 		Remove decimal point values for making data smooth	
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/    	
+	public int getRoundDownValue(float x)
+	{
+		int value = 0;
+		
+		if(x > 0)
+			value = (int)Math.floor((double)x);
+		else
+			value = (int)Math.ceil((double)x);
+		
+		return value;
+	}	
+	
+	/*=============================================================================
 	 * Name: sendMessageToHandler
 	 * 
 	 * Description:
@@ -955,5 +978,207 @@ public class DetectSwingThread extends Thread{
     	
     	mHandler.sendMessage(msg);
     }
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////
+	// Old version's function
+	public void detectXPeakPointUsingThreshold1()
+	{
+		int i = 0;
+		
+		float x1, x2, x3;
+		int dx1, dx2, dx3;
+		int timestamp = 0;
+		int arrSize = 0;
+		int maxIndex = 0;
+		int minIndex = 0;
+		float maxValue, minValue;
+		boolean isPeakFound = false;
+		
+		x1 = x2 = x3 = 0;
+		dx1 = dx2 = dx3 = 0;
+		
+		maxValue = minValue = 0;
+		
+		mCount = 0;
+		arrSize = mSwingArrayList.size();
+		
+		
+    	/*********************************************************  
+    	 *         Step2
+    	 * 		      /\
+    	 * 		     /  \  Step 3
+    	 * 	        /    \
+    	 * 	Step 1 /      \
+    	 *0 ---------------\------/- 
+    	 *                  \    /
+    	 *            Step4  \  /
+    	 *                    \/
+    	 * 					Step 5
+    	 *********************************************************/
+    	do
+    	{
+    		mCount++;
+    		timestamp = mSwingArrayList.get(i).mTimestamp;
+    		
+    		x2 = mSwingArrayList.get(i).mXvalue;        		
+    		if(i> 0)
+    			x1 = mSwingArrayList.get(i-1).mXvalue;
+    		if(i < arrSize-1)
+    			x3 = mSwingArrayList.get(i+1).mXvalue;
+    		
+
+    		if((x2 > X_THRESHOLD_MAX) && (i < arrSize-1))
+    		{
+        		/*****************************************
+        		 *  Step 1: Increasing point
+        		 *  
+        		 *  	1) value > IMPACT_HI_VALUE
+        		 *   	2) x3 > x2 > x1
+        		 *****************************************/
+    			
+    			if((x3 >= x2) && (x2 >= x1))
+    			{
+    				
+        			if(x3 > maxValue)
+        			{
+            			maxValue = x3;
+            			maxIndex = i;
+            			/*
+        				Log.i("Debug", "T:" + timestamp + ", maxValue: " + maxValue 
+        						+ ", x3:" + x3 + ", x2:" + x2 + ", x1:" + x1);
+        				*/
+        			}
+
+    			}
+        		/*****************************************
+        		 *  Step 2: The peak point
+        		 *  
+        		 *  	1) x2 > IMPACT_HI_VALUE
+        		 *   	2) (x2 > x3) && (x2 > x1)
+        		 *****************************************/   
+    			if((x2 >= x3) && (x2 >= x1))
+    			{
+    				if(x2 == x3)
+    				{	i++;
+    					continue;
+    				}    				
+    			}
+    			// The same values exist.
+    			if((x2 > x3) && (x2 >= x1))
+    			{
+    				// In some case, the peak values are the same in the different timestamp. 
+    				if(x2 >= maxValue)
+    				{
+    					isPeakFound = true;
+    					
+    					Log.i("detectswing", "Peak Time: " + mSwingArrayList.get(i).mTimestamp
+    							+ ", x: " + x2 + ", Max:" + maxValue);
+    					    
+    					maxValue = x2;
+    					    
+    					mMaxPeakIndex = i;
+    					mMaxPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
+    				}
+    			}        			
+    		}	
+    		// Step 3
+    		/*****************************************
+    		 *  Step 3: The decreasing point (value > 0)
+    		 *  
+    		 *  	1) (x2 >= 0) && ((x3 >= 0) || (x3 < 0))
+    		 *   	2) (x1 > x2) && (x2 > x3)
+    		 *****************************************/       			
+    		if((isPeakFound) && (x2 >= 0))
+    		{
+    			
+        		/*****************************************
+        		 *  Step 4: The decreasing point (value < 0)
+        		 *  
+        		 *  	1) (x1 >= 0) && (x2 >= 0) && ((x3 <= 0)
+        		 *   	2) (x1 > x2) && (x2 > x3)
+        		 *****************************************/
+    			if((x2 >= 0) && (x3 <= 0))
+    			{
+        			
+        			//isPeakFound = false;
+        			
+        			Log.i("detectswing", "MSG_PEAK_X: " + mMaxPeakIndex 
+        									+ ", T:" + mMaxPeakTimestamp + ", X:" + maxValue);
+        			//sendMessageToHandler(MSG_PEAK_X_MAX, mMaxPeakIndex, mMaxPeakTimestamp);        			
+        			maxValue = 0;
+        			maxIndex = 0;
+    			}
+    		}
+    		/*****************************************
+    		 *  Step 5: The negative peak point (value < 0)
+    		 *  
+    		 *  	1) (x1 < 0) && (x2 < 0) && ((x3 < 0)
+    		 *   	2) (x1 >= x2) && (x2 <= x3)
+    		 *****************************************/       			
+    		if((isPeakFound) && (x2 < 0) && (x1 < 0) && (x3 < 0))
+    		{
+    			dx1 = (int)Math.round((double)x1);
+    			dx2 = (int)Math.round((double)x2);
+    			dx3 = (int)Math.round((double)x3);
+    			
+    			if(x2 <= minValue)
+    			{
+    				minValue = x2;
+    				minIndex = i;
+    			}
+
+    			//if((dx1 >= dx2) && (dx2 < dx3))
+    			if((dx1 >= dx2) && (dx2 > dx3))
+    			{
+    				if(x2 <= minValue)
+    				{
+    					minValue = x2;
+    					minIndex = i;
+    				}
+
+    			}
+    			if((dx1 > dx2) && (dx2 < dx3))
+    			{
+    				
+    				mMinPeakIndex = i;
+    				mMinPeakTimestamp = (int)mSwingArrayList.get(i).mTimestamp;
+    				
+        			Log.i("detectswing", "MSG_PEAK_X_MIN: " + mMinPeakIndex 
+        									+ ", T:" + mMinPeakTimestamp + ", X:" + x2);
+        			//sendMessageToHandler(MSG_PEAK_X_MIN, mMinPeakIndex, mMinPeakTimestamp);        			
+        			
+        			break;
+        			
+    			}
+    			
+    			if(dx2 == dx3)
+    			{
+    				i++;
+    				continue;
+    			}
+    		}
+    		
+			try 
+			{
+				Thread.sleep(1);
+			} 
+			catch(InterruptedException e)
+			{
+				System.out.println(e.getMessage());
+			}
+			
+			
+    		i++;
+    		
+    	}while(i <= (arrSize-1));
+
+    	if(isPeakFound == false)
+    	{
+    		Log.e("detectswing", "Peak points are not found.");
+    		sendMessageToHandler(MSG_PEAK_X_MAX, -1, -1);
+    		sendMessageToHandler(MSG_PEAK_X_MIN, -1, -1);
+    	}	
+	}
 
 }

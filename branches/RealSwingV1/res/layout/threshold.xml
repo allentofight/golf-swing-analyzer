@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:layout_width="240dp"
+	android:layout_height="fill_parent"
+	android:padding="5px">
+
+    <TextView
+		android:layout_width="fill_parent"
+		android:layout_height="50dp"
+		android:text="Threshold of Swing"
+		android:gravity="center"
+		android:textAppearance="?android:attr/textAppearanceMedium">            
+	</TextView>  
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center|center_horizontal"
+            android:layout_weight="0.45"
+            android:layout_margin="2dp"
+            android:text="Maximum threshold"
+            android:gravity = "center_vertical"
+            android:textAppearance="?android:attr/textAppearanceSmall" >
+        </TextView>
+
+        <EditText
+            android:id="@+id/settings_threshold_hi"
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_weight="0.45"
+            android:inputType="numberDecimal|numberSigned" >
+        </EditText>
+    </LinearLayout>
+	
+	  <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+      
+		<TextView
+    	    android:layout_width="80dp"
+    	    android:layout_height="50dp"
+    	    android:layout_margin="2dp"
+    	    android:layout_gravity="center|center_horizontal"
+    	    android:text="Minimum Threshold" 
+    	    android:layout_weight="0.45"
+    	    android:gravity="center_vertical"
+    	    android:textAppearance="?android:attr/textAppearanceSmall">    	    
+    	</TextView>
+        <EditText
+            android:id="@+id/settings_threshold_low"
+            android:layout_width="80dp"
+            android:layout_height="50dp"
+            android:layout_weight="0.45"
+            android:inputType="numberDecimal|numberSigned">
+        </EditText>
+    </LinearLayout>
+</LinearLayout>

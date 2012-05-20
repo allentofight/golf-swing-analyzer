@@ -50,9 +50,10 @@ public class SwingFeedback extends Activity{
 	private static final String PREF_BEEP_METHOD = "beep_method";
 	private static final String PREF_MAX_THRESHOLD = "max_threshold";
 	private static final String PREF_MIN_THRESHOLD = "min_threshold";
-
+	private static final String PREF_PHONE_FRONT_PLACEMENT = "placement";
+	
 	private static final int DEFAULT_COLLECTION_TIME = 3;
-	private static final int DEFAULT_MAX_THRESHOLD = 10;
+	private static final int DEFAULT_MAX_THRESHOLD = 5;
 	private static final int DEFAULT_MIN_THRESHOLD = -5;
 
 	/*
@@ -114,10 +115,11 @@ public class SwingFeedback extends Activity{
 	/*
 	 * Button color to be displayed
 	 */
-	final static int COLOR_BLACK = 0;		// Default
-	final static int COLOR_GREEN = 1;		// 
-	final static int COLOR_RED	 = 2;		// Maximum
-	final static int COLOR_YELLOW = 3;		// Minimum
+	final static int COLOR_BLACK 	= 0;		// Reset
+	final static int COLOR_GREEN 	= 1;		// Ordinary
+	final static int COLOR_RED	 	= 2;		// Maximum
+	final static int COLOR_YELLOW 	= 3;		// Minimum
+	final static int COLOR_BOTH   	= 4;		// Maximum & Minimum
 	
 	/*
 	 * Timeout and time scale to calculate
@@ -130,9 +132,10 @@ public class SwingFeedback extends Activity{
 	/*
 	 * Peak point
 	 */
-	final static int NORMAL_POINT = 0;
-	final static int MIN_POINT = 1;
-	final static int MAX_POINT = 2;
+	final static int NORMAL_POINT 	= 0;
+	final static int MIN_POINT 		= 0x01;
+	final static int MAX_POINT 		= 0x10;
+	final static int BOTH_POINT 	= 0x11;
 	
 	final static int MUSICAL_NOTE_NUM = 35;
 	
@@ -192,6 +195,7 @@ public class SwingFeedback extends Activity{
 	int mNormalSoundId;
 	int mMaxSoundId;
 	int mMinSoundId;
+	int mMaxMinSoundId;
 	
 	private boolean mIsAboveThresholdX;
 	private boolean mIsAboveThresholdY;
@@ -257,7 +261,9 @@ public class SwingFeedback extends Activity{
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
-
+	private boolean mPhoneFrontPlaced = false;
+	
+	
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
@@ -589,8 +595,15 @@ public class SwingFeedback extends Activity{
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
 		
-		Log.i("feedback", "mMusicalNoteChecked=" + mMusicalNoteChecked);
+		Log.i("setting", "==== readPreferenceValues ====");
+		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNoteChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
+
 		
 	}
 
@@ -701,13 +714,6 @@ public class SwingFeedback extends Activity{
 														mMaxThreshold, mMinThreshold);
 			mDetectSwingThread.setDaemon(true);
 			mDetectSwingThread.start();
-			/*
-			mDetectPeakThread = new DetectPeakThread(mSwingDataArrayList, 
-													FeedbackHandler);
-			
-			mDetectPeakThread.setDaemon(true);
-			mDetectPeakThread.start();
-			*/
 		}
 		else
 		{
@@ -765,10 +771,10 @@ public class SwingFeedback extends Activity{
 				mIsAboveThresholdX = true;
 				if(mMusicalNoteChecked == false)
 				{
-					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
-										mXMaxTime, X_AXIS, MAX_POINT);
-					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
-										mXMinTime, X_AXIS, MIN_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMaxTime, 
+										X_AXIS, MAX_POINT);
+					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, mXMinTime, 
+										X_AXIS, MIN_POINT);
 				}
 			}
 			else
@@ -1008,6 +1014,7 @@ public class SwingFeedback extends Activity{
 			mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);		
 			mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
 			mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
+			mMaxMinSoundId = mSoundPool.load(this, R.raw.high_low_pitch, 1);
 		}
 		
 
@@ -1043,6 +1050,9 @@ public class SwingFeedback extends Activity{
 				mXImages[index].setImageResource(R.drawable.yellow_button_30);
 				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
+			case COLOR_BOTH:
+				mXImages[index].setImageResource(R.drawable.both_button_30);
+				mSoundPool.play(mMaxMinSoundId, 1, 1, 0, 0, 1);
 			}
 		}
 		else
@@ -1064,19 +1074,14 @@ public class SwingFeedback extends Activity{
 				mYImages[index].setImageResource(R.drawable.yellow_button_30);
 				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
+			case COLOR_BOTH:
+				mYImages[index].setImageResource(R.drawable.both_button_30);
+				mSoundPool.play(mMaxMinSoundId, 1, 1, 0, 0, 1);
+				
 			}
 
 		}
 	}
-	/*=============================================================================
-	 * Name: findPeakTimeIndex
-	 * 
-	 * Description:
-	 * 		Find an index using a given timestamp
-	 * 
-	 * Return:
-	 * 		None
-	 *=============================================================================*/		
 	/*=============================================================================
 	 * Name: findPeakTimeIndex
 	 * 
@@ -1108,13 +1113,17 @@ public class SwingFeedback extends Activity{
 		
 		if(axis == X_AXIS)
 		{
-			Log.i("feedback", "X Type:" + type + ", Index: " + index + ", Time:" + timestamp);
-			mSwingXResult[index] = type;
+			
+			//mSwingXResult[index] = type;
+			mSwingXResult[index] = mSwingXResult[index] ^ type;
+			Log.i("feedback", "X Type[" + index + "]= " + mSwingXResult[index] );
 		}
 		else
 		{
-			Log.i("feedback", "Y Type:" + type + ", Index: " + index + ", Time:" + timestamp);
-			mSwingYResult[index] = type;
+			
+			//mSwingYResult[index] = type;
+			mSwingYResult[index] = mSwingYResult[index] ^ type;
+			Log.i("feedback", "Y Type[" + index + "]= " + mSwingYResult[index] );
 		}		
 	}
 	/*=============================================================================
@@ -1134,6 +1143,8 @@ public class SwingFeedback extends Activity{
 				displayResultWithSoundIcon(index, COLOR_RED, X_AXIS);
 			else if(mSwingXResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, X_AXIS);
+			else if(mSwingXResult[index] == BOTH_POINT)
+				displayResultWithSoundIcon(index, COLOR_BOTH, X_AXIS);
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, X_AXIS);
 		}
@@ -1143,6 +1154,8 @@ public class SwingFeedback extends Activity{
 				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
 			else if(mSwingYResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
+			else if(mSwingYResult[index] == BOTH_POINT)
+				displayResultWithSoundIcon(index, COLOR_BOTH, Y_AXIS);			
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);			
 		}

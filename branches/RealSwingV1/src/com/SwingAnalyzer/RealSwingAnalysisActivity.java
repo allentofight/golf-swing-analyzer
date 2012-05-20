@@ -37,9 +37,10 @@ public class RealSwingAnalysisActivity extends Activity{
 	private static final String PREF_BEEP_METHOD = "beep_method";
 	private static final String PREF_MAX_THRESHOLD = "max_threshold";
 	private static final String PREF_MIN_THRESHOLD = "min_threshold";
-
+	private static final String PREF_PHONE_FRONT_PLACEMENT = "placement";
+	
 	private static final int DEFAULT_COLLECTION_TIME = 3;
-	private static final int DEFAULT_MAX_THRESHOLD = 10;
+	private static final int DEFAULT_MAX_THRESHOLD = 5;
 	private static final int DEFAULT_MIN_THRESHOLD = -5;
 	
 	/*
@@ -233,7 +234,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
-	
+	private boolean mPhoneFrontPlaced = false;
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
@@ -260,8 +261,11 @@ public class RealSwingAnalysisActivity extends Activity{
 		mYTimeScale.setScale(TIME_SCALE, COLLECTION_TIME);
 		
 		mRealSwingResultTextView = (TextView)findViewById(R.id.realswing_result);
-		mRealSwingXTextView = (TextView)findViewById(R.id.realswing_x_textview);		
+		mRealSwingXTextView = (TextView)findViewById(R.id.realswing_x_textview);
+		mRealSwingXTextView.setText("X-axis");
+		
 		mRealSwingYTextView = (TextView)findViewById(R.id.realswing_y_textview);
+		mRealSwingYTextView.setText("Y-axis");
 		
 		readPreferenceValues();
 		initMemberVariables();
@@ -542,12 +546,22 @@ public class RealSwingAnalysisActivity extends Activity{
 		}
 		else
 		{
+			
 			if(mSwingYResult[index] == MAX_POINT)
 				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
 			else if(mSwingYResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
 			else
-				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);			
+				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);
+			
+			/*
+			if(mSwingYResult[index] == MIN_POINT)
+				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
+			else if(mSwingYResult[index] == MAX_POINT)
+				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
+			else
+				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);
+			*/
 		}
 
 	}
@@ -655,7 +669,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * 		- MAX_THRESHOLD
 	 * 		- MIN_THRESHOLD
 	 * 		- BEEP_METHOD
-	 * 
+	 * 		- PHONE_FRONT_PLACEMENT
 	 * Return:
 	 * 		None
 	 *=============================================================================*/		
@@ -666,9 +680,15 @@ public class RealSwingAnalysisActivity extends Activity{
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
 		
-		Log.i("realswing", "mMusicalNoteChecked=" + mMusicalNoteChecked);
-		
+		Log.i("setting", "==== readPreferenceValues ====");
+		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNoteChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
+
 	}
     /*=============================================================================
 	 * Name: searchSwingFiles
@@ -1176,7 +1196,7 @@ public class RealSwingAnalysisActivity extends Activity{
     	public void handleMessage(Message msg)
     	{
     		String handlerText = "";
-    		float value = 0;
+    		int value = 0;
     		switch(msg.what)
     		{
     		case MSG_CONVERSION_DONE:
@@ -1197,34 +1217,37 @@ public class RealSwingAnalysisActivity extends Activity{
     			break;
     		case MSG_PEAK_X_MAX:
     			mXMaxIndex = msg.arg1;
-    			value = mConvertedSwingList.get(mXMaxIndex).mXvalue;
-    			handlerText = "X_MAX: Time:" + msg.arg2 + ", X=" + value;
+    			value = (int)mConvertedSwingList.get(mXMaxIndex).mXvalue;
+    			handlerText = "X-axis [Threshold=" + mMaxThreshold+"] " 
+    						+  "Peak:" + value + ", Time:" + msg.arg2;
     			
     			mRealSwingXTextView.setText(handlerText);
     			
-    			displayResultText(handlerText);
+    			//displayResultText(handlerText);
     			break;
     		case MSG_PEAK_X_MIN:
-    			mXMinIndex = msg.arg1;
+    			mXMinIndex = msg.arg1;    			
+    			value = (int)mConvertedSwingList.get(mXMinIndex).mXvalue;
     			
-    			value = mConvertedSwingList.get(mXMinIndex).mXvalue;
     			handlerText = "X_MIN: Time:" + msg.arg2 + ", X=" + value;
     			displayResultText(handlerText);
     			break;
     		case MSG_PEAK_Y_MAX:
-    			mYMaxIndex = msg.arg1;
+    			mYMaxIndex = msg.arg1;    			
+    			value = (int)mConvertedSwingList.get(mYMaxIndex).mYvalue;
     			
-    			value = mConvertedSwingList.get(mYMaxIndex).mYvalue;
     			handlerText = "Y_MAX: Time:" + msg.arg2 + ", Y=" + value;
     			displayResultText(handlerText);
     			break;    			
     		case MSG_PEAK_Y_MIN:
-    			mYMinIndex = msg.arg1;
+    			mYMinIndex = msg.arg1;    			
+    			value = (int)mConvertedSwingList.get(mYMinIndex).mYvalue;
+
+    			handlerText = "Y-axis [Threshold:" + mMinThreshold+"]" 
+						+  " Peak Y:" + value + ", Time:" + msg.arg2;    			
     			
-    			value = mConvertedSwingList.get(mYMinIndex).mYvalue;
-    			handlerText = "Y_MIN: Time:" + msg.arg2 + ", Y=" + value;
     			mRealSwingYTextView.setText(handlerText);
-    			displayResultText(handlerText);
+    			//displayResultText(handlerText);
     			break;
     		case MSG_DETECT_DONE_X:
     			handlerText = "DETECT_DONE_X";
@@ -1237,8 +1260,15 @@ public class RealSwingAnalysisActivity extends Activity{
     		case MSG_DETECT_DONE_ALL:    			
     			handlerText = "DETECT_DONE_ALL";
     			displayResultText(handlerText);
-    			
-    			startRealSwingFeedback();	// Start do display the feedback result
+    			if(msg.arg1 == -1)
+    			{
+    				showErrorDialog("Detection Fail", 
+    								"Swing is too weak to detect any points!");
+    			}
+    			else
+    			{
+    				startRealSwingFeedback();	// Start do display the feedback result
+    			}
     			break;
     		}
     		
