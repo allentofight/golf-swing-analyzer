@@ -10,12 +10,20 @@
 	    android:layout_height="60dp"
 	    android:orientation="horizontal" >
 	    <TextView
-	        android:layout_width="fill_parent"
+	        android:layout_width="250dp"
 	        android:layout_height="60dp"
 	        android:gravity="center|center_vertical"
 	        android:text="Golf Swing Analyzer"
 	        android:textAppearance="?android:attr/textAppearanceLarge" >
 	    </TextView>
+	   <ImageButton
+            android:id="@+id/collecting_settings_button"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="#000000"
+            android:gravity="center"
+            android:src="@drawable/settings" >
+        </ImageButton>   
     </LinearLayout>
     
 	<LinearLayout
@@ -35,7 +43,7 @@
     <TextView
         android:id="@+id/time_text_view"
         android:layout_width="fill_parent"
-        android:layout_height="60dp"
+        android:layout_height="40dp"
         android:gravity="center|center_vertical"
         android:text="3 seconds left."
         android:textColor="#FFFFFF"
@@ -45,13 +53,27 @@
     
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="20dp"
-        android:orientation="vertical" >        
+        android:layout_height="30dp"
+        android:orientation="vertical" >    
+      	<TextView
+	        android:id="@+id/collecting_placement"
+	        android:layout_width="fill_parent"
+	        android:layout_height="30dp"
+	        android:gravity="center|center_vertical"
+	        android:text="Phone Placement:"
+	        android:textAppearance="?android:attr/textAppearanceMedium" >
+	    </TextView>
+        
     </LinearLayout>
-    
+
+        <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:orientation="vertical" >    
+    </LinearLayout>
     <LinearLayout 
         android:layout_width="fill_parent"
-        android:layout_height="70dp"
+        android:layout_height="60dp"
         android:orientation="horizontal">    
 	    <Button
 	        android:id="@+id/feedback_button"

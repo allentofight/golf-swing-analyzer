@@ -132,7 +132,7 @@ public class SwingFeedback extends Activity{
 	/*
 	 * Peak point
 	 */
-	final static int NORMAL_POINT 	= 0;
+	final static int NORMAL_POINT 	= 0X00;
 	final static int MIN_POINT 		= 0x01;
 	final static int MAX_POINT 		= 0x10;
 	final static int BOTH_POINT 	= 0x11;
@@ -229,7 +229,20 @@ public class SwingFeedback extends Activity{
 	int mXMaxIndex;		// The maximum point of X-axis
 	int mXMinIndex;		// The minimum point of X-axis
 	int mYMaxIndex;		// The maximum point of Y-axis	
-	int mYMinIndex;		// The minimum point of Y-axis
+	int mYMinIndex;		// The minimum point of Y-axis	
+
+	int mXMaxTime = 0;
+	int mXMinTime = 0;
+	int mYMaxTime = 0;
+	int mYMinTime = 0;
+	
+	int mSwingDuration = 0;
+	
+	float mXMaxValue = 0;
+	float mXMinValue = 0;
+	
+	float mYMaxValue = 0;
+	float mYMinValue = 0;
 	
 
 	ArrayList<AccelerationData> mSwingDataArrayList = null;	
@@ -245,6 +258,7 @@ public class SwingFeedback extends Activity{
 	Button mAnalysisButton;
 	Button mStatDatabaseButton;
 	Button mBackButton;
+	Button mFileManagerButton;
 	
 	TextView mXTextView;
 	TextView mYTextView;
@@ -300,6 +314,8 @@ public class SwingFeedback extends Activity{
 		mAnalysisButton = (Button)findViewById(R.id.result_button);
 		mAnalysisButton.setOnClickListener(mClickListener);
 		
+		mFileManagerButton = (Button)findViewById(R.id.feedback_filemananger_button);
+		mFileManagerButton.setOnClickListener(mClickListener);
 		/*
 		mStatDatabaseButton = (Button)findViewById(R.id.stats_db_button);
 		mStatDatabaseButton.setOnClickListener(mClickListener);
@@ -341,6 +357,8 @@ public class SwingFeedback extends Activity{
 		// TODO Auto-generated method stub
 		super.onResume();
 		searchSwingFiles();
+		displayXYResultText(X_AXIS, mMaxThreshold, -1, 0);
+		displayXYResultText(Y_AXIS, mMaxThreshold, -1, 0);
 	}
 
 	Button.OnClickListener mClickListener = new View.OnClickListener() {
@@ -357,9 +375,12 @@ public class SwingFeedback extends Activity{
 				finish();
 				break;
 */				
+			case R.id.feedback_filemananger_button:
+				startActivity(new Intent(SwingFeedback.this, FileManagerActivity.class));
+				finish();
+				break;
 			case R.id.back_button:
-				Intent intent = new Intent(SwingFeedback.this, CollectingAccelerationData.class);
-				startActivity(intent);
+				startActivity(new Intent(SwingFeedback.this, CollectingAccelerationData.class));
 				finish();
 				break;
 			}
@@ -630,6 +651,9 @@ public class SwingFeedback extends Activity{
 		}
 		
 		mFeedbackTextView.setText("");
+		displayXYResultText(X_AXIS, mMaxThreshold, -1, 0);
+		displayXYResultText(Y_AXIS, mMaxThreshold, -1, 0);
+
 	}
 	/*=============================================================================
 	 * Name: getResultFileName
@@ -733,30 +757,41 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/ 	
 	public void startSwingFeedback()
 	{
+		/*
 		int mXMaxTime = 0;
 		int mXMinTime = 0;
 		int mYMaxTime = 0;
 		int mYMinTime = 0;
 		
+		int mSwingDuration = 0;
+		
 		float mXMaxValue = 0;
+		float mXMinValue = 0;
+		
+		float mYMaxValue = 0;
 		float mYMinValue = 0;
+		*/
 		
 		if(mStartIndex == -1|| mEndIndex == -1)
 		{
 			if(mStartIndex == -1)
-				showErrorDialog("Error", "Cannot detect a start point");
+				showMsgDialog("Error", "Cannot detect a start point");
 			else
-				showErrorDialog("Error", "Cannot detect an end point");
+				showMsgDialog("Error", "Cannot detect an end point");
 		}
 		else
 		{
 			mSwingStartTime = mSwingDataArrayList.get(mStartIndex).mTimestamp;
 			mSwingEndTime = mSwingDataArrayList.get(mEndIndex).mTimestamp;
-
+			mSwingDuration = mSwingEndTime - mSwingStartTime;
+			
+			displayResultText("Swing Duration: " + mSwingDuration + " msec");
+			
 			mXMaxTime = mSwingDataArrayList.get(mXMaxIndex).mTimestamp;			
 			mXMaxValue = mSwingDataArrayList.get(mXMaxIndex).mXvalue;
 			
 			mXMinTime = mSwingDataArrayList.get(mXMinIndex).mTimestamp;
+			mXMinValue = mSwingDataArrayList.get(mXMinIndex).mXvalue;
 			
 			// Draw lines and text
 			mXTimeScale.setFeedbackScale(TIME_SCALE, mSwingStartTime, mSwingEndTime);
@@ -783,6 +818,8 @@ public class SwingFeedback extends Activity{
 			}
 			
 			mYMaxTime = mSwingDataArrayList.get(mYMaxIndex).mTimestamp;
+			mYMaxValue = mSwingDataArrayList.get(mYMaxIndex).mYvalue;
+			
 			mYMinTime = mSwingDataArrayList.get(mYMinIndex).mTimestamp;
 			mYMinValue = mSwingDataArrayList.get(mYMinIndex).mYvalue;
 			
@@ -815,6 +852,11 @@ public class SwingFeedback extends Activity{
 			mYTimeScale.drawMaxValueText(mSwingYAccelTextResult);
 			
 			displayAnalysisResult();
+			
+			/*
+			 * Display All result values
+			 * Max, Min, Swing duration, Start time, End time
+			 */
 		}
 	}
 	/*=============================================================================
@@ -839,6 +881,11 @@ public class SwingFeedback extends Activity{
     	float x, y;
     	
     	x = y = 0;
+    	if(eIndex - sIndex == 0)
+    	{
+    		showMsgDialog("Errpr", "Cannot find critical points.");
+    		return;
+    	}
     	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
     	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
     	
@@ -951,12 +998,12 @@ public class SwingFeedback extends Activity{
     }
 
 	/*=============================================================================
-	 * Name: showErrorDialog
+	 * Name: showMsgDialog
 	 * 
 	 * Description:
 	 * 		Show an alert dialog when an error happens
 	 *=============================================================================*/	
-	public void showErrorDialog(String title, String message)
+	public void showMsgDialog(String title, String message)
 	{
 		AlertDialog.Builder alertDlg 
 		= new AlertDialog.Builder(SwingFeedback.this);
@@ -1282,17 +1329,13 @@ public class SwingFeedback extends Activity{
     			break;
     		case MSG_END_POINT:
     			mEndIndex = msg.arg1;
-    			handlerText = "END_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;
+    			handlerText = "END_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;    			
     			displayResultText(handlerText);
     			break;
     		
     		case MSG_PEAK_X_MAX:    			
-    			mXMaxIndex = msg.arg1;    	
-    			value = mSwingDataArrayList.get(mXMaxIndex).mXvalue;
-    			handlerText = "X_MAX: Time:" + msg.arg2 + ", X=" + value;    			
-    			mXTextView.setText(handlerText);    			
-    			displayResultText(handlerText);  
-    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);
+    			mXMaxIndex = msg.arg1;    
+    			displayXYResultText(X_AXIS, mMaxThreshold, mXMaxIndex, msg.arg2);
     			break;
     		case MSG_PEAK_X_MIN:
     			mXMinIndex = msg.arg1;
@@ -1304,18 +1347,14 @@ public class SwingFeedback extends Activity{
     			break;
     		case MSG_PEAK_Y_MAX:
     			mYMaxIndex = msg.arg1;
+    			
     			value = mSwingDataArrayList.get(mYMaxIndex).mYvalue;
     			handlerText = "Y_MAX: Time:" + msg.arg2 + ", Y=" + value;
     			displayResultText(handlerText);
     			break;    			
     		case MSG_PEAK_Y_MIN:
-    			mYMinIndex = msg.arg1;    			
-    			value = mSwingDataArrayList.get(mYMinIndex).mYvalue;
-    			handlerText = "Y_MIN: Time:" + msg.arg2 + ", Y=" + value;
-    			mYTextView.setText(handlerText);
-    			displayResultText(handlerText);
-
-    			//showFeedbackResultText(msg.arg1, msg.arg2, msg.what);    			
+    			mYMinIndex = msg.arg1;  
+    			displayXYResultText(Y_AXIS, mMinThreshold, mYMinIndex, msg.arg2);
     			break;
     		case MSG_DETECT_DONE_X:
     			handlerText = "DETECT_DONE_X";
@@ -1328,9 +1367,15 @@ public class SwingFeedback extends Activity{
     		case MSG_DETECT_DONE_ALL:
     			handlerText = "DETECT_DONE_ALL";
     			displayResultText(handlerText);
-    			
-    			startSwingFeedback();
-    			addFeedbackToDatabase();
+    			if((msg.arg1 == -1) && (msg.arg2 == -1))
+    			{
+    				showMsgDialog("Detection Fail", "Cannot detect any points.");
+    			}
+    			else
+    			{
+    				startSwingFeedback();
+    				addFeedbackToDatabase();
+    			}
     			break;
     		}
     		
@@ -1385,18 +1430,29 @@ public class SwingFeedback extends Activity{
 				{
 					if(mIsAboveThresholdX == false && mIsAboveThresholdY == true)
 					{
-						showErrorDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
+						showMsgDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
 					}
 					else if(mIsAboveThresholdX == true && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
+						showMsgDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
 					}
 					else if(mIsAboveThresholdX == false && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
+						showMsgDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
 										+ mMaxThreshold + ", Min=" + mMinThreshold + ")");
 					}
+					else
+					{
+						String result = "";
+						result = "Swing Duration:" + mSwingDuration + " msec.\n"
+								+ "X Max Value: " + (int)mXMaxValue + ", Time: " + mXMaxTime + "\n"
+								+ "X Min Value: " + (int)mXMinValue + ", Time: " + mXMinTime + "\n\n"
+								+ "Y Max Value: " + (int)mYMaxValue + ", Time: " + mYMaxTime + "\n"
+								+ "Y Min Value: " + (int)mYMinValue + ", Time: " + mYMinTime + "\n";
+						
+						showMsgDialog("Swing Result", result);
 
+					}
 				}
 			}
 		};
@@ -1408,6 +1464,44 @@ public class SwingFeedback extends Activity{
     {
     	mFeedbackTextView.append(text + "\n");
     	Log.i("feedback", text);
+    }
+    
+    public void displayXYResultText(int axis, int threshold, int index, int time)
+    {
+    	String text = "";
+    	int value = 0;
+    	
+    	if(axis == X_AXIS)
+    	{
+    		if(index != -1)
+    		{
+	    		value = (int)mSwingDataArrayList.get(index).mXvalue;
+	    	
+	    		text = "X-axis(Threshold:" + mMaxThreshold+") " 
+					  +  "+Peak:" + value + ", Time:" + time;
+    		}
+    		else
+    		{
+        		text = "X-axis(Threshold:" + mMaxThreshold + ") ";
+    		}
+    		mXTextView.setText(text);
+    	}
+    	else
+    	{
+    		if(index != -1)
+    		{
+    			value = (int)mSwingDataArrayList.get(index).mYvalue;
+    			text = "Y-axis(Threshold:" + mMinThreshold+") " 
+    					+  "-Peak:" + value + ", Time:" + time;
+    		}
+    		else
+    		{
+    			text = "Y-axis(Threshold:" + mMinThreshold +") ";
+    		}
+    		mYTextView.setText(text);
+    		
+    	}
+
     }
 	
 	/*=============================================================================

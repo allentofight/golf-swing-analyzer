@@ -18,9 +18,9 @@ public class Home extends Activity implements View.OnClickListener{
 	/*
 	 * Widgets
 	 */
-	Button mAnalyzeSwingButton;
-	Button mCollectingDataButton;
-	Button mStatisticsButton;
+	ImageButton mAnalyzeSwingButton;
+	ImageButton mCollectingDataButton;
+	ImageButton mStatisticsButton;
 	
 	ImageButton mSettingsButton;
 	
@@ -35,13 +35,13 @@ public class Home extends Activity implements View.OnClickListener{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.home);
 		
-		mAnalyzeSwingButton = (Button)findViewById(R.id.home_real_swing_button);
+		mAnalyzeSwingButton = (ImageButton)findViewById(R.id.home_real_swing_button);
 		mAnalyzeSwingButton.setOnClickListener(this);
 		
-		mCollectingDataButton = (Button)findViewById(R.id.home_collecting_data_button);
+		mCollectingDataButton = (ImageButton)findViewById(R.id.home_collecting_data_button);
 		mCollectingDataButton.setOnClickListener(this);
 		
-		mStatisticsButton = (Button)findViewById(R.id.home_statistics_button);
+		mStatisticsButton = (ImageButton)findViewById(R.id.home_statistics_button);
 		mStatisticsButton.setOnClickListener(this);
 		
 		mSettingsButton = (ImageButton)findViewById(R.id.home_settings_button);

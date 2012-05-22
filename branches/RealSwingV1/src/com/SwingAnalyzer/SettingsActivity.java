@@ -23,17 +23,18 @@ public class SettingsActivity extends Activity{
 	private static final String PREF_MAX_THRESHOLD = "max_threshold";
 	private static final String PREF_MIN_THRESHOLD = "min_threshold";	
 	private static final String PREF_PHONE_FRONT_PLACEMENT = "placement";
+	private static final String PREF_DATA_KEEPING_TIME = "keeping_time";
 	
 	private static final int DEFAULT_MAX_THRESHOLD = 5;
 	private static final int DEFAULT_MIN_THRESHOLD = -5;
 	
-	final static int MENU_ITEM_NUMBER = 4;
+	final static int LIST_COLLECTION_TIME 	= 0;
+	final static int LIST_FEEDBACK_SOUND 	= 1;
+	final static int LIST_SWING_THRESHOLD 	= 2;
+	final static int LIST_PHONE_PLACEMENT 	= 3;
+	final static int LIST_KEEPING_TIME 		= 4;
 	
-	final static int LIST_COLLECTION_TIME = 0;
-	final static int LIST_FEEDBACK_SOUND = 1;
-	final static int LIST_SWING_THRESHOLD = 2;
-	final static int LIST_PHONE_PLACEMENT = 3;
-	
+	final static int MENU_ITEM_NUMBER 		= 5;
 	/*
 	 * Widgets
 	 */
@@ -48,12 +49,22 @@ public class SettingsActivity extends Activity{
 	int [] mIconItems = {R.drawable.setting_icon_time,
 						 R.drawable.setting_icon_beep,
 						 R.drawable.setting_icon_threshold,
-						 R.drawable.setting_icon_placement};
+						 R.drawable.setting_icon_placement,
+						 R.drawable.setting_icon_keepingtime};
 	
-	String[] mMenuItems = {"Swing collection time", "Feedback sound",
-							"Swing threshold for detection", "Placement of your body"};
+	String[] mMenuItems = {"Swing collection time", 
+							"Feedback sound",
+							"Swing threshold for detection", 
+							"Placement of your body",
+							"Swing data keeping time"
+							};
 	
-	String[] mValueItems = {"3 seconds", "Beep", "Max=5, Min=-5", "Back (Waist)"};
+	String[] mValueItems = {"3 seconds", 
+							"Beep", 
+							"Max=5, Min=-5", 
+							"Back (Waist)", 
+							"No limitation"
+							};
 	
 	
 	String[] mOptionCollectionTime = {"3 seconds", "4 seconds", "5 seconds"};
@@ -65,6 +76,8 @@ public class SettingsActivity extends Activity{
 	String[] mOptionPlacement = {"Front (Chest)", "Back (Waist)"};
 	boolean[] mBoolPlacement = {false, true};
 	
+	String[] mOptionKeepingTime = {"No limitation", "1 days", "7 days", "15 days", "30 days", "180 days"};
+	int[] mIntKeepingTime = {0, 1, 7, 15, 30, (30*6)};
 	
 	int mSelectedItem = 0;
 	int mSwingTime = 0;
@@ -82,12 +95,12 @@ public class SettingsActivity extends Activity{
 	/*=================================================
 	 * Pref Variables
 	 *====================================================*/
-	int mCollectionTime = 0;	
-	int mMaxThreshold = 0;
-	int mMinThreshold = 0;
-	boolean mMusicalNotesChecked = false;
-	boolean mFrontPlacement = false;
-
+	private int mCollectionTime = 0;	
+	private int mMaxThreshold = 0;
+	private int mMinThreshold = 0;
+	private boolean mMusicalNotesChecked = false;
+	private boolean mFrontPlacement = false;
+	private int mDataKeepingTime = 0;
 	
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -150,6 +163,9 @@ public class SettingsActivity extends Activity{
 				break;
 			case LIST_PHONE_PLACEMENT:
 				showDialogPhonePlacement();
+				break;
+			case LIST_KEEPING_TIME:
+				showDialogDataKeepingTime();
 				break;
 			
 			}
@@ -281,6 +297,44 @@ public class SettingsActivity extends Activity{
 		
 	}
 	
+	public void showDialogDataKeepingTime()
+	{
+		int selection = 0;
+		
+		if(mDataKeepingTime == 0)
+			selection = 0;
+		else if(mDataKeepingTime == 1)
+			selection = 1;
+		else if(mDataKeepingTime == 7)
+			selection = 2;
+		else if(mDataKeepingTime == 15)
+			selection = 3;
+		else if(mDataKeepingTime == 30)
+			selection = 4;
+		else
+			selection = 5;
+		
+		AlertDialog.Builder dlg = new AlertDialog.Builder(this);
+		
+		dlg.setTitle("Select Data Keeping Time");		
+		dlg.setIcon(R.drawable.ic_launcher);
+		dlg.setSingleChoiceItems(mOptionKeepingTime, selection, 
+			new DialogInterface.OnClickListener() 
+			{
+				public void onClick(DialogInterface dialog, int which) 
+				{
+					mDataKeepingTime = mIntKeepingTime[which];					
+					String value = mOptionKeepingTime[which];
+					Log.i("setting", "Data Keeping Time: " + value + ". Days=" + mDataKeepingTime);
+					
+					updateSettingItemValue(LIST_KEEPING_TIME, value);
+					dialog.dismiss();
+				}
+		});
+		
+		dlg.show();
+
+	}
     public void updateSettingItemValue(int itemIndex, String value)
     {
     	mSettingItemArrayList.get(itemIndex).mValue = value;
@@ -313,6 +367,7 @@ public class SettingsActivity extends Activity{
 		String stringMusicalNotes = "";
 		String stringThreshold = "";
 		String stringPhonePlacement = "";
+		String stringKeepingTime = "";
 		
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, 3);
 		
@@ -320,7 +375,16 @@ public class SettingsActivity extends Activity{
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		mFrontPlacement = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);	
-	
+		mDataKeepingTime = pref.getInt(PREF_DATA_KEEPING_TIME, 0);
+		
+		Log.i("setting", "loadSettingValues======");
+		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNotesChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mFrontPlacement);
+		Log.i("setting", "PREF_DATA_KEEPING_TIME: " + mDataKeepingTime);
+
 		stringCollectionTime = Integer.toString(mCollectionTime) + " seconds";
 		mValueItems[LIST_COLLECTION_TIME] = stringCollectionTime;
 
@@ -339,13 +403,14 @@ public class SettingsActivity extends Activity{
 			stringPhonePlacement = "Back (Waist)";
 		mValueItems[LIST_PHONE_PLACEMENT] = stringPhonePlacement;
 		
-		Log.i("setting", "loadSettingValues======");
-		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNotesChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
-		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mFrontPlacement);
-
+		if(mDataKeepingTime == 0)
+			stringKeepingTime = mOptionKeepingTime[0];
+		else
+		{
+			stringKeepingTime = mDataKeepingTime + " days";
+		}
+		mValueItems[LIST_KEEPING_TIME] = stringKeepingTime;
+		
 	}
 	
 	public void saveSettingValues()
@@ -359,7 +424,7 @@ public class SettingsActivity extends Activity{
 		
 		editor.putInt(PREF_MAX_THRESHOLD, mMaxThreshold);
 		editor.putInt(PREF_MIN_THRESHOLD, mMinThreshold);
-		
+		editor.putInt(PREF_DATA_KEEPING_TIME, mDataKeepingTime);
 		
 		editor.commit();
 		
@@ -369,7 +434,7 @@ public class SettingsActivity extends Activity{
 		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
 		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
 		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mFrontPlacement);
-		
+		Log.i("setting", "PREF_DATA_KEEPING_TIME: " + mDataKeepingTime);
 	}
 	
 
