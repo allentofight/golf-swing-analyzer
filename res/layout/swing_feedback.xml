@@ -283,15 +283,23 @@
             android:layout_width="80dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
-            android:layout_weight="0.05"
+            android:layout_weight="2"
             android:text="Result"
             android:textAppearance="?android:attr/textAppearanceMedium" />
+		<Button
+            android:id="@+id/feedback_filemananger_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="2"
+            android:text="File Manager"
+            android:textAppearance="?android:attr/textAppearanceSmall" />        
         <Button
             android:id="@+id/back_button"
             android:layout_width="80dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
-            android:layout_weight="0.05"
+            android:layout_weight="1"
             android:text="Back"
             android:textAppearance="?android:attr/textAppearanceMedium" />
     </LinearLayout>

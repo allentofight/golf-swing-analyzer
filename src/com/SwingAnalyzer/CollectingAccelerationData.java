@@ -36,6 +36,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	private static final String PREF_MAX_THRESHOLD = "max_threshold";
 	private static final String PREF_MIN_THRESHOLD = "min_threshold";
 	private static final String PREF_PHONE_FRONT_PLACEMENT = "placement";
+	private static final String PREF_DATA_KEEPING_TIME = "keeping_time";
 	
 	private static final int DEFAULT_COLLECTION_TIME 	= 3;
 	private static final int DEFAULT_MAX_THRESHOLD 		= 5;
@@ -104,7 +105,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
 	private boolean mPhoneFrontPlaced = false;
-
+	private int mDataKeepingTime = 0;
 	/*
 	 * Widgets
 	 */
@@ -115,6 +116,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	Button mCollectionHomeButton;
 	
 	TextView mTimeTextView;
+	TextView mPhonePlacementTextView;
 	
 	private ArrayList<AccelerationData> mSwingDataArrayList;
 	
@@ -124,9 +126,12 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		setContentView(R.layout.collecting_acceleration);
 		
 		readPreferenceValues();
+		
 		mStartButton = (ImageButton)findViewById(R.id.start_button);
 		mStartButton.setOnClickListener(mClickListener);
 		
+		mSettingsButton = (ImageButton)findViewById(R.id.collecting_settings_button);
+		mSettingsButton.setOnClickListener(mClickListener);
 	
 		mFeedbackScreenButton = (Button)findViewById(R.id.feedback_button);
 		mFeedbackScreenButton.setOnClickListener(mClickListener);
@@ -135,6 +140,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mCollectionHomeButton.setOnClickListener(mClickListener);
 		
 		mTimeTextView = (TextView)findViewById(R.id.time_text_view);
+		mPhonePlacementTextView = (TextView)findViewById(R.id.collecting_placement);
 		
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);		
 		
@@ -146,7 +152,8 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		makeOutputFolder();
 		initCollectionSoundPool();
 		
-		deleteFiles(DELETE_FILE_DATE,COLLECTED_SWING_PATH);
+		if(mDataKeepingTime != 0)
+			deletePreviousSwingData(mDataKeepingTime,COLLECTED_SWING_PATH);
 	}
 
 	
@@ -173,6 +180,11 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		// TODO Auto-generated method stub
 		super.onResume();
 		
+		if(mPhoneFrontPlaced)
+			mPhonePlacementTextView.setText("Phone Placement : Front side");
+		else
+			mPhonePlacementTextView.setText("Phone Placement : Back side");
+		
 		mSensorManager.registerListener(this, 
 								mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
 								SensorManager.SENSOR_DELAY_FASTEST);
@@ -198,6 +210,10 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				startActivity(new Intent(CollectingAccelerationData.this, Home.class));
 				finish();
 				break;
+			case R.id.collecting_settings_button:
+				startActivity(new Intent(CollectingAccelerationData.this,
+								SettingsActivity.class));
+				finish();
 			default:
 				break;
 			}
@@ -244,14 +260,15 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
 		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
 		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
+		mDataKeepingTime = pref.getInt(PREF_DATA_KEEPING_TIME, 0);
 		
-		Log.i("setting", "==== readPreferenceValues ====");
-		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNoteChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
-		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
-
+		Log.i("collect", "==== readPreferenceValues ====");
+		Log.i("collect", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
+		Log.i("collect", "PREF_BEEP_METHOD          : " + mMusicalNoteChecked);
+		Log.i("collect", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
+		Log.i("collect", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
+		Log.i("collect", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
+		Log.i("collect", "PREF_DATA_KEEPING_TIME    : " + mDataKeepingTime);
 	}
 
 	/*=============================================================================
@@ -518,6 +535,8 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 				}
 				else
 				{
+					mSoundPool.play(mBeepSoundId, 1, 1, 0, 0, 1);
+					
 					isRecording = false;
 					mEndTimeMillis = System.currentTimeMillis();
 					writeAccelerationDataToFile();
@@ -962,8 +981,38 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
     	
     	return stringTime;
     }
+    /*=============================================================================
+	 * Name: getSDPathName
+	 * 
+	 * Description:
+	 * 		Check whether a SD card is mounted or not		
+	 * 		If mounted, return the absolute SD card path name
+	 * 
+	 * Return:
+	 * 		String
+	 *=============================================================================*/	
+    public String getSDPathName()
+    {
+        String ext = Environment.getExternalStorageState();
+        String sdPath = "";
+        if(ext.equals(Environment.MEDIA_MOUNTED))
+        {
+        	sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+        	//mSdPath = sdPath;
+        }
+        else
+        {
+        	sdPath = Environment.MEDIA_UNMOUNTED;
+        	
+        	//mSdPath = "";
+        	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
+        }
+        
+    	return sdPath;
+    }
+    
 	/*=============================================================================
-	 * Name: deleteFiles
+	 * Name: deletePreviousSwingData
 	 * 
 	 * Description:
 	 * 		Delete files older than the day to save memory space
@@ -971,9 +1020,16 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 * Return:
 	 * 		None
 	 *=============================================================================*/ 
-    public void deleteFiles(int day, String dir)
+    public void deletePreviousSwingData(int day, String dir)
     {
-    	File directory = new File(dir);
+    	String sdPathName = getSDPathName();
+    	
+    	if(sdPathName == Environment.MEDIA_UNMOUNTED)
+    		return;
+    	
+    	File directory = new File(sdPathName + dir);
+    	Log.i("collect", "Swing data keeping time is " + day + " days.");
+    	
     	int i;
     	if(directory.exists())
     	{

@@ -34,7 +34,7 @@
 			android:layout_height="30dp"			
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:textColor="#ffffff"
-			android:gravity="center_vertical">
+			android:layout_margin="2dp">
 		</TextView>
 	</LinearLayout>
 </LinearLayout>

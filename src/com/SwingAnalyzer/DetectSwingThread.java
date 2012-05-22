@@ -431,11 +431,14 @@ public class DetectSwingThread extends Thread{
     	}while(i<= (arrSize-1));
     	
     	Log.i("detectswing", "Max Peak point[" + maxIndex +"]:" + maxValue 
-    						+ "isPeakFound=" + isPeakFound);
+    						+ ", isPeakFound=" + isPeakFound);
     	if(isPeakFound == false)
-    		return PEAK_DETECTION_FAIL;
-    	else
-    		return maxIndex;
+    	{
+    		maxIndex = PEAK_DETECTION_FAIL;
+    		Log.e("detectswing", "PEAK_DETECTION_FAIL");
+    	}
+    	
+    	return maxIndex;
 	}
 	
 	/*=============================================================================
@@ -911,7 +914,7 @@ public class DetectSwingThread extends Thread{
     		if((dx == 0) && (dy == 0))
     		{
     			++zero_count;
-    			Log.i("detectswing", "Zero [" + count + "]" + " dx=" + dx + ", dy=" + dy);
+    			Log.i("detectswing", "Zero [" + zero_count + "]" + " dx=" + dx + ", dy=" + dy);
     			
     			if(zero_count == END_CRITERION)
     			{

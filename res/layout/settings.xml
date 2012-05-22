@@ -3,12 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-	<TextView
-        android:layout_width="fill_parent"
-        android:layout_height="50dp"
-        android:gravity="center|center_horizontal"
-        android:text="Settings"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+	
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="0.5dp"
@@ -19,12 +14,12 @@
     <ListView
         android:id="@+id/setting_listItem"
         android:layout_width="match_parent"
-        android:layout_height="300dp" >
+        android:layout_height="350dp" >
     </ListView>
    
     <LinearLayout 
         android:layout_width="fill_parent"
-        android:layout_height="30dp">
+        android:layout_height="10dp">
     </LinearLayout>
    <Button
         android:id="@+id/setting_back"

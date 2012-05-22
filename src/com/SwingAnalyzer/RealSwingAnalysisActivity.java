@@ -106,6 +106,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	final static int COLOR_GREEN = 1;		// 
 	final static int COLOR_RED	 = 2;		// Maximum
 	final static int COLOR_YELLOW = 3;		// Minimum
+	final static int COLOR_BOTH   	= 4;		// Maximum & Minimum
 	
 	/*
 	 * Timeout and time scale to calculate
@@ -118,9 +119,10 @@ public class RealSwingAnalysisActivity extends Activity{
 	/*
 	 * Peak point
 	 */
-	final static int NORMAL_POINT = 0;
-	final static int MIN_POINT = 1;
-	final static int MAX_POINT = 2;
+	final static int NORMAL_POINT 	= 0X00;
+	final static int MIN_POINT 		= 0x01;
+	final static int MAX_POINT 		= 0x10;
+	final static int BOTH_POINT 	= 0x11;
 	
 	final static int MUSICAL_NOTE_NUM = 35;
 	
@@ -158,6 +160,8 @@ public class RealSwingAnalysisActivity extends Activity{
 	int mSwingStartTime;
 	int mEndIndex;		// The end point of a swing
 	int mSwingEndTime;
+	
+	int mSwingDuration = 0;
 	
 	int mXMaxIndex;		// The maximum point of X-axis
 	int mXMinIndex;		// The minimum point of X-axis
@@ -220,7 +224,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	int mNormalSoundId;
 	int mMaxSoundId;
 	int mMinSoundId;
-	
+	int mMaxMinSoundId;
 
 	
 	List<AccelerationData> mRealSwingDataList = null;
@@ -428,6 +432,7 @@ public class RealSwingAnalysisActivity extends Activity{
 			mNormalSoundId = mSoundPool.load(this, R.raw.normal_pitch, 1);
 			mMaxSoundId = mSoundPool.load(this, R.raw.high_pitch, 1);
 			mMinSoundId = mSoundPool.load(this, R.raw.low_pitch, 1);
+			mMaxMinSoundId = mSoundPool.load(this, R.raw.high_low_pitch, 1);
 		}
 	}
 	/*=============================================================================
@@ -460,6 +465,10 @@ public class RealSwingAnalysisActivity extends Activity{
 				mXImages[index].setImageResource(R.drawable.yellow_button_30);
 				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
+			case COLOR_BOTH:
+				mXImages[index].setImageResource(R.drawable.both_button_30);
+				mSoundPool.play(mMaxMinSoundId, 1, 1, 0, 0, 1);
+				
 			}
 		}
 		else
@@ -481,6 +490,10 @@ public class RealSwingAnalysisActivity extends Activity{
 				mYImages[index].setImageResource(R.drawable.yellow_button_30);
 				mSoundPool.play(mMinSoundId, 1, 1, 0, 0, 1);
 				break;
+			case COLOR_BOTH:
+				mYImages[index].setImageResource(R.drawable.both_button_30);
+				mSoundPool.play(mMaxMinSoundId, 1, 1, 0, 0, 1);
+				
 			}
 
 		}
@@ -516,11 +529,17 @@ public class RealSwingAnalysisActivity extends Activity{
 		
 		if(axis == X_AXIS)
 		{		
-			mSwingXResult[index] = type;
+			//mSwingXResult[index] = type;
+			mSwingXResult[index] = mSwingXResult[index] ^ type;
+			Log.i("feedback", "X Type[" + index + "]= " + mSwingXResult[index] );
+
 		}
 		else
 		{
-			mSwingYResult[index] = type;
+			//mSwingYResult[index] = type;
+			mSwingYResult[index] = mSwingYResult[index] ^ type;
+			Log.i("feedback", "Y Type[" + index + "]= " + mSwingYResult[index] );
+
 		}		
 	}
 	
@@ -541,6 +560,8 @@ public class RealSwingAnalysisActivity extends Activity{
 				displayResultWithSoundIcon(index, COLOR_RED, X_AXIS);
 			else if(mSwingXResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, X_AXIS);
+			else if(mSwingXResult[index] == BOTH_POINT)
+				displayResultWithSoundIcon(index, COLOR_BOTH, X_AXIS);
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, X_AXIS);
 		}
@@ -551,17 +572,11 @@ public class RealSwingAnalysisActivity extends Activity{
 				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
 			else if(mSwingYResult[index] == MIN_POINT)
 				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
+			else if(mSwingYResult[index] == BOTH_POINT)
+				displayResultWithSoundIcon(index, COLOR_BOTH, Y_AXIS);						
 			else
 				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);
 			
-			/*
-			if(mSwingYResult[index] == MIN_POINT)
-				displayResultWithSoundIcon(index, COLOR_RED, Y_AXIS);
-			else if(mSwingYResult[index] == MAX_POINT)
-				displayResultWithSoundIcon(index, COLOR_YELLOW, Y_AXIS);
-			else
-				displayResultWithSoundIcon(index, COLOR_GREEN, Y_AXIS);
-			*/
 		}
 
 	}
@@ -773,11 +788,13 @@ public class RealSwingAnalysisActivity extends Activity{
         		}
         	});
         	
-        	
+        	/*
         	String[] sortedFileNameList = new String[fileNameList.length]; 
         	sortedFileNameList = doNaturalSorting(fileNameList);
 
         	insertFileNameToSpinner(sortedFileNameList);
+        	*/
+        	insertFileNameToSpinner(fileNameList);
     	}
     	
     }
@@ -1009,7 +1026,11 @@ public class RealSwingAnalysisActivity extends Activity{
 			mXTimeScale.drawMaxValueText(mSwingXAccelTextResult);
 			mYTimeScale.drawMaxValueText(mSwingYAccelTextResult);
 			
-			displayAnalysisResult();
+			//displayAnalysisResult();
+			mSwingDuration = mSwingEndTime - mSwingStartTime;
+			displayResultText("Swing Duration:" + mSwingDuration);
+			
+			displayAnalysisExactTimeResult();
 			
 			// Display absolute value in scale
 		}
@@ -1218,8 +1239,8 @@ public class RealSwingAnalysisActivity extends Activity{
     		case MSG_PEAK_X_MAX:
     			mXMaxIndex = msg.arg1;
     			value = (int)mConvertedSwingList.get(mXMaxIndex).mXvalue;
-    			handlerText = "X-axis [Threshold=" + mMaxThreshold+"] " 
-    						+  "Peak:" + value + ", Time:" + msg.arg2;
+    			handlerText = "X-axis(Threshold:" + mMaxThreshold+") " 
+    						+  "+Peak:" + value + ", Time:" + msg.arg2;
     			
     			mRealSwingXTextView.setText(handlerText);
     			
@@ -1243,8 +1264,8 @@ public class RealSwingAnalysisActivity extends Activity{
     			mYMinIndex = msg.arg1;    			
     			value = (int)mConvertedSwingList.get(mYMinIndex).mYvalue;
 
-    			handlerText = "Y-axis [Threshold:" + mMinThreshold+"]" 
-						+  " Peak Y:" + value + ", Time:" + msg.arg2;    			
+    			handlerText = "Y-axis(Threshold:" + mMinThreshold+") " 
+						+  "-Peak:" + value + ", Time:" + msg.arg2;    			
     			
     			mRealSwingYTextView.setText(handlerText);
     			//displayResultText(handlerText);
@@ -1363,6 +1384,84 @@ public class RealSwingAnalysisActivity extends Activity{
 		mTimerHandler.sendEmptyMessage(0);
 	}
 	
+	/*=============================================================================
+	 * Name: displayAnalysisExactTimeResult
+	 * 
+	 * Description:
+	 * 		Display result within the exact time duration. (Starttime - Endtime)		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/    
+	public void displayAnalysisExactTimeResult()
+	{
+		mTimerHandler = new Handler()
+		{
+			int wait = 0;
+			int timeIndex = 0;
+			int timeInterval = 0;
+			public void handleMessage(Message msg)
+			{
+				/*
+				 *  To display two axis icon, it waits for (TIMEOUT *2)
+				 */
+				timeInterval = mSwingDuration / TIME_SCALE;
+				
+				if(wait < (mSwingDuration * 2))
+				{
+					mTimerHandler.sendEmptyMessageDelayed(0, timeInterval);
+					wait += timeInterval;
+					Log.i("realswing", "timeIndex: " + timeIndex 
+										+ ", wait:" + wait 
+										+ ", timeInterval:" + timeInterval);
+					
+					if(timeIndex < TIME_SCALE)
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						else
+							showTimeSlotWithBeep(timeIndex, X_AXIS);
+
+					}
+					else
+					{
+						if(mMusicalNoteChecked)
+							showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+						else
+						{
+							Log.i("realswing", "timeIndex:" + timeIndex);
+							if(timeIndex - TIME_SCALE < 10)
+							{
+								showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
+							}
+						}
+
+					}
+					
+					timeIndex++;
+				}
+				else
+				{
+					if(mIsAboveThresholdX == false && mIsAboveThresholdY == true)
+					{
+						showErrorDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
+					}
+					else if(mIsAboveThresholdX == true && mIsAboveThresholdY == false)
+					{
+						showErrorDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
+					}
+					else if(mIsAboveThresholdX == false && mIsAboveThresholdY == false)
+					{
+						showErrorDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
+										+ mMaxThreshold + ", Min=" + mMinThreshold + ")");
+					}
+					
+				}
+			}
+		};
+		
+		mTimerHandler.sendEmptyMessage(0);
+	}
 
     public void displayResultText(String text)
     {
