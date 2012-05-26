@@ -39,6 +39,14 @@
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
         
+        <activity android:name=".SwingPastDataFeedback" android:label="Past Swing Data"
+            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
+        </activity>
+        
+        <activity android:name=".SwingGraphActivity" android:label="Swing Graph"
+            android:windowSoftInputMode="stateHidden">            
+        </activity>
+        
         <activity android:name=".StatisticsActivity" android:label="Statistics"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">
         </activity>

@@ -89,7 +89,7 @@ public class FileManagerActivity extends Activity{
 				deleteSelectedItems();
 				break;
 			case R.id.filemanager_back:
-				startActivity(new Intent(FileManagerActivity.this, SwingFeedback.class));
+				startActivity(new Intent(FileManagerActivity.this, SwingPastDataFeedback.class));
 				finish();
 				break;
 			}

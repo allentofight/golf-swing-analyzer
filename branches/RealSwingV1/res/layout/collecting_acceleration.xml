@@ -45,7 +45,7 @@
         android:layout_width="fill_parent"
         android:layout_height="40dp"
         android:gravity="center|center_vertical"
-        android:text="3 seconds left."
+        android:text=""
         android:textColor="#FFFFFF"
         android:textAppearance="?android:attr/textAppearanceMedium" />    
 

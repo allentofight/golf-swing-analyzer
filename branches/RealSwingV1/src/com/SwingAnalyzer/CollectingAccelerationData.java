@@ -100,7 +100,7 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 	 * SharedPreference Values 
 	 */
 	private int mCollectionTime = 0;
-	private boolean mMusicalNoteChecked = true;
+	private boolean mBeepChecked = true;
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
@@ -258,13 +258,13 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
-		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mBeepChecked = pref.getBoolean(PREF_BEEP_METHOD, false);
 		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
 		mDataKeepingTime = pref.getInt(PREF_DATA_KEEPING_TIME, 0);
 		
 		Log.i("collect", "==== readPreferenceValues ====");
 		Log.i("collect", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
-		Log.i("collect", "PREF_BEEP_METHOD          : " + mMusicalNoteChecked);
+		Log.i("collect", "PREF_BEEP_METHOD          : " + mBeepChecked);
 		Log.i("collect", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
 		Log.i("collect", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
 		Log.i("collect", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
@@ -341,49 +341,53 @@ public class CollectingAccelerationData extends Activity implements SensorEventL
 		
 		switch(dispRotation)
 		{
-		/*
-		 *	 Attached to the front part of a body (Chest)
-		 *		. accelData.mXvalue = values[0]
-		 * 	           ^
-		 *             | +y       
-		 *          +-----+
-		 *          |O    |
-		 *          |     |
-		 *    <---  |Back | ---> : () : sensor coordinate values
-		 *   -x     |     |  +x
-		 *          +-----+
-		 *            | -y
-		 *            V
- 
-		 * 
-		 *     
-		 *     
-		 *     Attached to the back part of a body (Waist)
-		 * 
-		 * 		. accelData.mXvalue = -values[0]
-		 * 		. X-axis values should be converted to negative values
-		 * 
-		 * 	           ^
-		 *             | +y(-y)       
-		 *          +-----+
-		 *          |     |
-		 *          |     |
-		 *    <---  |_____| ---> : () : sensor coordinate values
-		 *   +x     |  O  |  -x
-		 *          +-----+
-		 *            | -y(+y)
-		 *            V
-		 */
 		
+ 
 		case Surface.ROTATION_0:
 			if(mPhoneFrontPlaced == true)
 			{
+				/*
+				 *	 Attached to the front part of a body (Chest)
+				 *		. accelData.mXvalue = values[0]
+				 * 	           ^
+				 *             | +y       
+				 *          +-----+
+				 *          |O    |
+				 *          |     |
+				 *    <---  |Back | ---> : () : sensor coordinate values
+				 *   -x(+x) |     |  +x(-x)
+				 *          +-----+
+				 *            | -y
+				 *            V
+				 */            
+
+				Log.i("collect", "Front Placed: " + mPhoneFrontPlaced + " value=" + values[0]);
 				accelData.mXvalue = values[0];
 			}
 			else
 			{
+				 /* 
+				 *     
+				 *     
+				 *     Attached to the back part of a body (Waist)
+				 * 
+				 * 		. accelData.mXvalue = -values[0]
+				 * 		. X-axis values should be converted to negative values
+				 * 
+				 * 	           ^
+				 *             | +y       
+				 *          +-----+
+				 *          |     |
+				 *          |     |
+				 *    <---  |_____| ---> : () : sensor coordinate values
+				 *     (-x) |  O  |  (+x)
+				 *          +-----+
+				 *            | -y
+				 *            V
+				 */
 				// When a smart phone is attached to the back part of a body (Waist)
 				// X values should be changed.
+				Log.i("collect", "Front Placed: " + mPhoneFrontPlaced + " value=" + values[0]);
 				accelData.mXvalue = -values[0];
 			}
 			
