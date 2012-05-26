@@ -161,13 +161,25 @@ public class RealSwingAnalysisActivity extends Activity{
 	int mEndIndex;		// The end point of a swing
 	int mSwingEndTime;
 	
-	int mSwingDuration = 0;
 	
 	int mXMaxIndex;		// The maximum point of X-axis
 	int mXMinIndex;		// The minimum point of X-axis
 	int mYMaxIndex;		// The maximum point of Y-axis	
 	int mYMinIndex;		// The minimum point of Y-axis
 	
+	int mXMaxTime = 0;
+	int mXMinTime = 0;
+	int mYMaxTime = 0;
+	int mYMinTime = 0;
+	
+	int mSwingDuration = 0;
+	
+	float mXMaxValue = 0;
+	float mXMinValue = 0;
+	
+	float mYMaxValue = 0;
+	float mYMinValue = 0;
+
 	
 	ImageView mXImages[] = new ImageView[TIME_SCALE];
 	ImageView mYImages[] = new ImageView[TIME_SCALE];
@@ -234,7 +246,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * SharedPreference Values 
 	 */
 	private int mCollectionTime = 0;
-	private boolean mMusicalNoteChecked = true;
+	private boolean mBeepChecked = true;
 	
 	private int mMaxThreshold = 0;		// Threshold of X-axis
 	private int mMinThreshold = 0;		// Threshold of Y-axis
@@ -417,7 +429,7 @@ public class RealSwingAnalysisActivity extends Activity{
 	 *=============================================================================*/				
 	public void initSoundPool()
 	{
-		if(mMusicalNoteChecked)
+		if(!mBeepChecked)
 		{
 			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
 			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
@@ -694,14 +706,14 @@ public class RealSwingAnalysisActivity extends Activity{
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, DEFAULT_COLLECTION_TIME);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
-		mMusicalNoteChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mBeepChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
 		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
 		
 		Log.i("setting", "==== readPreferenceValues ====");
-		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNoteChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD          : " + mBeepChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
 		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
 
 	}
@@ -943,30 +955,28 @@ public class RealSwingAnalysisActivity extends Activity{
 	 *=============================================================================*/ 	
 	public void startRealSwingFeedback()
 	{
-		int mXMaxTime = 0;
-		int mXMinTime = 0;
-		int mYMaxTime = 0;
-		int mYMinTime = 0;
-		
-		float mXMaxValue = 0;
-		float mYMinValue = 0;
 		
 		if(mStartIndex == -1|| mEndIndex == -1)
 		{
 			if(mStartIndex == -1)
-				showErrorDialog("Error", "Cannot detect a start point");
+				showMsgDialog("Error", "Cannot detect a start point");
 			else
-				showErrorDialog("Error", "Cannot detect an end point");
+				showMsgDialog("Error", "Cannot detect an end point");
 		}
 		else
 		{
 			mSwingStartTime = mConvertedSwingList.get(mStartIndex).mTimestamp;
 			mSwingEndTime = mConvertedSwingList.get(mEndIndex).mTimestamp;
+			mSwingDuration = mSwingEndTime - mSwingStartTime;
+			
+			displayResultText("Swing Duration: " + mSwingDuration + " msec");
+			displayResultText("Time interval : " + mSwingDuration/TIME_SCALE + " msec");
 
 			mXMaxTime = mConvertedSwingList.get(mXMaxIndex).mTimestamp;			
 			mXMaxValue = mConvertedSwingList.get(mXMaxIndex).mXvalue;
 			
 			mXMinTime = mConvertedSwingList.get(mXMinIndex).mTimestamp;
+			mXMinValue = mConvertedSwingList.get(mXMinIndex).mXvalue;
 			
 			// Draw lines and text
 			mXTimeScale.setFeedbackScale(TIME_SCALE, mSwingStartTime, mSwingEndTime);
@@ -979,7 +989,7 @@ public class RealSwingAnalysisActivity extends Activity{
 			if((int)mXMaxValue >= mMaxThreshold)
 			{
 				mIsAboveThresholdX = true;
-				if(mMusicalNoteChecked == false)
+				if(mBeepChecked)
 				{
 					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
 										mXMaxTime, X_AXIS, MAX_POINT);
@@ -993,6 +1003,8 @@ public class RealSwingAnalysisActivity extends Activity{
 			}
 			
 			mYMaxTime = mConvertedSwingList.get(mYMaxIndex).mTimestamp;
+			mYMaxValue = mConvertedSwingList.get(mYMaxIndex).mYvalue;
+			
 			mYMinTime = mConvertedSwingList.get(mYMinIndex).mTimestamp;
 			mYMinValue = mConvertedSwingList.get(mYMinIndex).mYvalue;
 			
@@ -1003,7 +1015,7 @@ public class RealSwingAnalysisActivity extends Activity{
 			if((int)mYMinValue <= mMinThreshold)
 			{
 				mIsAboveThresholdY = true;
-				if(mMusicalNoteChecked == false)
+				if(mBeepChecked)
 				{
 					// Make a different beep sound in the max peak and the min peak point
 					findPeakTimeIndex(mSwingStartTime, mSwingEndTime, 
@@ -1027,12 +1039,9 @@ public class RealSwingAnalysisActivity extends Activity{
 			mYTimeScale.drawMaxValueText(mSwingYAccelTextResult);
 			
 			//displayAnalysisResult();
-			mSwingDuration = mSwingEndTime - mSwingStartTime;
-			displayResultText("Swing Duration:" + mSwingDuration);
-			
+	
 			displayAnalysisExactTimeResult();
-			
-			// Display absolute value in scale
+
 		}
 	}
 	
@@ -1086,7 +1095,7 @@ public class RealSwingAnalysisActivity extends Activity{
     				Log.i("realswing", "[" + prevIndex +"] " 
     									+ "Abs|X|: maxX=" + Math.abs(maxX) 
     									+ " minX=" + Math.abs(minX));
-    				if(mMusicalNoteChecked == true)
+    				if(!mBeepChecked)
     					mSwingXResult[prevIndex] = (int)minX;
     				
     				mSwingXAccelTextResult[prevIndex] = (int)minX;
@@ -1097,7 +1106,7 @@ public class RealSwingAnalysisActivity extends Activity{
 							+ "Abs|X|: maxX=" + Math.abs(maxX) 
 							+ " minX=" + Math.abs(minX));
     				
-    				if(mMusicalNoteChecked == true)
+    				if(!mBeepChecked)
     					mSwingXResult[prevIndex] = (int)maxX;
     				
     				mSwingXAccelTextResult[prevIndex] = (int)maxX;
@@ -1109,7 +1118,7 @@ public class RealSwingAnalysisActivity extends Activity{
     									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     									+ " minY=" + Math.abs(minY));
     				
-    				if(mMusicalNoteChecked == true)
+    				if(!mBeepChecked)
     					mSwingYResult[prevIndex] = (int)minY;
     				
     				mSwingYAccelTextResult[prevIndex] = (int)minY;
@@ -1121,7 +1130,7 @@ public class RealSwingAnalysisActivity extends Activity{
     								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
     								+ " minY=" + Math.abs(minY));
     				
-    				if(mMusicalNoteChecked == true)
+    				if(!mBeepChecked)
     					mSwingYResult[prevIndex] = (int)maxY;
     				
     				mSwingYAccelTextResult[prevIndex] = (int)maxY;
@@ -1182,12 +1191,12 @@ public class RealSwingAnalysisActivity extends Activity{
     }
 	
 	/*=============================================================================
-	 * Name: showErrorDialog
+	 * Name: showMsgDialog
 	 * 
 	 * Description:
 	 * 		Show an alert dialog when an error happens
 	 *=============================================================================*/	
-	public void showErrorDialog(String title, String message)
+	public void showMsgDialog(String title, String message)
 	{
 		AlertDialog.Builder alertDlg 
 		= new AlertDialog.Builder(RealSwingAnalysisActivity.this);
@@ -1221,19 +1230,16 @@ public class RealSwingAnalysisActivity extends Activity{
     		switch(msg.what)
     		{
     		case MSG_CONVERSION_DONE:
-    			handlerText = "MSG_CONVERSION_DONE: count=" + msg.arg1;
-    			displayResultText(handlerText);
-    			
     			startAnalyzeSwingData();	// Start to analyze the converted swing data
     			break;    		
     		case MSG_START_POINT:
     			mStartIndex = msg.arg1;
-    			handlerText = "START_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;
+    			handlerText = "Start Time: " + msg.arg2;
     			displayResultText(handlerText);
     			break;
     		case MSG_END_POINT:
     			mEndIndex = msg.arg1;
-    			handlerText = "END_POINT: index=" + msg.arg1 + ", Time:" + msg.arg2;
+    			handlerText = "End Time  : " + msg.arg2;
     			displayResultText(handlerText);
     			break;
     		case MSG_PEAK_X_MAX:
@@ -1243,22 +1249,12 @@ public class RealSwingAnalysisActivity extends Activity{
     						+  "+Peak:" + value + ", Time:" + msg.arg2;
     			
     			mRealSwingXTextView.setText(handlerText);
-    			
-    			//displayResultText(handlerText);
     			break;
     		case MSG_PEAK_X_MIN:
-    			mXMinIndex = msg.arg1;    			
-    			value = (int)mConvertedSwingList.get(mXMinIndex).mXvalue;
-    			
-    			handlerText = "X_MIN: Time:" + msg.arg2 + ", X=" + value;
-    			displayResultText(handlerText);
+    			mXMinIndex = msg.arg1;
     			break;
     		case MSG_PEAK_Y_MAX:
-    			mYMaxIndex = msg.arg1;    			
-    			value = (int)mConvertedSwingList.get(mYMaxIndex).mYvalue;
-    			
-    			handlerText = "Y_MAX: Time:" + msg.arg2 + ", Y=" + value;
-    			displayResultText(handlerText);
+    			mYMaxIndex = msg.arg1;
     			break;    			
     		case MSG_PEAK_Y_MIN:
     			mYMinIndex = msg.arg1;    			
@@ -1268,22 +1264,15 @@ public class RealSwingAnalysisActivity extends Activity{
 						+  "-Peak:" + value + ", Time:" + msg.arg2;    			
     			
     			mRealSwingYTextView.setText(handlerText);
-    			//displayResultText(handlerText);
     			break;
     		case MSG_DETECT_DONE_X:
-    			handlerText = "DETECT_DONE_X";
-    			displayResultText(handlerText);
     			break;
     		case MSG_DETECT_DONE_Y:
-    			handlerText = "DETECT_DONE_Y";
-    			displayResultText(handlerText);
     			break;
-    		case MSG_DETECT_DONE_ALL:    			
-    			handlerText = "DETECT_DONE_ALL";
-    			displayResultText(handlerText);
+    		case MSG_DETECT_DONE_ALL:
     			if(msg.arg1 == -1)
     			{
-    				showErrorDialog("Detection Fail", 
+    				showMsgDialog("Detection Fail", 
     								"Swing is too weak to detect any points!");
     			}
     			else
@@ -1344,7 +1333,7 @@ public class RealSwingAnalysisActivity extends Activity{
 					
 					if(timeIndex < TIME_SCALE)
 					{
-						if(mMusicalNoteChecked)
+						if(!mBeepChecked)
 							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
 						else
 							showTimeSlotWithBeep(timeIndex, X_AXIS);
@@ -1352,7 +1341,7 @@ public class RealSwingAnalysisActivity extends Activity{
 					}
 					else
 					{
-						if(mMusicalNoteChecked)
+						if(!mBeepChecked)
 							showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
 						else
 							showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
@@ -1365,15 +1354,15 @@ public class RealSwingAnalysisActivity extends Activity{
 				{
 					if(mIsAboveThresholdX == false && mIsAboveThresholdY == true)
 					{
-						showErrorDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
+						showMsgDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
 					}
 					else if(mIsAboveThresholdX == true && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
+						showMsgDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
 					}
 					else if(mIsAboveThresholdX == false && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
+						showMsgDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
 										+ mMaxThreshold + ", Min=" + mMinThreshold + ")");
 					}
 					
@@ -1411,13 +1400,14 @@ public class RealSwingAnalysisActivity extends Activity{
 				{
 					mTimerHandler.sendEmptyMessageDelayed(0, timeInterval);
 					wait += timeInterval;
-					Log.i("realswing", "timeIndex: " + timeIndex 
+					Log.i("realswing", "Duration:" + mSwingDuration 
+										+ ", Index:" + timeIndex 
 										+ ", wait:" + wait 
-										+ ", timeInterval:" + timeInterval);
+										+ ", Interval:" + timeInterval);
 					
 					if(timeIndex < TIME_SCALE)
 					{
-						if(mMusicalNoteChecked)
+						if(!mBeepChecked)
 							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
 						else
 							showTimeSlotWithBeep(timeIndex, X_AXIS);
@@ -1425,11 +1415,17 @@ public class RealSwingAnalysisActivity extends Activity{
 					}
 					else
 					{
-						if(mMusicalNoteChecked)
-							showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+						if(!mBeepChecked)
+						{
+							Log.i("realswing", "Musical Notes timeIndex:" + timeIndex);
+							if(timeIndex - TIME_SCALE < 10)
+							{
+								showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+							}
+						}
 						else
 						{
-							Log.i("realswing", "timeIndex:" + timeIndex);
+							Log.i("realswing", "Beep timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
 								showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
@@ -1444,18 +1440,30 @@ public class RealSwingAnalysisActivity extends Activity{
 				{
 					if(mIsAboveThresholdX == false && mIsAboveThresholdY == true)
 					{
-						showErrorDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
+						showMsgDialog("Weak Swing", "Swing values of X-axis are less than " + mMaxThreshold +".");
 					}
 					else if(mIsAboveThresholdX == true && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
+						showMsgDialog("Weak Swing", "Swing values of Y-axis are less than " + mMinThreshold + ".");
 					}
 					else if(mIsAboveThresholdX == false && mIsAboveThresholdY == false)
 					{
-						showErrorDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
+						showMsgDialog("Weak Swing", "Both swing values(X, Y-axis) are too small.(Max=" 
 										+ mMaxThreshold + ", Min=" + mMinThreshold + ")");
 					}
-					
+					else
+					{
+						String result = "";
+						result = "Swing Duration :" + mSwingDuration + " msec.\n"
+								+ "(From : " + mSwingStartTime + " to : " + mSwingEndTime + " msec)\n\n"
+								+ "X Max Value: " + (int)mXMaxValue + ", Time: " + mXMaxTime + "\n"
+								+ "X Min Value: " + (int)mXMinValue + ", Time: " + mXMinTime + "\n\n"
+								+ "Y Max Value: " + (int)mYMaxValue + ", Time: " + mYMaxTime + "\n"
+								+ "Y Min Value: " + (int)mYMinValue + ", Time: " + mYMinTime + "\n";
+						
+						showMsgDialog("Swing Result", result);
+
+					}
 				}
 			}
 		};

@@ -98,7 +98,7 @@ public class SettingsActivity extends Activity{
 	private int mCollectionTime = 0;	
 	private int mMaxThreshold = 0;
 	private int mMinThreshold = 0;
-	private boolean mMusicalNotesChecked = false;
+	private boolean mBeepChecked = true;
 	private boolean mFrontPlacement = false;
 	private int mDataKeepingTime = 0;
 	
@@ -206,7 +206,7 @@ public class SettingsActivity extends Activity{
 	{
 		int selection = 0;
 		
-		if(mMusicalNotesChecked == false)
+		if(mBeepChecked == true)
 			selection = 0;
 		else
 			selection =1;
@@ -222,12 +222,12 @@ public class SettingsActivity extends Activity{
 						String value = "";
 						if(which == 0)
 						{
-							mMusicalNotesChecked = false;
+							mBeepChecked = true;
 							value = "Beep";
 						}
 						else
 						{
-							mMusicalNotesChecked = true;
+							mBeepChecked = false;
 							value = "Musical Notes";
 						}
 						updateSettingItemValue(LIST_FEEDBACK_SOUND, value);
@@ -371,27 +371,28 @@ public class SettingsActivity extends Activity{
 		
 		mCollectionTime = pref.getInt(PREF_COLLECTION_TIME, 3);
 		
-		mMusicalNotesChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
+		mBeepChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
 		mMaxThreshold = pref.getInt(PREF_MAX_THRESHOLD, DEFAULT_MAX_THRESHOLD);
 		mMinThreshold = pref.getInt(PREF_MIN_THRESHOLD, DEFAULT_MIN_THRESHOLD);
-		mFrontPlacement = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);	
+		mFrontPlacement = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	true);	
 		mDataKeepingTime = pref.getInt(PREF_DATA_KEEPING_TIME, 0);
 		
 		Log.i("setting", "loadSettingValues======");
-		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNotesChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD          : " + mBeepChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
 		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mFrontPlacement);
-		Log.i("setting", "PREF_DATA_KEEPING_TIME: " + mDataKeepingTime);
+		Log.i("setting", "PREF_DATA_KEEPING_TIME    : " + mDataKeepingTime);
 
 		stringCollectionTime = Integer.toString(mCollectionTime) + " seconds";
 		mValueItems[LIST_COLLECTION_TIME] = stringCollectionTime;
 
-		if(mMusicalNotesChecked == false)
+		if(mBeepChecked == true)
 			stringMusicalNotes = "Beep";
 		else
 			stringMusicalNotes = "Musical Notes";
+		
 		mValueItems[LIST_FEEDBACK_SOUND] = stringMusicalNotes;
 		
 		stringThreshold = "Max=" + mMaxThreshold + ", Min=" + mMinThreshold;
@@ -419,7 +420,7 @@ public class SettingsActivity extends Activity{
 		SharedPreferences.Editor editor = pref.edit();
 		
 		editor.putInt(PREF_COLLECTION_TIME, mCollectionTime);
-		editor.putBoolean(PREF_BEEP_METHOD, mMusicalNotesChecked);
+		editor.putBoolean(PREF_BEEP_METHOD, mBeepChecked);
 		editor.putBoolean(PREF_PHONE_FRONT_PLACEMENT, mFrontPlacement);
 		
 		editor.putInt(PREF_MAX_THRESHOLD, mMaxThreshold);
@@ -429,12 +430,12 @@ public class SettingsActivity extends Activity{
 		editor.commit();
 		
 		Log.i("setting", "saveSettingValues======");
-		Log.i("setting", "'PREF_COLLECTION_TIME: " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD: " + mMusicalNotesChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD: " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD: " + mMinThreshold);
+		Log.i("setting", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
+		Log.i("setting", "PREF_BEEP_METHOD          : " + mBeepChecked);
+		Log.i("setting", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
+		Log.i("setting", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
 		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mFrontPlacement);
-		Log.i("setting", "PREF_DATA_KEEPING_TIME: " + mDataKeepingTime);
+		Log.i("setting", "PREF_DATA_KEEPING_TIME    : " + mDataKeepingTime);
 	}
 	
 

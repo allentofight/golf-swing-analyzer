@@ -48,13 +48,16 @@ public class DatabaseHandler extends SQLiteOpenHelper
 	
 	private static final String X_MAX = "xmax";
 	private static final String X_MAX_TIME = "xmax_time";
+	
 	private static final String X_MIN = "xmin";
 	private static final String X_MIN_TIME = "xmin_time";
 	
 	private static final String Y_MAX = "ymax";
 	private static final String Y_MAX_TIME = "ymax_time";
+	
 	private static final String Y_MIN = "ymin";
 	private static final String Y_MIN_TIME = "ymin_time";
+	
 	
 	/*
 	 * Index of Columns
@@ -325,5 +328,6 @@ public class DatabaseHandler extends SQLiteOpenHelper
 
 		db.delete(TABLE_SWINGSTATS, null, null);
 		cursor.requery();
+		db.close();
 	}
 }

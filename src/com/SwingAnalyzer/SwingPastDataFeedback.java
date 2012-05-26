@@ -1,13 +1,13 @@
 /*-----------------------------------------------------------------------------------------
-  File:   SwingFeedback.java
+File:   SwingPastDataFeedback.java
 
-  Author: Jung Chang Su
-  -----------------------------------------------------------------------------------------
-  Copyright (C) 2012 SICS.
+Author: Jung Chang Su
+-----------------------------------------------------------------------------------------
+Copyright (C) 2012 SICS.
+
   
-    
-  
-  *----------------------------------------------------------------------------------------*/
+
+*----------------------------------------------------------------------------------------*/
 package com.SwingAnalyzer;
 
 import java.io.File;
@@ -35,7 +35,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.*;
 
-public class SwingFeedback extends Activity{
+public class SwingPastDataFeedback extends Activity{
 	
 	final static String OUTPUT_FILENAME = "swing.dat";
 	
@@ -139,9 +139,6 @@ public class SwingFeedback extends Activity{
 	
 	final static int MUSICAL_NOTE_NUM = 35;
 	
-	final static int DRAW_GRAPH = 1;
-	
-	
 	ImageView mXImages[] = new ImageView[TIME_SCALE];
 	ImageView mYImages[] = new ImageView[TIME_SCALE];
 	
@@ -210,6 +207,12 @@ public class SwingFeedback extends Activity{
 	
 	int mWhichAxis;
 	
+	private String mStartDateString;
+	private String mStartTimeString;
+	private boolean mSwingStarted;
+	
+	//DetectPeakThread mDetectPeakThread;
+	
 	DetectSwingThread mDetectSwingThread;
 	/* 
 	 * Database Handler
@@ -246,21 +249,26 @@ public class SwingFeedback extends Activity{
 	
 	SwingTimeScale mXTimeScale;
 	SwingTimeScale mYTimeScale;
+
+	//Ruler mRulerX;
+	//Ruler mRulerY;
+	
 	/*
 	 * Widgets 
 	 */
-	Button mAnalysisButton;	
-	Button mBackButton;
-	//Button mFileManagerButton;
-	Button mFeedbackGraphButton;
+	Button mAnalysisButton;
+	Button mStatDatabaseButton;
+	Button mHomeButton;
+	Button mFileManagerButton;
+	Button mGraphButton;
 	
 	TextView mXTextView;
 	TextView mYTextView;
 	TextView mFeedbackTextView;
 	
-	//Spinner mSwingFileSpinner;
+	Spinner mSwingFileSpinner;
 	
-	// ArrayAdapter<String> spinnerAdapter;
+	ArrayAdapter<String> spinnerAdapter;
 	/* 
 	 * SharedPreference Values 
 	 */
@@ -275,7 +283,7 @@ public class SwingFeedback extends Activity{
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.swing_feedback);
+		setContentView(R.layout.swing_pastdata_feedback);
 		
 		/*=================================================================
 		 * Draw X-axis time scales
@@ -299,24 +307,23 @@ public class SwingFeedback extends Activity{
 		/* 
 		 * Widgets
 		 */
-		/*
 		mSwingFileSpinner = (Spinner)findViewById(R.id.feedback_swing_spinner);
 		mSwingFileSpinner.setOnItemSelectedListener(mItemSelectedListener);
 		
-    	spinnerAdapter = new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
+		spinnerAdapter = new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
 									android.R.layout.simple_spinner_item);
-		*/
-		
-		mAnalysisButton = (Button)findViewById(R.id.feedback_result_button);
+
+		mAnalysisButton = (Button)findViewById(R.id.past_feedback_result_button);
 		mAnalysisButton.setOnClickListener(mClickListener);
 		
-		/*
-		mFeedbackGraphButton = (Button)findViewById(R.id.feedback_graph_button);
-		mFeedbackGraphButton.setOnClickListener(mClickListener);
-		*/
+		mFileManagerButton = (Button)findViewById(R.id.past_feedback_filemananger_button);
+		mFileManagerButton.setOnClickListener(mClickListener);
 		
-		mBackButton = (Button)findViewById(R.id.feedback_back_button);
-		mBackButton.setOnClickListener(mClickListener);
+		mGraphButton = (Button)findViewById(R.id.past_feedback_graph_button);
+		mGraphButton.setOnClickListener(mClickListener);
+
+		mHomeButton = (Button)findViewById(R.id.past_feedback_home_button);
+		mHomeButton.setOnClickListener(mClickListener);
 		
 		mXTextView = (TextView)findViewById(R.id.feedback_x_textview);
 		mYTextView = (TextView)findViewById(R.id.feedback_y_textview);
@@ -329,6 +336,8 @@ public class SwingFeedback extends Activity{
 		
 		initSoundPool();
 		
+		
+		//searchSwingFiles();
 	}
 
 	@Override
@@ -339,8 +348,6 @@ public class SwingFeedback extends Activity{
 		if(mDatabaseHandler != null)
 			mDatabaseHandler.close();
 		
-		if(mSwingDataArrayList.size() > 0)
-			mSwingDataArrayList.clear();
 		
 		initMemberVariables();
 	}
@@ -355,44 +362,45 @@ public class SwingFeedback extends Activity{
 	protected void onResume() {
 		// TODO Auto-generated method stub
 		super.onResume();
-		
 		searchSwingFiles();
-		
 		displayXYResultText(X_AXIS, mMaxThreshold, -1, 0);
 		displayXYResultText(Y_AXIS, mMaxThreshold, -1, 0);
-
-		try 
-		{
-			Thread.sleep(1000);
-		} 
-		catch(InterruptedException e) 
-		{
-			System.out.println(e.getMessage());
-		}
-		
-		analyzeSwingData();
 	}
-
 
 	Button.OnClickListener mClickListener = new View.OnClickListener() {
 		
 		public void onClick(View v) {
 			switch(v.getId())
 			{
-			case R.id.feedback_result_button:
+			case R.id.past_feedback_result_button:
 				analyzeSwingData();
 				break;
 /*				
-			case R.id.feedback_graph_button:
-				
-				Intent intent = new Intent(SwingFeedback.this, SwingGraphActivity.class);
-				intent.putExtra("file", mSelectedFile);				
-				startActivity(intent);				
-				finish();				
+			case R.id.stats_db_button:
+				startActivity(new Intent(SwingPastDataFeedback.this, StatisticsActivity.class));
+				finish();
 				break;
 */				
-			case R.id.feedback_back_button:
-				startActivity(new Intent(SwingFeedback.this, CollectingAccelerationData.class));
+			case R.id.past_feedback_filemananger_button:
+				startActivity(new Intent(SwingPastDataFeedback.this, FileManagerActivity.class));
+				finish();
+				break;
+			case R.id.past_feedback_graph_button:
+				if(mSelectedFile.isEmpty())
+				{
+					Toast.makeText(SwingPastDataFeedback.this, 
+									"Error. There is no selected file", Toast.LENGTH_LONG).show();
+				}
+				else
+				{
+					Intent intent = new Intent(SwingPastDataFeedback.this, 
+												SwingGraphActivity.class);
+					intent.putExtra("file", mSelectedFile);
+					startActivity(intent);
+				}
+				break;
+			case R.id.past_feedback_home_button:
+				startActivity(new Intent(SwingPastDataFeedback.this, Home.class));
 				finish();
 				break;
 			}
@@ -400,7 +408,6 @@ public class SwingFeedback extends Activity{
 		}
 	};
 	
-	/*
 	private AdapterView.OnItemSelectedListener mItemSelectedListener = new AdapterView.OnItemSelectedListener()
 	{
 
@@ -416,8 +423,8 @@ public class SwingFeedback extends Activity{
 		}
 		
 	};
-	*/
-    /*=============================================================================
+
+  /*=============================================================================
 	 * Name: searchSwingFiles
 	 * 
 	 * Description:
@@ -430,19 +437,19 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/
 	public void searchSwingFiles()
 	{
-    	String stringSdPath = "";
-    	
-    	stringSdPath = getSDPathName();
-    	
-    	if(stringSdPath != Environment.MEDIA_UNMOUNTED)
-    	{
-    		searchFilesinSdPath(stringSdPath + GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR);    		
-    	}
-    	else
-    		mSelectedFile = "";
+  	String stringSdPath = "";
+  	
+  	stringSdPath = getSDPathName();
+  	
+  	if(stringSdPath != Environment.MEDIA_UNMOUNTED)
+  	{
+  		searchFilesinSdPath(stringSdPath + GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR);    		
+  	}
+  	else
+  		mSelectedFile = "";
 	}
 	
-    /*=============================================================================
+  /*=============================================================================
 	 * Name: getSDPathName
 	 * 
 	 * Description:
@@ -452,24 +459,27 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		String
 	 *=============================================================================*/	
-    public String getSDPathName()
-    {
-        String ext = Environment.getExternalStorageState();
-        String sdPath = "";
-        if(ext.equals(Environment.MEDIA_MOUNTED))
-        {
-        	sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        }
-        else
-        {
-        	sdPath = Environment.MEDIA_UNMOUNTED;
-        	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
-        }
-        
-    	return sdPath;
-    }
-    
-    /*=============================================================================
+  public String getSDPathName()
+  {
+      String ext = Environment.getExternalStorageState();
+      String sdPath = "";
+      if(ext.equals(Environment.MEDIA_MOUNTED))
+      {
+      	sdPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+      	//mSdPath = sdPath;
+      }
+      else
+      {
+      	sdPath = Environment.MEDIA_UNMOUNTED;
+      	
+      	//mSdPath = "";
+      	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
+      }
+      
+  	return sdPath;
+  }
+  
+  /*=============================================================================
 	 * Name: searchFilesinSdPath
 	 * 
 	 * Description:
@@ -480,34 +490,30 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/	    
-    public void searchFilesinSdPath(String swingDataPath)
-    {
-    	File swingDir = new File(swingDataPath);    	
-    	
-    	Log.i("feedback", "Collected Swing Dir Path: " + swingDataPath);
-    	
-    	if(swingDir.isDirectory())
-    	{
-        	String[] fileNameList = swingDir.list(new FilenameFilter()
-        	{
-        		public boolean accept(File dir, String name)
-        		{
-        			return name.endsWith("dat");
-        		}
-        	});
-        	
-        	
-        	String[] sortedFileNameList = new String[fileNameList.length];
-        	sortedFileNameList = doNaturalSorting(fileNameList);
+  public void searchFilesinSdPath(String swingDataPath)
+  {
+  	File swingDir = new File(swingDataPath);    	
+  	
+  	Log.i("feedback", "Collected Swing Dir Path: " + swingDataPath);
+  	
+  	if(swingDir.isDirectory())
+  	{
+      	String[] fileNameList = swingDir.list(new FilenameFilter()
+      	{
+      		public boolean accept(File dir, String name)
+      		{
+      			return name.endsWith("dat");
+      		}
+      	});
+      	
+      	
+      	String[] sortedFileNameList = new String[fileNameList.length];
+      	sortedFileNameList = doNaturalSorting(fileNameList);
 
-        	//insertFileNameToSpinner(sortedFileNameList);
-        	
-        	mSelectedFile = sortedFileNameList[0];
-        	Log.i("feedback", "The last created file: " + mSelectedFile);
-        	
-    	}
-    	
-    }
+      	insertFileNameToSpinner(sortedFileNameList);
+  	}
+  	
+  }
 	/*=============================================================================
 	 * Name: doNaturalSorting
 	 * 
@@ -518,8 +524,8 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/	    
-    private String[] doNaturalSorting(String[] array)
-    {	
+  private String[] doNaturalSorting(String[] array)
+  {	
 		String tmp = "";
 		
 		String s1 = "";
@@ -549,8 +555,33 @@ public class SwingFeedback extends Activity{
 			}
 		}
 		
-    	return array;
-    }
+  	return array;
+  }
+
+	/*=============================================================================
+	 * Name: insertFileNameToSpinner
+	 * 
+	 * Description:
+	 * 		Insert file names to a Spinner widget		
+	 * 
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	    
+  private void insertFileNameToSpinner(String[] filenames)
+  {
+  	/*
+  	ArrayAdapter<String> spinnerAdapter = 
+  						new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
+  											android.R.layout.simple_spinner_item,
+  											filenames);
+  	*/
+  	for(int i = 0; i < filenames.length; i++)
+  	{
+  		spinnerAdapter.add(filenames[i]);
+  	}
+  	spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+  	mSwingFileSpinner.setAdapter(spinnerAdapter);
+  }
 
 
 	/*=============================================================================
@@ -571,6 +602,10 @@ public class SwingFeedback extends Activity{
 		mSelectedFile = "";
 		
 		mWhichAxis = 0;
+		
+		mStartDateString = "";
+		mStartTimeString = "";
+		mSwingStarted = false;
 		
 		for(int i=0; i<TIME_SCALE; i++)
 		{
@@ -653,44 +688,44 @@ public class SwingFeedback extends Activity{
 	public boolean getResultFileName()
 	{
 		boolean isFound = false;
-        String ext = Environment.getExternalStorageState();
-        String resultFile = "";
-        
-        if(mSelectedFile.isEmpty())
-        {
-        	return false;
-        }
-        
-        if(ext.equals(Environment.MEDIA_MOUNTED))
-        {
-        	mSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath();  
-        	
-        	resultFile = mSDCardPath + COLLECTED_SWING_PATH + mSelectedFile;
-        	
-        	File file = new File(resultFile);
-        	
-        	if(file.exists())
-        	{
-        		mResultFileName = resultFile;
-        		isFound = true;
-        		Log.i("feedback", "ResultFileName: " + mResultFileName);
-        	}
-        	else
-        	{
-        		resultFile = "";
-        		isFound = false;
-        		Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
-        	}
-        }
-        else
-        {
-        	mSDCardPath = Environment.MEDIA_UNMOUNTED;
-        	mResultFileName = "";
-        	isFound = false;
-        	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
-        }
-        
-        return isFound;
+      String ext = Environment.getExternalStorageState();
+      String resultFile = "";
+      
+      if(mSelectedFile.isEmpty())
+      {
+      	return false;
+      }
+      
+      if(ext.equals(Environment.MEDIA_MOUNTED))
+      {
+      	mSDCardPath = Environment.getExternalStorageDirectory().getAbsolutePath();  
+      	
+      	resultFile = mSDCardPath + COLLECTED_SWING_PATH + mSelectedFile;
+      	
+      	File file = new File(resultFile);
+      	
+      	if(file.exists())
+      	{
+      		mResultFileName = resultFile;
+      		isFound = true;
+      		Log.i("feedback", "ResultFileName: " + mResultFileName);
+      	}
+      	else
+      	{
+      		resultFile = "";
+      		isFound = false;
+      		Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
+      	}
+      }
+      else
+      {
+      	mSDCardPath = Environment.MEDIA_UNMOUNTED;
+      	mResultFileName = "";
+      	isFound = false;
+      	Toast.makeText(this, "SD card is not mounted", Toast.LENGTH_LONG).show();
+      }
+      
+      return isFound;
 	}
 	
 	/*=============================================================================
@@ -728,6 +763,43 @@ public class SwingFeedback extends Activity{
 		{
 			Toast.makeText(this, "The file name does not exist", Toast.LENGTH_LONG).show();
 		}		
+	}
+	/*=============================================================================
+	 * Name: analyzeSwingData1
+	 * 
+	 * Description:
+	 * 		Create a thread to detect the peak points of X and Y-axis data
+	 * 		Another way to detect a start point
+	 * Return:
+	 * 		None
+	 *=============================================================================*/	
+	public void analyzeSwingData1()
+	{
+		resetIconColor(X_AXIS);
+		resetIconColor(Y_AXIS);
+		clearSwingResult();
+		
+		if(getResultFileName() == true)
+			readArrayListFromFile();
+		else
+		{
+			Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
+			return;
+		}
+		
+		if(!mResultFileName.isEmpty())
+		{
+			mDetectSwingThread = new DetectSwingThread(FeedbackHandler,
+														(ArrayList)mSwingDataArrayList,
+														mMaxThreshold, mMinThreshold, 1);
+			mDetectSwingThread.setDaemon(true);
+			mDetectSwingThread.start();
+		}
+		else
+		{
+			Toast.makeText(this, "The file name does not exist", Toast.LENGTH_LONG).show();
+		}		
+		
 	}
 	/*=============================================================================
 	 * Name: startSwingFeedback
@@ -840,134 +912,134 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/ 	
-    public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
-    {
-    	int interval = 0;
-    	float maxX, minX;
-    	float maxY, minY;    	
-    	int timestamp = 0; 
-    	int startTimestamp = 0;
-    	int endTimestamp = 0;
-    	int arrIndex = 0;
-    	int prevIndex = 0;
-    	float x, y;
-    	
-    	x = y = 0;
-    	if(eIndex - sIndex == 0)
-    	{
-    		showMsgDialog("Errpr", "Cannot find critical points.");
-    		return;
-    	}
-    	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
-    	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
-    	
-    	minX = maxX;
-    	minY = maxY;
+  public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
+  {
+  	int interval = 0;
+  	float maxX, minX;
+  	float maxY, minY;    	
+  	int timestamp = 0; 
+  	int startTimestamp = 0;
+  	int endTimestamp = 0;
+  	int arrIndex = 0;
+  	int prevIndex = 0;
+  	float x, y;
+  	
+  	x = y = 0;
+  	if(eIndex - sIndex == 0)
+  	{
+  		showMsgDialog("Errpr", "Cannot find critical points.");
+  		return;
+  	}
+  	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
+  	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
+  	
+  	minX = maxX;
+  	minY = maxY;
 
-    	startTimestamp = mSwingDataArrayList.get(sIndex).mTimestamp;
-    	endTimestamp = mSwingDataArrayList.get(eIndex).mTimestamp;
-    	
-    	interval = (endTimestamp - startTimestamp) / timescale;
-    	
-    	for(int i=sIndex; i<=eIndex; i++)
-    	{
-    		timestamp = mSwingDataArrayList.get(i).mTimestamp;
-    		x = mSwingDataArrayList.get(i).mXvalue;
-    		y = mSwingDataArrayList.get(i).mYvalue;
-    		
-    		arrIndex = (timestamp - startTimestamp) / interval;
-    		if(arrIndex >= TIME_SCALE)
-    			arrIndex = TIME_SCALE -1;
-    		
-    		if((arrIndex - prevIndex) == 1)
-    		{
-    			if(Math.abs(maxX) < Math.abs(minX))
-    			{
-    				Log.i("realswing", "[" + prevIndex +"] " 
-    									+ "Abs|X|: maxX=" + Math.abs(maxX) 
-    									+ " minX=" + Math.abs(minX));
-    				if(!mBeepChecked)
-    					mSwingXResult[prevIndex] = (int)minX;
-    				
-    				mSwingXAccelTextResult[prevIndex] = (int)minX;
-    			}
-    			else
-    			{
-    				Log.i("realswing", "[" + prevIndex +"] " 
+  	startTimestamp = mSwingDataArrayList.get(sIndex).mTimestamp;
+  	endTimestamp = mSwingDataArrayList.get(eIndex).mTimestamp;
+  	
+  	interval = (endTimestamp - startTimestamp) / timescale;
+  	
+  	for(int i=sIndex; i<=eIndex; i++)
+  	{
+  		timestamp = mSwingDataArrayList.get(i).mTimestamp;
+  		x = mSwingDataArrayList.get(i).mXvalue;
+  		y = mSwingDataArrayList.get(i).mYvalue;
+  		
+  		arrIndex = (timestamp - startTimestamp) / interval;
+  		if(arrIndex >= TIME_SCALE)
+  			arrIndex = TIME_SCALE -1;
+  		
+  		if((arrIndex - prevIndex) == 1)
+  		{
+  			if(Math.abs(maxX) < Math.abs(minX))
+  			{
+  				Log.i("realswing", "[" + prevIndex +"] " 
+  									+ "Abs|X|: maxX=" + Math.abs(maxX) 
+  									+ " minX=" + Math.abs(minX));
+  				if(!mBeepChecked)
+  					mSwingXResult[prevIndex] = (int)minX;
+  				
+  				mSwingXAccelTextResult[prevIndex] = (int)minX;
+  			}
+  			else
+  			{
+  				Log.i("realswing", "[" + prevIndex +"] " 
 							+ "Abs|X|: maxX=" + Math.abs(maxX) 
 							+ " minX=" + Math.abs(minX));
-    				
-    				if(!mBeepChecked)
-    					mSwingXResult[prevIndex] = (int)maxX;
-    				
-    				mSwingXAccelTextResult[prevIndex] = (int)maxX;
-    			}
+  				
+  				if(!mBeepChecked)
+  					mSwingXResult[prevIndex] = (int)maxX;
+  				
+  				mSwingXAccelTextResult[prevIndex] = (int)maxX;
+  			}
 
-    			if(Math.abs(maxY) < Math.abs(minY))
-    			{
-    				Log.i("realswing","[" + prevIndex +"] " 
-    									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
-    									+ " minY=" + Math.abs(minY));
-    				if(!mBeepChecked)
-    					mSwingYResult[prevIndex] = (int)minY;
-    				
-    				mSwingYAccelTextResult[prevIndex] = (int)minY;
-    			}
-    			else
-    			{
-    				Log.i("realswing","[" + prevIndex +"] " 
-    								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
-    								+ " minY=" + Math.abs(minY));
-    				if(!mBeepChecked)
-    					mSwingYResult[prevIndex] = (int)maxY;
-    				
-    				mSwingYAccelTextResult[prevIndex] = (int)maxY;
-    			}
+  			if(Math.abs(maxY) < Math.abs(minY))
+  			{
+  				Log.i("realswing","[" + prevIndex +"] " 
+  									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+  									+ " minY=" + Math.abs(minY));
+  				if(!mBeepChecked)
+  					mSwingYResult[prevIndex] = (int)minY;
+  				
+  				mSwingYAccelTextResult[prevIndex] = (int)minY;
+  			}
+  			else
+  			{
+  				Log.i("realswing","[" + prevIndex +"] " 
+  								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+  								+ " minY=" + Math.abs(minY));
+  				if(!mBeepChecked)
+  					mSwingYResult[prevIndex] = (int)maxY;
+  				
+  				mSwingYAccelTextResult[prevIndex] = (int)maxY;
+  			}
 
-    			// Initialize maximum and minimum values in each time slot
-    			maxX = mSwingDataArrayList.get(i).mXvalue;
-    			minX = mSwingDataArrayList.get(i).mXvalue;
-    			
-    			maxY = mSwingDataArrayList.get(i).mYvalue;
-    			minY = mSwingDataArrayList.get(i).mYvalue;
-    			prevIndex = arrIndex;
-    		}
-    		
-    		if(x <= minX)
-    		{
-    			minX = x;
-    		}
-    		
-    		if(x >= maxX)
-    		{
-    			maxX = x;
-    		}
-    		
-    		if(y <= minY)
-    		{
-    			minY = y;
-    		}
-    		
-    		if(y >= maxY)
-    		{
-    			maxY = y; 
-    		}
-    	}
-    	
-    	/* Debug
-    	 * 
-    	 */
-    	for(int j=0; j<TIME_SCALE; j++)
-    	{
-    		Log.i("feedback", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
-    	}
+  			// Initialize maximum and minimum values in each time slot
+  			maxX = mSwingDataArrayList.get(i).mXvalue;
+  			minX = mSwingDataArrayList.get(i).mXvalue;
+  			
+  			maxY = mSwingDataArrayList.get(i).mYvalue;
+  			minY = mSwingDataArrayList.get(i).mYvalue;
+  			prevIndex = arrIndex;
+  		}
+  		
+  		if(x <= minX)
+  		{
+  			minX = x;
+  		}
+  		
+  		if(x >= maxX)
+  		{
+  			maxX = x;
+  		}
+  		
+  		if(y <= minY)
+  		{
+  			minY = y;
+  		}
+  		
+  		if(y >= maxY)
+  		{
+  			maxY = y; 
+  		}
+  	}
+  	
+  	/* Debug
+  	 * 
+  	 */
+  	for(int j=0; j<TIME_SCALE; j++)
+  	{
+  		Log.i("feedback", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
+  	}
 
-    	for(int j=0; j<TIME_SCALE; j++)
-    	{
-    		Log.i("feedback", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
-    	}
+  	for(int j=0; j<TIME_SCALE; j++)
+  	{
+  		Log.i("feedback", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
+  	}
 
-    }
+  }
 
 	/*=============================================================================
 	 * Name: showMsgDialog
@@ -978,7 +1050,7 @@ public class SwingFeedback extends Activity{
 	public void showMsgDialog(String title, String message)
 	{
 		AlertDialog.Builder alertDlg 
-		= new AlertDialog.Builder(SwingFeedback.this);
+		= new AlertDialog.Builder(SwingPastDataFeedback.this);
 	
 		alertDlg.setTitle(title);
 		alertDlg.setMessage(message);
@@ -1285,59 +1357,61 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/    
-    Handler FeedbackHandler = new Handler()
-    {
-    	public void handleMessage(Message msg)
-    	{
-    		String handlerText = "";
-    		switch(msg.what)
-    		{
-    		case MSG_START_POINT:
-    			mStartIndex = msg.arg1;
-    			handlerText = "Start Time: " + msg.arg2;
-    			displayResultText(handlerText);
-    			break;
-    		case MSG_END_POINT:
-    			mEndIndex = msg.arg1;
-    			handlerText = "End Time  : " + msg.arg2;    			
-    			displayResultText(handlerText);
-    			break;
-    		
-    		case MSG_PEAK_X_MAX:    			
-    			mXMaxIndex = msg.arg1;    
-    			displayXYResultText(X_AXIS, mMaxThreshold, mXMaxIndex, msg.arg2);
-    			break;
-    		case MSG_PEAK_X_MIN:
-    			mXMinIndex = msg.arg1;
-    			break;
-    		case MSG_PEAK_Y_MAX:
-    			mYMaxIndex = msg.arg1;
-    			break;    			
-    		case MSG_PEAK_Y_MIN:
-    			mYMinIndex = msg.arg1;  
-    			displayXYResultText(Y_AXIS, mMinThreshold, mYMinIndex, msg.arg2);
-    			break;
-    		case MSG_DETECT_DONE_X:
-    			break;
-    		case MSG_DETECT_DONE_Y:
-    			break;
-    		case MSG_DETECT_DONE_ALL:
-    			if((msg.arg1 == -1) && (msg.arg2 == -1))
-    			{
-    				showMsgDialog("Detection Fail", 
-    								"Swing is too weak to detect any points!");
+  Handler FeedbackHandler = new Handler()
+  {
+  	public void handleMessage(Message msg)
+  	{
+  		String handlerText = "";
+  		float value = 0;
+  		
+  		switch(msg.what)
+  		{
+  		case MSG_START_POINT:
+  			mStartIndex = msg.arg1;
+  			handlerText = "Start Time: " + msg.arg2;
+  			displayResultText(handlerText);
+  			break;
+  		case MSG_END_POINT:
+  			mEndIndex = msg.arg1;
+  			handlerText = "End Time  : " + msg.arg2;    			
+  			displayResultText(handlerText);
+  			break;
+  		
+  		case MSG_PEAK_X_MAX:    			
+  			mXMaxIndex = msg.arg1;    
+  			displayXYResultText(X_AXIS, mMaxThreshold, mXMaxIndex, msg.arg2);
+  			break;
+  		case MSG_PEAK_X_MIN:
+  			mXMinIndex = msg.arg1;
+  			break;
+  		case MSG_PEAK_Y_MAX:
+  			mYMaxIndex = msg.arg1;
+  			break;    			
+  		case MSG_PEAK_Y_MIN:
+  			mYMinIndex = msg.arg1;  
+  			displayXYResultText(Y_AXIS, mMinThreshold, mYMinIndex, msg.arg2);
+  			break;
+  		case MSG_DETECT_DONE_X:
+  			break;
+  		case MSG_DETECT_DONE_Y:
+  			break;
+  		case MSG_DETECT_DONE_ALL:
+  			if((msg.arg1 == -1) && (msg.arg2 == -1))
+  			{
+  				showMsgDialog("Detection Fail", 
+  								"Swing is too weak to detect any points!");
 
-    			}
-    			else
-    			{
-    				startSwingFeedback();
-    				addFeedbackToDatabase();
-    			}
-    			break;
-    		}
-    		
-    	}
-    };
+  			}
+  			else
+  			{
+  				startSwingFeedback();
+  				//addFeedbackToDatabase();
+  			}
+  			break;
+  		}
+  		
+  	}
+  };
 	
 	/*=============================================================================
 	 * Name: displayAnalysisResult
@@ -1516,49 +1590,49 @@ public class SwingFeedback extends Activity{
 		mTimerHandler.sendEmptyMessage(0);
 	}
 	
-    public void displayResultText(String text)
-    {
-    	mFeedbackTextView.append(text + "\n");
-    	Log.i("feedback", text);
-    }
-    
-    public void displayXYResultText(int axis, int threshold, int index, int time)
-    {
-    	String text = "";
-    	int value = 0;
-    	
-    	if(axis == X_AXIS)
-    	{
-    		if(index != -1)
-    		{
+  public void displayResultText(String text)
+  {
+  	mFeedbackTextView.append(text + "\n");
+  	Log.i("feedback", text);
+  }
+  
+  public void displayXYResultText(int axis, int threshold, int index, int time)
+  {
+  	String text = "";
+  	int value = 0;
+  	
+  	if(axis == X_AXIS)
+  	{
+  		if(index != -1)
+  		{
 	    		value = (int)mSwingDataArrayList.get(index).mXvalue;
 	    	
 	    		text = "X-axis(Threshold:" + mMaxThreshold+") " 
 					  +  "+Peak:" + value + ", Time:" + time;
-    		}
-    		else
-    		{
-        		text = "X-axis(Threshold:" + mMaxThreshold + ") ";
-    		}
-    		mXTextView.setText(text);
-    	}
-    	else
-    	{
-    		if(index != -1)
-    		{
-    			value = (int)mSwingDataArrayList.get(index).mYvalue;
-    			text = "Y-axis(Threshold:" + mMinThreshold+") " 
-    					+  "-Peak:" + value + ", Time:" + time;
-    		}
-    		else
-    		{
-    			text = "Y-axis(Threshold:" + mMinThreshold +") ";
-    		}
-    		mYTextView.setText(text);
-    		
-    	}
+  		}
+  		else
+  		{
+      		text = "X-axis(Threshold:" + mMaxThreshold + ") ";
+  		}
+  		mXTextView.setText(text);
+  	}
+  	else
+  	{
+  		if(index != -1)
+  		{
+  			value = (int)mSwingDataArrayList.get(index).mYvalue;
+  			text = "Y-axis(Threshold:" + mMinThreshold+") " 
+  					+  "-Peak:" + value + ", Time:" + time;
+  		}
+  		else
+  		{
+  			text = "Y-axis(Threshold:" + mMinThreshold +") ";
+  		}
+  		mYTextView.setText(text);
+  		
+  	}
 
-    }
+  }
 	
 	/*=============================================================================
 	 * Name: showFeedbackResultText
@@ -1647,8 +1721,8 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/     		
 	public void readArrayListFromFile() 
 	{
-    	FileInputStream inputStream = null;
-    	ObjectInputStream objInputStream = null;
+  	FileInputStream inputStream = null;
+  	ObjectInputStream objInputStream = null;
 
 		try
 		{
@@ -1678,53 +1752,50 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		String
 	 *=============================================================================*/	                
-    public String getDateString()
-    {
-    	String stringDate = "";
-    	
-    	Calendar today = Calendar.getInstance();
-    	
-    	
-    	stringDate = ((today.get(Calendar.MONTH) + 1) + "/"
-    					+ today.get(Calendar.DATE) + "/"
-    					+ today.get(Calendar.YEAR));
-    	
-    	return stringDate;
-    	
-    	/*
-    	 * 
-    	 * String stringMonthDate = "";
-    	String stringMonth = "";
-    	String stringDate = "";
-    	String stringYear = "";
-    	
-    	int month = (today.get(Calendar.MONTH) +1);
-    	
-    	
-    	if(month < 10)
-    		stringMonth = "0" + month + "/"; 
-    	else
-    		stringMonth = "" + month + "/";
-    	
-    	
-    	int date = today.get(Calendar.DATE);
-    	
-    	if(date < 10)
-    		stringDate = "0" + date + "/";
-    	else
-    		stringDate = "" + date + "/";
-    	
-    	
-    	int year = today.get(Calendar.YEAR);
-    	stringYear = "" + year;
-    	
-    	stringMonthDate = stringMonth + stringDate + stringYear;
-    	
-    	return stringMonthDate;
-    	*/
-    	
-    }
-    
+  public String getDateString()
+  {
+  	String stringMonthDate = "";
+  	String stringMonth = "";
+  	String stringDate = "";
+  	String stringYear = "";
+  	
+  	Calendar today = Calendar.getInstance();
+  	
+  	
+  	stringDate = ((today.get(Calendar.MONTH) + 1) + "/"
+  					+ today.get(Calendar.DATE) + "/"
+  					+ today.get(Calendar.YEAR));
+  	
+  	return stringDate;
+  	
+  	/*
+  	int month = (today.get(Calendar.MONTH) +1);
+  	
+  	
+  	if(month < 10)
+  		stringMonth = "0" + month + "/"; 
+  	else
+  		stringMonth = "" + month + "/";
+  	
+  	
+  	int date = today.get(Calendar.DATE);
+  	
+  	if(date < 10)
+  		stringDate = "0" + date + "/";
+  	else
+  		stringDate = "" + date + "/";
+  	
+  	
+  	int year = today.get(Calendar.YEAR);
+  	stringYear = "" + year;
+  	
+  	stringMonthDate = stringMonth + stringDate + stringYear;
+  	
+  	return stringMonthDate;
+  	*/
+  	
+  }
+  
 	/*=============================================================================
 	 * Name: getTimeString
 	 * 
@@ -1735,36 +1806,36 @@ public class SwingFeedback extends Activity{
 	 * Return:
 	 * 		String
 	 *=============================================================================*/	                
-    public String getTimeString()
-    {
-    	String stringTime = "";
-    	
-    	int hour, min, sec;
-    	
-    	hour = min = sec = 0;
-    	
-    	Calendar today = Calendar.getInstance();
-    	
-    	hour = today.get(Calendar.HOUR_OF_DAY);
-    	if(hour < 10)
-    		stringTime += "0" + hour + ":";
-    	else
-    		stringTime += hour + ":";
-    	
-    	min = today.get(Calendar.MINUTE);
-    	if(min < 10)
-    		stringTime += "0" + min + ":";
-    	else
-    		stringTime += min + ":";    	
-    	
-    	sec = today.get(Calendar.SECOND);
-    	if(sec < 10)
-    		stringTime += "0" + sec;
-    	else
-    		stringTime += sec;
-    	
-    	return stringTime;
-    }
+  public String getTimeString()
+  {
+  	String stringTime = "";
+  	
+  	int hour, min, sec;
+  	
+  	hour = min = sec = 0;
+  	
+  	Calendar today = Calendar.getInstance();
+  	
+  	hour = today.get(Calendar.HOUR_OF_DAY);
+  	if(hour < 10)
+  		stringTime += "0" + hour + ":";
+  	else
+  		stringTime += hour + ":";
+  	
+  	min = today.get(Calendar.MINUTE);
+  	if(min < 10)
+  		stringTime += "0" + min + ":";
+  	else
+  		stringTime += min + ":";    	
+  	
+  	sec = today.get(Calendar.SECOND);
+  	if(sec < 10)
+  		stringTime += "0" + sec;
+  	else
+  		stringTime += sec;
+  	
+  	return stringTime;
+  }
 
 	/*=============================================================================
 	 * Name: addFeedbackToDatabase
@@ -1777,8 +1848,8 @@ public class SwingFeedback extends Activity{
 	 *=============================================================================*/     			
 	public void addFeedbackToDatabase()
 	{
-		String stringDate= "";
-		String stringTime= "";
+		String stringDate= getDateString();
+		String stringTime= getTimeString();
 		String x_max = "";
 		String x_max_time = "";
 		String x_min = "";
@@ -1790,8 +1861,8 @@ public class SwingFeedback extends Activity{
 
 		AccelerationData element = new AccelerationData();
 
-		stringDate= getDateString();
-		stringTime= getTimeString();
+		//date = mStartDateString;
+		//time = mStartTimeString;
 		
 		element = mSwingDataArrayList.get(mXMaxIndex);
 		x_max = String.valueOf(element.mXvalue);

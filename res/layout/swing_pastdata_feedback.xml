@@ -4,70 +4,41 @@
     android:layout_height="fill_parent"
     android:background="#000000"
     android:orientation="vertical" >
-
-    <LinearLayout
-        android:id="@+id/layer_bottom"
-        android:layout_width="fill_parent"
-        android:layout_height="60dp"
-        android:orientation="horizontal" >
-        <Button
-            android:id="@+id/feedback_result_button"
-            android:layout_width="80dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:text="Result"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-		<!-- 
-        <Button
-            android:id="@+id/feedback_graph_button"
-            android:layout_width="80dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="2"
-            android:text="Graph"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-		 -->
-        <Button
-            android:id="@+id/feedback_back_button"
-            android:layout_width="80dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:text="Back"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-    </LinearLayout>
-
-    	<LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="0.5dp"
-        android:background="#FFFFFF"
-        android:orientation="vertical" >
-    </LinearLayout>
-
-    	<LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="10dp"
-        android:orientation="vertical" >
-    </LinearLayout>
     
+    <LinearLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+    <Spinner
+        android:id="@+id/feedback_swing_spinner"
+        android:layout_width="240dp"
+        android:layout_height="50dp" />
+	<Button
+    	android:id="@+id/past_feedback_home_button"
+		android:layout_width="60dp"
+		android:layout_height="fill_parent"
+		android:layout_gravity="center"
+		android:layout_weight="1"
+		android:text="Home"
+		android:textAppearance="?android:attr/textAppearanceMedium" />
+
+  </LinearLayout>
     
+	
     <TextView
-        android:id="@+id/feedback_x_textview"
-        android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:text="X-axis" />
-
+       	android:id="@+id/feedback_x_textview"
+       	android:layout_width="fill_parent"
+       	android:layout_height="30dp"
+       	android:text="X-axis" />    
+    
     <!-- X-axis ruler -->
-
     <LinearLayout
-        android:id="@+id/feedback_timescale_x"
-        android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:orientation="vertical" />
-
+	   	android:id="@+id/feedback_timescale_x"
+	   	android:layout_width="fill_parent"
+	   	android:layout_height="40dp"	   
+	   	android:orientation="vertical"/>
+    
     <!-- X axis Image buttons -->
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
@@ -78,11 +49,11 @@
         <ImageView
             android:id="@+id/img_x1"
             android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_weight="1"
-            android:background="#00000000"
-            android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:layout_height="20dp"    
+            android:layout_weight="1"        
+            android:background="#00000000"      
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_x2"
@@ -90,8 +61,8 @@
             android:layout_height="20dp"
             android:layout_weight="1"
             android:background="#00000000"
-            android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:gravity="center"            
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_x3"
@@ -100,7 +71,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_x4"
@@ -109,7 +80,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_x5"
@@ -118,7 +89,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_x6"
@@ -127,45 +98,45 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
-        <ImageView
+		<ImageView
             android:id="@+id/img_x7"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
-        <ImageView
+		<ImageView
             android:id="@+id/img_x8"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
-
-        <ImageView
+            android:src="@drawable/black_button_30"/>
+		
+		<ImageView
             android:id="@+id/img_x9"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
-        <ImageView
+		<ImageView
             android:id="@+id/img_x10"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>		
     </LinearLayout>
-
+    
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="0.5dp"
@@ -173,34 +144,32 @@
         android:orientation="vertical" >
     </LinearLayout>
 
-    <LinearLayout
+     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="10dp"
+        android:layout_height="10dp"    
         android:orientation="vertical" >
     </LinearLayout>
-
-    <!-- Y axis Image buttons -->
-
-    <LinearLayout
+    
+ 	<!-- Y axis Image buttons -->    
+	<LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:orientation="vertical" >
-
-        <TextView
-            android:id="@+id/feedback_y_textview"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:text="Y-axis" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/feedback_timescale_y"
-        android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:orientation="vertical" />
-
+        android:layout_height="30dp"
+        android:orientation="vertical" > 
+    	<TextView
+        	android:id="@+id/feedback_y_textview"
+        	android:layout_width="fill_parent"
+        	android:layout_height="fill_parent"
+        	android:text="Y-axis" />
+	</LinearLayout>
+	
+	
+	<LinearLayout
+	   	android:id="@+id/feedback_timescale_y"
+	   	android:layout_width="fill_parent"
+	   	android:layout_height="40dp"	   
+	   	android:orientation="vertical" />
+	
     <!-- Y axis Image buttons -->
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="30dp"
@@ -215,7 +184,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_y2"
@@ -224,7 +193,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_y3"
@@ -233,7 +202,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_y4"
@@ -242,7 +211,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_y5"
@@ -251,7 +220,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>
 
         <ImageView
             android:id="@+id/img_y6"
@@ -260,8 +229,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
-
+            android:src="@drawable/black_button_30"/>
         <ImageView
             android:id="@+id/img_y7"
             android:layout_width="20dp"
@@ -269,8 +237,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
-
+            android:src="@drawable/black_button_30"/>
         <ImageView
             android:id="@+id/img_y8"
             android:layout_width="20dp"
@@ -278,8 +245,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
-
+            android:src="@drawable/black_button_30"/>
         <ImageView
             android:id="@+id/img_y9"
             android:layout_width="20dp"
@@ -287,8 +253,7 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
-
+            android:src="@drawable/black_button_30"/>
         <ImageView
             android:id="@+id/img_y10"
             android:layout_width="20dp"
@@ -296,33 +261,60 @@
             android:layout_weight="1"
             android:background="#00000000"
             android:gravity="center"
-            android:src="@drawable/black_button_30" />
+            android:src="@drawable/black_button_30"/>        
     </LinearLayout>
-
+    
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="0.5dp"
-        android:background="#FFFFFF"
-        android:orientation="vertical" >
-    </LinearLayout>
-
+       	android:layout_width="fill_parent"
+       	android:layout_height="0.5dp"
+       	android:background="#FFFFFF"
+       	android:orientation="vertical" >
+	</LinearLayout>
     <ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="60dp"
-        android:layout_weight="0.45" >
-
-        <LinearLayout
-            android:id="@+id/layer_result"
+        android:layout_height="70dp" >        
+    	<LinearLayout
+	        android:id="@+id/layer_result"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"        
+	        android:orientation="vertical" >
+        <TextView
+            android:id="@+id/feedback_result"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/feedback_result"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:text="Result" />
-        </LinearLayout>
+            android:text="Result" />
+    	</LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/layer_bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/past_feedback_result_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="2"
+            android:text="Result"
+            android:textAppearance="?android:attr/textAppearanceMedium" />        
+        <Button
+            android:id="@+id/past_feedback_graph_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="Graph"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+		<Button
+            android:id="@+id/past_feedback_filemananger_button"
+            android:layout_width="80dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="File Manager"
+            android:textAppearance="?android:attr/textAppearanceSmall" />        
+    </LinearLayout>
 
 </LinearLayout>

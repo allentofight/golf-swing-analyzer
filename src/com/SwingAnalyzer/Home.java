@@ -21,6 +21,7 @@ public class Home extends Activity implements View.OnClickListener{
 	ImageButton mAnalyzeSwingButton;
 	ImageButton mCollectingDataButton;
 	ImageButton mStatisticsButton;
+	ImageButton mPastSwingDataButton;
 	
 	ImageButton mSettingsButton;
 	
@@ -40,6 +41,9 @@ public class Home extends Activity implements View.OnClickListener{
 		
 		mCollectingDataButton = (ImageButton)findViewById(R.id.home_collecting_data_button);
 		mCollectingDataButton.setOnClickListener(this);
+		
+		mPastSwingDataButton = (ImageButton)findViewById(R.id.home_pastswing_button);
+		mPastSwingDataButton.setOnClickListener(this);
 		
 		mStatisticsButton = (ImageButton)findViewById(R.id.home_statistics_button);
 		mStatisticsButton.setOnClickListener(this);
@@ -67,6 +71,10 @@ public class Home extends Activity implements View.OnClickListener{
 			startActivity(new Intent(Home.this, SettingsActivity.class));
 			finish();
 			break;
+		case R.id.home_pastswing_button:
+			startActivity(new Intent(Home.this, SwingPastDataFeedback.class));
+			finish();
+			break;			
 		case R.id.home_statistics_button:
 			startActivity(new Intent(Home.this, StatisticsActivity.class));
 			finish();

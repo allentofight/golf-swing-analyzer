@@ -80,6 +80,8 @@ public class DetectSwingThread extends Thread{
 	final static int X_AXIS_DETECTION = 0;
 	final static int Y_AXIS_DETECTION = 1;
 	
+	
+	final static int NEW_METHOD = 1;
 	/*
 	 * Member Variables
 	 */
@@ -94,6 +96,7 @@ public class DetectSwingThread extends Thread{
 	int mMaxPeakTimestamp, mMinPeakTimestamp;
 	int mStartTimestamp, mEndTimestamp;
 	
+	int mType = 0;
 	boolean mIsAboveThresholdX;
 	boolean mIsAboveThresholdY;
 	
@@ -121,7 +124,24 @@ public class DetectSwingThread extends Thread{
 		
 		initMemberVariables();
 	}
-	
+
+	public DetectSwingThread(Handler handler, ArrayList<AccelerationData>array, 
+							int maxThreshold, int minThreshold, int type)
+	{
+		mHandler = handler;
+		
+		mSwingArrayList = new ArrayList<AccelerationData>();
+		mSwingArrayList = array;
+		
+		mXThresholdMax = maxThreshold;
+		mYThresholdMin = minThreshold;
+		
+		mType = type;
+		Log.i("detectswing", "X_Threshold=" + mXThresholdMax + ", Y_Threshold=" + mYThresholdMin);
+		
+		initMemberVariables();
+	}
+
 	private void initMemberVariables()
 	{
 		mCount = 0;
@@ -230,17 +250,33 @@ public class DetectSwingThread extends Thread{
 	    	/*=======================================================================
 	    	 * Detect a start point from a swing data
 	    	 *=======================================================================*/
-	    	mStartPointIndex = findSwingStartPoint(mMaxPeakIndex);
-	    	if(mStartPointIndex != -1)
+	    	if(mType == NEW_METHOD)
 	    	{
-	    		mStartTimestamp = mSwingArrayList.get(mStartPointIndex).mTimestamp;
-	    		sendMessageToHandler(MSG_START_POINT, mStartPointIndex, mStartTimestamp);
+	    		mStartPointIndex = findSwingStartPoint1(mMaxPeakIndex);
+		    	if(mStartPointIndex != -1)
+		    	{
+		    		mStartTimestamp = mSwingArrayList.get(mStartPointIndex).mTimestamp;
+		    		sendMessageToHandler(MSG_START_POINT, mStartPointIndex, mStartTimestamp);
+		    	}
+		    	else
+		    	{
+		    		sendMessageToHandler(MSG_START_POINT, -1, -1);
+		    	}
+
 	    	}
 	    	else
 	    	{
-	    		sendMessageToHandler(MSG_START_POINT, -1, -1);
+		    	mStartPointIndex = findSwingStartPoint(mMaxPeakIndex);
+		    	if(mStartPointIndex != -1)
+		    	{
+		    		mStartTimestamp = mSwingArrayList.get(mStartPointIndex).mTimestamp;
+		    		sendMessageToHandler(MSG_START_POINT, mStartPointIndex, mStartTimestamp);
+		    	}
+		    	else
+		    	{
+		    		sendMessageToHandler(MSG_START_POINT, -1, -1);
+		    	}
 	    	}
-	    	
 	    	/*=======================================================================
 	    	 * Send MSG_PEAK_X_MAX, MSG_PEAK_X_MIN message to a handler
 	    	 *=======================================================================*/    	
@@ -841,7 +877,84 @@ public class DetectSwingThread extends Thread{
 			return 0;
 		}
 	}
-	
+	/*=============================================================================
+	 * Name: findSwingStartPoint1
+	 * 
+	 * Description:
+	 * 		Find a start point from the peak in reverse direction    	 
+	 * 
+	 *  	The function starts to search a start point from the beginning.
+	 *  	It will choose the first point when x value is greater than 0 for the first time.
+	 * 
+	 * Return:
+	 * 		int
+	 *=============================================================================*/
+	public int findSwingStartPoint1(int peakIndex)
+	{
+		int startIndex = 0;
+		int i=0;
+		int timestamp = 0;		 
+		float x = 0;
+		boolean isFound = false;
+		int positiveCount = 0;
+    	/*********************************************************  
+    	 *         Peak point
+    	 * 		      /\
+    	 * 		     /  \  
+    	 * 	        /    \
+    	 * 	Start  /      \
+    	 * --____@/--------\------/- 
+    	 *                  \    /
+    	 *          	     \  /
+    	 *                    \/
+    	 *                    
+    	 * A start point can be the first point which the Math.floor(x[peak_point--]) is 
+    	 * zero from the peak point.
+    	 *********************************************************/
+		Log.i("detectswing", "findSwingStartPoint1()");
+		
+		//i = peakIndex;		
+		
+		for(i = 0; i< mSwingArrayList.size(); i++)
+		{
+			
+    		timestamp = (int)mSwingArrayList.get(i).mTimestamp;
+    		
+    		x = mSwingArrayList.get(i).mXvalue;        		
+    		
+    		int d = (int)Math.ceil((double)x);
+    		
+    		Log.i("detectswing", "Ceil [" + i + "] d=" + d + ", Time=" + timestamp);
+    		
+    		if((x > 0) && (d > 0))
+    		{
+    			positiveCount++;
+    			
+    			if(positiveCount > 1)
+    			{
+    				isFound = true;
+    				startIndex = i;
+    				Log.i("detectswing", "Start Index:" + startIndex + ", Time:" + timestamp);
+    				break;
+    			}	
+    		}
+    		else
+    		{
+    			positiveCount = 0;
+    		}
+		}
+		
+		if(isFound)
+		{
+			return startIndex;
+		}
+		else
+		{
+			// If not found a start point, then return the first index
+			return 0;
+		}
+		
+	}
 	/*=============================================================================
 	 * Name: findSwingEndPoint
 	 * 
@@ -906,11 +1019,11 @@ public class DetectSwingThread extends Thread{
     			dy = (int)Math.floor((double)y);
     		else
     			dy = (int)Math.ceil((double)y);
-    		
+    		/*
     		Log.i("detectswing", "Finding End [" + count + "] " + "T:" + timestamp
     							+ ", dx=" + dx + "/" + x 
     							+ ", dy=" + dy + "/" + y);
-    		
+    		*/
     		if((dx == 0) && (dy == 0))
     		{
     			++zero_count;

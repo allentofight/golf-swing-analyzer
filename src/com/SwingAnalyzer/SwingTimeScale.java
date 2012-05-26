@@ -159,12 +159,12 @@ public class SwingTimeScale extends View{
 			
 			y = scaleSize;
 			canvas.drawLine(x, 20, x, y + textSize + 20, Pnt);			
-			Log.i("scale", "| = " + x);
+			//Log.i("scale", "| = " + x);
 			
 			Pnt.setAntiAlias(true);
 			
 			
-			//Log.i("realswing", "Scale: text=" + text);
+			
 			if(unit == mScale)
 			{
 				int lastTime = mStart + (mInterval * unit);
@@ -176,6 +176,7 @@ public class SwingTimeScale extends View{
 			else
 				text = "" + (mStart + (mInterval * unit));
 			
+			/*
 			if((unit % 2 == 0) || (unit == mScale))
 			{
 				if(unit == 0)
@@ -183,6 +184,12 @@ public class SwingTimeScale extends View{
 				else
 					canvas.drawText(text, x, y, Pnt);
 			}
+			*/
+			if(unit == 0)
+				canvas.drawText(text, x+4, y, Pnt);
+			else
+				canvas.drawText(text, x, y, Pnt);
+
 		}
 		
 		/*=======================================================================
@@ -203,7 +210,7 @@ public class SwingTimeScale extends View{
 			x = interval - 15;
 			y = 25;
 			
-			Log.i("scale", "Max X :" + x);
+			//Log.i("scale", "Max X :" + x);
 			
 			Pnt.setAntiAlias(true);
 			textMaxValue = Integer.toString(mMaxTextValue[j]);			
