@@ -6,6 +6,7 @@
 
     <uses-sdk android:minSdkVersion="10" />
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.INTERNET" />
 	
     <application
         android:icon="@drawable/golf_analyzer_icon"
@@ -21,34 +22,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RealSwingAnalysisActivity" android:label="Detecting points"
+        <activity android:name=".RealSwingAnalysisActivity" android:label="External Golf Swing Data"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
         
-        
-        <activity android:name=".CollectingAccelerationData" android:label="Collecting Data" 
-            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">
-        </activity>
-        
-        <activity android:name=".DetectingPointActivity" android:label="Detecting points"
+        <activity android:name=".SwingFeedback" android:label="Golf Swing Analyzer"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
         
-        
-        <activity android:name=".SwingFeedback" android:label="Swing Analysis"
+        <activity android:name=".SwingPastDataFeedback" android:label="Past Golf Swing Data"
             android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
         </activity>
         
-        <activity android:name=".SwingPastDataFeedback" android:label="Past Swing Data"
-            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">            
-        </activity>
-        
-        <activity android:name=".SwingGraphActivity" android:label="Swing Graph"
+        <activity android:name=".SwingGraphActivity" android:label="Swing Database Graph"
             android:windowSoftInputMode="stateHidden">            
         </activity>
         
         <activity android:name=".StatisticsActivity" android:label="Statistics"
-            android:screenOrientation="portrait" android:windowSoftInputMode="stateHidden">
+            android:windowSoftInputMode="stateHidden">
         </activity>
         
         <activity android:name=".SettingsActivity" android:label="Settings"

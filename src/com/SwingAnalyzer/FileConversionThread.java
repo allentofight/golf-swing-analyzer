@@ -28,6 +28,7 @@ public class FileConversionThread extends Thread{
 	String mSrcFileName;
 	String mOutputFile;
 	boolean mFinished;
+	boolean mRemoveGChecked;
 	static Handler mHandler;
 	
 	FileConversionThread(String srcfile, String outfile, Handler handler)
@@ -48,10 +49,12 @@ public class FileConversionThread extends Thread{
 		initMemberVariables();
 	}
 
-	FileConversionThread(String srcfile, Handler handler, ArrayList<AccelerationData> array)
+	FileConversionThread(String srcfile, Handler handler, 
+						ArrayList<AccelerationData> array, boolean isRemoveGChecked)
 	{
 		mSrcFileName = srcfile;
 		mHandler = handler;
+		mRemoveGChecked = isRemoveGChecked;
 		mOutputFile = "";
 		
 		//initMemberVariables();
@@ -110,7 +113,7 @@ public class FileConversionThread extends Thread{
 			fileReader = new FileReader(mSrcFileName);
 			bufReader = new BufferedReader(fileReader);
 			
-			mFinished = false;
+			mFinished = true;
 			Log.i("conversion", "RawData: " + mSrcFileName);			
 			
 			while((accelStringData = bufReader.readLine()) != null)
@@ -123,13 +126,20 @@ public class FileConversionThread extends Thread{
 				if(token != null)
 				{
 					int tokenNum = token.countTokens();
-					
-					String[] element = new String[tokenNum];
-					for(int i=0; i<tokenNum; i++)
+					if(tokenNum == 4)
 					{
-						element[i] = (String)token.nextToken();
+						String[] element = new String[tokenNum];
+						for(int i=0; i<tokenNum; i++)
+						{
+							element[i] = (String)token.nextToken();
+						}
+						addArrayList(count, element);
 					}
-					addArrayList(count, element);
+					else
+					{
+						mFinished = false;
+						break;
+					}
 				}
 				
 				try 
@@ -143,6 +153,7 @@ public class FileConversionThread extends Thread{
 
 			}
 		
+			
 			bufReader.close();				
 			fileReader.close();        	
 			
@@ -153,15 +164,27 @@ public class FileConversionThread extends Thread{
 			System.out.println(e.getMessage());
 		}
 		
-    	mFinished = true;
-    	Log.i("conversion", "File conversion finished. count=" + mConvertedCount);
-    	
-    	Message msg = Message.obtain();
-    	msg.what = MSG_CONVERSION_DONE;
-    	msg.arg1 = mConvertedCount;
-    	
-    	mHandler.sendMessage(msg);
-
+    	if(mFinished == false)
+    	{
+    		Log.e("conversion", "File conversion failed: " + mConvertedCount);
+	    	
+	    	Message msg = Message.obtain();
+	    	msg.what = MSG_CONVERSION_DONE;
+	    	msg.arg1 = -1;
+	    	
+	    	mHandler.sendMessage(msg);
+    	}
+    	else
+    	{
+	    	//mFinished = true;
+	    	Log.i("conversion", "File conversion finished. count=" + mConvertedCount);
+	    	
+	    	Message msg = Message.obtain();
+	    	msg.what = MSG_CONVERSION_DONE;
+	    	msg.arg1 = mConvertedCount;
+	    	
+	    	mHandler.sendMessage(msg);
+    	}
 	}
 	
 	/*=============================================================================
@@ -288,12 +311,18 @@ public class FileConversionThread extends Thread{
     	element.mTimestamp = Integer.parseInt(data[0]);    	
     	element.mXvalue = Float.parseFloat(data[1]);    	
     	element.mYvalue = Float.parseFloat(data[2]);
-    	element.mYvalue -= 9.81;    	
+    	
+    	if(mRemoveGChecked)
+    		element.mYvalue -= 9.81;
+    	
     	element.mZvalue = Float.parseFloat(data[3]);
     	
-    	//Log.i("convert", "index= " + element.mIndex + " timestamp: " + element.mTimestamp);
-    	//Log.i("convert", "X= " + element.mXvalue + " Y= " + element.mYvalue + " Z= " + element.mZvalue);
-    	
+    	/*
+    	Log.i("convert", "["+element.mIndex+"]: T=" + element.mTimestamp 
+    										+ ", X= " + element.mXvalue 
+    										+ ", Y= " + element.mYvalue 
+    										+ ", Z= " + element.mZvalue);
+    	*/
     	mAccelerationArray.add(element);
     	
     }

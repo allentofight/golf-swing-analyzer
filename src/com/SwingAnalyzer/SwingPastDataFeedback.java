@@ -184,7 +184,38 @@ public class SwingPastDataFeedback extends Activity{
 	};
 	
 	int mSoundPoolId[] = new int[MUSICAL_NOTE_NUM];
-			
+	
+	/*================================================================================
+	 * Simplified Audio Feedback
+	 *================================================================================*/
+	final static int SIMPLE_MUSICAL_NOTE_NUM = 10;
+	int mSimpleSoundPoolId[] = new int [SIMPLE_MUSICAL_NOTE_NUM];
+	
+	boolean mSimpleAudioFeedback = true;
+								// Do         Mi        Sol      Do2
+	int mSimpleMusicalNotes[] = {R.raw.c4,	// Do
+								R.raw.d4,	// Re
+								R.raw.e4, 	// Mi
+								R.raw.f4,	// Fa
+								R.raw.g4, 	// Sol								
+								R.raw.b3,	// Ti  
+								R.raw.a3,	// Ra
+								R.raw.g3,	// Sol
+								R.raw.f3,	// Fa
+								R.raw.e3};	// Mi
+	
+	int mSimpleSwingStrengthIconArray[] = {R.drawable.p0, 
+											R.drawable.p5, 
+											R.drawable.p10,
+											R.drawable.p15,
+											R.drawable.p20, 
+											R.drawable.n1,
+											R.drawable.n5,
+											R.drawable.n9,
+											R.drawable.n12,
+											R.drawable.n14};
+	
+	/*=================================================================================*/
 	
 	Handler mTimerHandler;
 	
@@ -214,6 +245,7 @@ public class SwingPastDataFeedback extends Activity{
 	//DetectPeakThread mDetectPeakThread;
 	
 	DetectSwingThread mDetectSwingThread;
+	SwingDetectionThread mSwingDetectionThread;
 	/* 
 	 * Database Handler
 	 */
@@ -258,7 +290,7 @@ public class SwingPastDataFeedback extends Activity{
 	 */
 	Button mAnalysisButton;
 	Button mStatDatabaseButton;
-	Button mHomeButton;
+	ImageButton mHomeButton;
 	Button mFileManagerButton;
 	Button mGraphButton;
 	
@@ -322,7 +354,7 @@ public class SwingPastDataFeedback extends Activity{
 		mGraphButton = (Button)findViewById(R.id.past_feedback_graph_button);
 		mGraphButton.setOnClickListener(mClickListener);
 
-		mHomeButton = (Button)findViewById(R.id.past_feedback_home_button);
+		mHomeButton = (ImageButton)findViewById(R.id.past_feedback_home_button);
 		mHomeButton.setOnClickListener(mClickListener);
 		
 		mXTextView = (TextView)findViewById(R.id.feedback_x_textview);
@@ -375,12 +407,6 @@ public class SwingPastDataFeedback extends Activity{
 			case R.id.past_feedback_result_button:
 				analyzeSwingData();
 				break;
-/*				
-			case R.id.stats_db_button:
-				startActivity(new Intent(SwingPastDataFeedback.this, StatisticsActivity.class));
-				finish();
-				break;
-*/				
 			case R.id.past_feedback_filemananger_button:
 				startActivity(new Intent(SwingPastDataFeedback.this, FileManagerActivity.class));
 				finish();
@@ -397,6 +423,7 @@ public class SwingPastDataFeedback extends Activity{
 												SwingGraphActivity.class);
 					intent.putExtra("file", mSelectedFile);
 					startActivity(intent);
+					finish();
 				}
 				break;
 			case R.id.past_feedback_home_button:
@@ -414,7 +441,7 @@ public class SwingPastDataFeedback extends Activity{
 		public void onItemSelected(AdapterView<?> parent, View view, int position, long id) 
 		{
 			mSelectedFile = (String)parent.getSelectedItem();
-			Log.i("feedback", "Selected File: " + mSelectedFile);
+			Log.i("pastswing", "Selected File: " + mSelectedFile);
 		}
 
 		public void onNothingSelected(AdapterView<?> arg0) {
@@ -437,17 +464,17 @@ public class SwingPastDataFeedback extends Activity{
 	 *=============================================================================*/
 	public void searchSwingFiles()
 	{
-  	String stringSdPath = "";
-  	
-  	stringSdPath = getSDPathName();
-  	
-  	if(stringSdPath != Environment.MEDIA_UNMOUNTED)
-  	{
-  		searchFilesinSdPath(stringSdPath + GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR);    		
-  	}
-  	else
-  		mSelectedFile = "";
-	}
+	  	String stringSdPath = "";
+	  	
+	  	stringSdPath = getSDPathName();
+	  	
+	  	if(stringSdPath != Environment.MEDIA_UNMOUNTED)
+	  	{
+	  		searchFilesinSdPath(stringSdPath + GOLFSWING_DATA_DIR + COLLECTED_SWING_DIR);    		
+	  	}
+	  	else
+	  		mSelectedFile = "";
+		}
 	
   /*=============================================================================
 	 * Name: getSDPathName
@@ -494,7 +521,7 @@ public class SwingPastDataFeedback extends Activity{
   {
   	File swingDir = new File(swingDataPath);    	
   	
-  	Log.i("feedback", "Collected Swing Dir Path: " + swingDataPath);
+  	Log.i("pastswing", "Collected Swing Dir Path: " + swingDataPath);
   	
   	if(swingDir.isDirectory())
   	{
@@ -567,21 +594,22 @@ public class SwingPastDataFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/	    
-  private void insertFileNameToSpinner(String[] filenames)
-  {
-  	/*
-  	ArrayAdapter<String> spinnerAdapter = 
-  						new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
-  											android.R.layout.simple_spinner_item,
-  											filenames);
-  	*/
-  	for(int i = 0; i < filenames.length; i++)
+  	private void insertFileNameToSpinner(String[] filenames)
   	{
-  		spinnerAdapter.add(filenames[i]);
+	  	/*
+	  	ArrayAdapter<String> spinnerAdapter = 
+	  						new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
+	  											android.R.layout.simple_spinner_item,
+	  											filenames);
+	  	*/
+	  	for(int i = 0; i < filenames.length; i++)
+	  	{
+	  		spinnerAdapter.add(filenames[i]);
+	  	}
+	  	spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	  	mSwingFileSpinner.setAdapter(spinnerAdapter);
+	  	
   	}
-  	spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-  	mSwingFileSpinner.setAdapter(spinnerAdapter);
-  }
 
 
 	/*=============================================================================
@@ -638,12 +666,12 @@ public class SwingPastDataFeedback extends Activity{
 		mBeepChecked = pref.getBoolean(PREF_BEEP_METHOD, true);
 		mPhoneFrontPlaced = pref.getBoolean(PREF_PHONE_FRONT_PLACEMENT,	false);
 		
-		Log.i("setting", "==== readPreferenceValues ====");
-		Log.i("setting", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
-		Log.i("setting", "PREF_BEEP_METHOD          : " + mBeepChecked);
-		Log.i("setting", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
-		Log.i("setting", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
-		Log.i("setting", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
+		Log.i("pastswing", "==== readPreferenceValues ====");
+		Log.i("pastswing", "'PREF_COLLECTION_TIME     : " + mCollectionTime);
+		Log.i("pastswing", "PREF_BEEP_METHOD          : " + mBeepChecked);
+		Log.i("pastswing", "PREF_MAX_THRESHOLD        : " + mMaxThreshold);
+		Log.i("pastswing", "PREF_MIN_THRESHOLD        : " + mMinThreshold);
+		Log.i("pastswing", "PREF_PHONE_FRONT_PLACEMENT: " + mPhoneFrontPlaced);
 
 		
 	}
@@ -708,7 +736,7 @@ public class SwingPastDataFeedback extends Activity{
       	{
       		mResultFileName = resultFile;
       		isFound = true;
-      		Log.i("feedback", "ResultFileName: " + mResultFileName);
+      		Log.i("pastswing", "ResultFileName: " + mResultFileName);
       	}
       	else
       	{
@@ -753,53 +781,24 @@ public class SwingPastDataFeedback extends Activity{
 		
 		if(!mResultFileName.isEmpty())
 		{
+			/*
 			mDetectSwingThread = new DetectSwingThread(FeedbackHandler,
 														(ArrayList)mSwingDataArrayList,
 														mMaxThreshold, mMinThreshold);
 			mDetectSwingThread.setDaemon(true);
 			mDetectSwingThread.start();
+			*/
+			
+			mSwingDetectionThread = new SwingDetectionThread(FeedbackHandler,
+															(ArrayList)mSwingDataArrayList,
+															mMaxThreshold, mMinThreshold);
+			mSwingDetectionThread.setDaemon(true);
+			mSwingDetectionThread.start();
 		}
 		else
 		{
 			Toast.makeText(this, "The file name does not exist", Toast.LENGTH_LONG).show();
 		}		
-	}
-	/*=============================================================================
-	 * Name: analyzeSwingData1
-	 * 
-	 * Description:
-	 * 		Create a thread to detect the peak points of X and Y-axis data
-	 * 		Another way to detect a start point
-	 * Return:
-	 * 		None
-	 *=============================================================================*/	
-	public void analyzeSwingData1()
-	{
-		resetIconColor(X_AXIS);
-		resetIconColor(Y_AXIS);
-		clearSwingResult();
-		
-		if(getResultFileName() == true)
-			readArrayListFromFile();
-		else
-		{
-			Toast.makeText(this, "The result file does not exist", Toast.LENGTH_LONG).show();
-			return;
-		}
-		
-		if(!mResultFileName.isEmpty())
-		{
-			mDetectSwingThread = new DetectSwingThread(FeedbackHandler,
-														(ArrayList)mSwingDataArrayList,
-														mMaxThreshold, mMinThreshold, 1);
-			mDetectSwingThread.setDaemon(true);
-			mDetectSwingThread.start();
-		}
-		else
-		{
-			Toast.makeText(this, "The file name does not exist", Toast.LENGTH_LONG).show();
-		}		
-		
 	}
 	/*=============================================================================
 	 * Name: startSwingFeedback
@@ -903,6 +902,7 @@ public class SwingPastDataFeedback extends Activity{
 			 */
 		}
 	}
+	
 	/*=============================================================================
 	 * Name: calculateMaxValuePerTimeslot
 	 * 
@@ -912,134 +912,134 @@ public class SwingPastDataFeedback extends Activity{
 	 * Return:
 	 * 		None
 	 *=============================================================================*/ 	
-  public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
-  {
-  	int interval = 0;
-  	float maxX, minX;
-  	float maxY, minY;    	
-  	int timestamp = 0; 
-  	int startTimestamp = 0;
-  	int endTimestamp = 0;
-  	int arrIndex = 0;
-  	int prevIndex = 0;
-  	float x, y;
+	public void calculateMaxValuePerTimeslot(int timescale, int sIndex, int eIndex)
+	{
+	  	int interval = 0;
+	  	float maxX, minX;
+	  	float maxY, minY;    	
+	  	int timestamp = 0; 
+	  	int startTimestamp = 0;
+	  	int endTimestamp = 0;
+	  	int arrIndex = 0;
+	  	int prevIndex = 0;
+	  	float x, y;
   	
-  	x = y = 0;
-  	if(eIndex - sIndex == 0)
-  	{
-  		showMsgDialog("Errpr", "Cannot find critical points.");
-  		return;
-  	}
-  	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
-  	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
-  	
-  	minX = maxX;
-  	minY = maxY;
+	  	x = y = 0;
+	  	if(eIndex - sIndex == 0)
+	  	{
+	  		showMsgDialog("Errpr", "Cannot find critical points.");
+	  		return;
+	  	}
+	  	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
+	  	maxY = mSwingDataArrayList.get(sIndex).mYvalue;
+	  	
+	  	minX = maxX;
+	  	minY = maxY;
+	
+	  	startTimestamp = mSwingDataArrayList.get(sIndex).mTimestamp;
+	  	endTimestamp = mSwingDataArrayList.get(eIndex).mTimestamp;
+	  	
+	  	interval = (endTimestamp - startTimestamp) / timescale;
+	  	
+	  	for(int i=sIndex; i<=eIndex; i++)
+	  	{
+	  		timestamp = mSwingDataArrayList.get(i).mTimestamp;
+	  		x = mSwingDataArrayList.get(i).mXvalue;
+	  		y = mSwingDataArrayList.get(i).mYvalue;
+	  		
+	  		arrIndex = (timestamp - startTimestamp) / interval;
+	  		if(arrIndex >= TIME_SCALE)
+	  			arrIndex = TIME_SCALE -1;
+	  		
+	  		if((arrIndex - prevIndex) == 1)
+	  		{
+	  			if(Math.abs(maxX) < Math.abs(minX))
+	  			{
+	  				Log.i("pastswing", "[" + prevIndex +"] " 
+	  									+ "Abs|X|: maxX=" + Math.abs(maxX) 
+	  									+ " minX=" + Math.abs(minX));
+	  				if(!mBeepChecked)
+	  					mSwingXResult[prevIndex] = (int)minX;
+	  				
+	  				mSwingXAccelTextResult[prevIndex] = (int)minX;
+	  			}
+	  			else
+	  			{
+	  				Log.i("pastswing", "[" + prevIndex +"] " 
+								+ "Abs|X|: maxX=" + Math.abs(maxX) 
+								+ " minX=" + Math.abs(minX));
+	  				
+	  				if(!mBeepChecked)
+	  					mSwingXResult[prevIndex] = (int)maxX;
+	  				
+	  				mSwingXAccelTextResult[prevIndex] = (int)maxX;
+	  			}
+	
+	  			if(Math.abs(maxY) < Math.abs(minY))
+	  			{
+	  				Log.i("pastswing","[" + prevIndex +"] " 
+	  									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+	  									+ " minY=" + Math.abs(minY));
+	  				if(!mBeepChecked)
+	  					mSwingYResult[prevIndex] = (int)minY;
+	  				
+	  				mSwingYAccelTextResult[prevIndex] = (int)minY;
+	  			}
+	  			else
+	  			{
+	  				Log.i("pastswing","[" + prevIndex +"] " 
+	  								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
+	  								+ " minY=" + Math.abs(minY));
+	  				if(!mBeepChecked)
+	  					mSwingYResult[prevIndex] = (int)maxY;
+	  				
+	  				mSwingYAccelTextResult[prevIndex] = (int)maxY;
+	  			}
+	
+	  			// Initialize maximum and minimum values in each time slot
+	  			maxX = mSwingDataArrayList.get(i).mXvalue;
+	  			minX = mSwingDataArrayList.get(i).mXvalue;
+	  			
+	  			maxY = mSwingDataArrayList.get(i).mYvalue;
+	  			minY = mSwingDataArrayList.get(i).mYvalue;
+	  			prevIndex = arrIndex;
+	  		}
+	  		
+	  		if(x <= minX)
+	  		{
+	  			minX = x;
+	  		}
+	  		
+	  		if(x >= maxX)
+	  		{
+	  			maxX = x;
+	  		}
+	  		
+	  		if(y <= minY)
+	  		{
+	  			minY = y;
+	  		}
+	  		
+	  		if(y >= maxY)
+	  		{
+	  			maxY = y; 
+	  		}
+	  	}
+	  	
+	  	/* Debug
+	  	 * 
+	  	 */
+	  	for(int j=0; j<TIME_SCALE; j++)
+	  	{
+	  		Log.i("pastswing", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
+	  	}
+	
+	  	for(int j=0; j<TIME_SCALE; j++)
+	  	{
+	  		Log.i("pastswing", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
+	  	}
 
-  	startTimestamp = mSwingDataArrayList.get(sIndex).mTimestamp;
-  	endTimestamp = mSwingDataArrayList.get(eIndex).mTimestamp;
-  	
-  	interval = (endTimestamp - startTimestamp) / timescale;
-  	
-  	for(int i=sIndex; i<=eIndex; i++)
-  	{
-  		timestamp = mSwingDataArrayList.get(i).mTimestamp;
-  		x = mSwingDataArrayList.get(i).mXvalue;
-  		y = mSwingDataArrayList.get(i).mYvalue;
-  		
-  		arrIndex = (timestamp - startTimestamp) / interval;
-  		if(arrIndex >= TIME_SCALE)
-  			arrIndex = TIME_SCALE -1;
-  		
-  		if((arrIndex - prevIndex) == 1)
-  		{
-  			if(Math.abs(maxX) < Math.abs(minX))
-  			{
-  				Log.i("realswing", "[" + prevIndex +"] " 
-  									+ "Abs|X|: maxX=" + Math.abs(maxX) 
-  									+ " minX=" + Math.abs(minX));
-  				if(!mBeepChecked)
-  					mSwingXResult[prevIndex] = (int)minX;
-  				
-  				mSwingXAccelTextResult[prevIndex] = (int)minX;
-  			}
-  			else
-  			{
-  				Log.i("realswing", "[" + prevIndex +"] " 
-							+ "Abs|X|: maxX=" + Math.abs(maxX) 
-							+ " minX=" + Math.abs(minX));
-  				
-  				if(!mBeepChecked)
-  					mSwingXResult[prevIndex] = (int)maxX;
-  				
-  				mSwingXAccelTextResult[prevIndex] = (int)maxX;
-  			}
-
-  			if(Math.abs(maxY) < Math.abs(minY))
-  			{
-  				Log.i("realswing","[" + prevIndex +"] " 
-  									+ "Abs|Y|: maxY=" + Math.abs(maxY) 
-  									+ " minY=" + Math.abs(minY));
-  				if(!mBeepChecked)
-  					mSwingYResult[prevIndex] = (int)minY;
-  				
-  				mSwingYAccelTextResult[prevIndex] = (int)minY;
-  			}
-  			else
-  			{
-  				Log.i("realswing","[" + prevIndex +"] " 
-  								+ "Abs|Y|: maxY=" + Math.abs(maxY) 
-  								+ " minY=" + Math.abs(minY));
-  				if(!mBeepChecked)
-  					mSwingYResult[prevIndex] = (int)maxY;
-  				
-  				mSwingYAccelTextResult[prevIndex] = (int)maxY;
-  			}
-
-  			// Initialize maximum and minimum values in each time slot
-  			maxX = mSwingDataArrayList.get(i).mXvalue;
-  			minX = mSwingDataArrayList.get(i).mXvalue;
-  			
-  			maxY = mSwingDataArrayList.get(i).mYvalue;
-  			minY = mSwingDataArrayList.get(i).mYvalue;
-  			prevIndex = arrIndex;
-  		}
-  		
-  		if(x <= minX)
-  		{
-  			minX = x;
-  		}
-  		
-  		if(x >= maxX)
-  		{
-  			maxX = x;
-  		}
-  		
-  		if(y <= minY)
-  		{
-  			minY = y;
-  		}
-  		
-  		if(y >= maxY)
-  		{
-  			maxY = y; 
-  		}
-  	}
-  	
-  	/* Debug
-  	 * 
-  	 */
-  	for(int j=0; j<TIME_SCALE; j++)
-  	{
-  		Log.i("feedback", "mSwingXResult["+j+"] = " + mSwingXResult[j]);
-  	}
-
-  	for(int j=0; j<TIME_SCALE; j++)
-  	{
-  		Log.i("feedback", "mSwingYResult["+j+"] = " + mSwingYResult[j]);
-  	}
-
-  }
+	}
 
 	/*=============================================================================
 	 * Name: showMsgDialog
@@ -1091,10 +1091,21 @@ public class SwingPastDataFeedback extends Activity{
 	{
 		if(!mBeepChecked)
 		{
-			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
-			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+			if(mSimpleAudioFeedback)
 			{
-				mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				mSoundPool = new SoundPool(SIMPLE_MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< SIMPLE_MUSICAL_NOTE_NUM; i++)
+				{
+					mSimpleSoundPoolId[i] = mSoundPool.load(this, mSimpleMusicalNotes[i], 1);
+				}
+			}
+			else
+			{
+				mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+				{
+					mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				}
 			}
 
 		}
@@ -1191,7 +1202,7 @@ public class SwingPastDataFeedback extends Activity{
 			timestamp = 1;
 		
 		interval = (end - start)/TIME_SCALE;
-		Log.i("feedback", "interval:" + interval);
+		Log.i("pastswing", "interval:" + interval);
 		
 		if(timestamp >= start)
 			index = (timestamp - start)/interval;
@@ -1207,14 +1218,14 @@ public class SwingPastDataFeedback extends Activity{
 			
 			//mSwingXResult[index] = type;
 			mSwingXResult[index] = mSwingXResult[index] ^ type;
-			Log.i("feedback", "X Type[" + index + "]= " + mSwingXResult[index] );
+			Log.i("pastswing", "X Type[" + index + "]= " + mSwingXResult[index] );
 		}
 		else
 		{
 			
 			//mSwingYResult[index] = type;
 			mSwingYResult[index] = mSwingYResult[index] ^ type;
-			Log.i("feedback", "Y Type[" + index + "]= " + mSwingYResult[index] );
+			Log.i("pastswing", "Y Type[" + index + "]= " + mSwingYResult[index] );
 		}		
 	}
 	/*=============================================================================
@@ -1289,7 +1300,7 @@ public class SwingPastDataFeedback extends Activity{
 			if(isFound == false)
 			{
 				matchedIndex = 0;
-				Log.i("feedback", "X soundIndex=" + matchedIndex + ", isFound:" + isFound);
+				Log.i("pastswing", "X soundIndex=" + matchedIndex + ", isFound:" + isFound);
 			}
 			
 			
@@ -1319,7 +1330,7 @@ public class SwingPastDataFeedback extends Activity{
 			if(isFound == false)
 			{
 				matchedIndex = 0;
-				Log.i("feedback", "Y soundIndex=" + matchedIndex + ", isFound:" + isFound);
+				Log.i("pastswing", "Y soundIndex=" + matchedIndex + ", isFound:" + isFound);
 			}
 			
 			
@@ -1328,6 +1339,78 @@ public class SwingPastDataFeedback extends Activity{
 
 		}
 
+	}
+	
+	public void showTimeSlotWithSimpleMusicalNotes(int index, int axis)
+	{
+		int strength = 0;
+		int matchedIndex = 0;		
+		
+		if(axis == X_AXIS)
+		{
+			strength = mSwingXResult[index];
+			
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "X: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mXImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+			
+		}
+		else
+		{
+			strength = mSwingYResult[index];
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "Y: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mYImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+
+		}
+
+		
 	}
 
 	/*=============================================================================
@@ -1518,15 +1601,21 @@ public class SwingPastDataFeedback extends Activity{
 				{
 					mTimerHandler.sendEmptyMessageDelayed(0, timeInterval);
 					wait += timeInterval;
-					Log.i("realswing", "Duration:" + mSwingDuration 
+					/*
+					Log.i("pastswing", "Duration:" + mSwingDuration 
 										+ ", Index:" + timeIndex 
 										+ ", wait:" + wait 
 										+ ", Interval:" + timeInterval);
-					
+					*/
 					if(timeIndex < TIME_SCALE)
 					{
 						if(!mBeepChecked)
-							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						{
+							if(mSimpleAudioFeedback)
+								showTimeSlotWithSimpleMusicalNotes(timeIndex, X_AXIS);
+							else
+								showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						}
 						else
 							showTimeSlotWithBeep(timeIndex, X_AXIS);
 
@@ -1535,15 +1624,18 @@ public class SwingPastDataFeedback extends Activity{
 					{
 						if(!mBeepChecked)
 						{
-							Log.i("realswing", "Musical Notes timeIndex:" + timeIndex);
+							Log.i("pastswing", "Musical Notes timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
-								showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								if(mSimpleAudioFeedback)
+									showTimeSlotWithSimpleMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								else
+									showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
 							}
 						}
 						else
 						{
-							Log.i("realswing", "Beep timeIndex:" + timeIndex);
+							Log.i("pastswing", "Beep timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
 								showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);
@@ -1590,49 +1682,49 @@ public class SwingPastDataFeedback extends Activity{
 		mTimerHandler.sendEmptyMessage(0);
 	}
 	
-  public void displayResultText(String text)
-  {
-  	mFeedbackTextView.append(text + "\n");
-  	Log.i("feedback", text);
-  }
+	public void displayResultText(String text)
+	{
+		mFeedbackTextView.append(text + "\n");
+		Log.i("pastswing", text);
+	}
   
-  public void displayXYResultText(int axis, int threshold, int index, int time)
-  {
-  	String text = "";
-  	int value = 0;
-  	
-  	if(axis == X_AXIS)
-  	{
-  		if(index != -1)
-  		{
-	    		value = (int)mSwingDataArrayList.get(index).mXvalue;
-	    	
-	    		text = "X-axis(Threshold:" + mMaxThreshold+") " 
-					  +  "+Peak:" + value + ", Time:" + time;
-  		}
-  		else
-  		{
-      		text = "X-axis(Threshold:" + mMaxThreshold + ") ";
-  		}
-  		mXTextView.setText(text);
-  	}
-  	else
-  	{
-  		if(index != -1)
-  		{
-  			value = (int)mSwingDataArrayList.get(index).mYvalue;
-  			text = "Y-axis(Threshold:" + mMinThreshold+") " 
-  					+  "-Peak:" + value + ", Time:" + time;
-  		}
-  		else
-  		{
-  			text = "Y-axis(Threshold:" + mMinThreshold +") ";
-  		}
-  		mYTextView.setText(text);
+	public void displayXYResultText(int axis, int threshold, int index, int time)
+	{
+	  	String text = "";
+	  	int value = 0;
+	  	
+	  	if(axis == X_AXIS)
+	  	{
+	  		if(index != -1)
+	  		{
+		    		value = (int)mSwingDataArrayList.get(index).mXvalue;
+		    	
+		    		text = "X-axis(Threshold:" + mMaxThreshold+") " 
+						  +  "+Peak:" + value + ", Time:" + time;
+	  		}
+	  		else
+	  		{
+	      		text = "X-axis(Threshold:" + mMaxThreshold + ") ";
+	  		}
+	  		mXTextView.setText(text);
+	  	}
+	  	else
+	  	{
+	  		if(index != -1)
+	  		{
+	  			value = (int)mSwingDataArrayList.get(index).mYvalue;
+	  			text = "Y-axis(Threshold:" + mMinThreshold+") " 
+	  					+  "-Peak:" + value + ", Time:" + time;
+	  		}
+	  		else
+	  		{
+	  			text = "Y-axis(Threshold:" + mMinThreshold +") ";
+	  		}
+	  		mYTextView.setText(text);
   		
-  	}
+	  	}
 
-  }
+	}
 	
 	/*=============================================================================
 	 * Name: showFeedbackResultText
@@ -1651,7 +1743,7 @@ public class SwingPastDataFeedback extends Activity{
 		
 		accel = mSwingDataArrayList.get(index);
 		
-		Log.i("feedback", "Result index: " + index 
+		Log.i("pastswing", "Result index: " + index 
 											+ ", T:" + accel.mTimestamp 
 											+ ", X:" + accel.mXvalue
 											+ ", Y:" + accel.mYvalue);
@@ -1731,13 +1823,13 @@ public class SwingPastDataFeedback extends Activity{
 						
 			mSwingDataArrayList = (ArrayList<AccelerationData>)objInputStream.readObject();
 			
-			Log.i("detectpeak", "mSwingArrayList.size: " + mSwingDataArrayList.size());
+			Log.i("pastswing", "mSwingArrayList.size: " + mSwingDataArrayList.size());
 			
 			objInputStream.close();
 		} 
 		catch(Exception e)
 		{
-			Log.e("Debug", e.getMessage());
+			Log.e("pastswing", e.getMessage());
 		}
 
 	}
@@ -1880,11 +1972,11 @@ public class SwingPastDataFeedback extends Activity{
 		y_min = String.valueOf(element.mYvalue);
 		y_min_time = String.valueOf(element.mTimestamp);
 		
-		Log.i("feedback", "addSwingStats: date: " + stringDate + ", time:" + stringTime);
-		Log.i("feedback", "x_max: " + x_max + ", time: " + x_max_time);
-		Log.i("feedback", "x_min: " + x_min + ", time: " + x_min_time);
-		Log.i("feedback", "y_max: " + y_max + ", time: " + y_max_time);
-		Log.i("feedback", "y_min: " + y_min + ", time: " + y_min_time);
+		Log.i("pastswing", "addSwingStats: date: " + stringDate + ", time:" + stringTime);
+		Log.i("pastswing", "x_max: " + x_max + ", time: " + x_max_time);
+		Log.i("pastswing", "x_min: " + x_min + ", time: " + x_min_time);
+		Log.i("pastswing", "y_max: " + y_max + ", time: " + y_max_time);
+		Log.i("pastswing", "y_min: " + y_min + ", time: " + y_min_time);
 		
 		SwingStatistics swing = new SwingStatistics(stringDate, stringTime, 
 												x_max, x_max_time, x_min, x_min_time,
