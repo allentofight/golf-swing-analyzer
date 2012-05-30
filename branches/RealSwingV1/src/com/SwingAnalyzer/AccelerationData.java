@@ -34,7 +34,10 @@ public class AccelerationData implements Serializable{
 		mIndex = 0;
 		mTimestamp = 0;
 		
-		mXvalue = mYvalue = mZvalue = 0;
+		mXvalue = 0f; 
+		mYvalue = 0f;
+		mZvalue = 0f;
+		
 		mSwingStartDate = "";
 		mSwingStartTime = "";
 	}

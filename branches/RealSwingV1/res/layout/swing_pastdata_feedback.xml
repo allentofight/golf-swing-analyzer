@@ -12,15 +12,16 @@
     <Spinner
         android:id="@+id/feedback_swing_spinner"
         android:layout_width="240dp"
-        android:layout_height="50dp" />
-	<Button
+        android:layout_height="50dp" 
+        android:layout_weight = "1"/>
+	<ImageButton
     	android:id="@+id/past_feedback_home_button"
 		android:layout_width="60dp"
 		android:layout_height="fill_parent"
+		android:layout_weight = "0.5"
 		android:layout_gravity="center"
-		android:layout_weight="1"
-		android:text="Home"
-		android:textAppearance="?android:attr/textAppearanceMedium" />
+		android:background="#000000"
+		android:src="@drawable/home_icon"/>
 
   </LinearLayout>
     

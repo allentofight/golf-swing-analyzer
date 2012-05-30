@@ -19,6 +19,7 @@ import java.util.*;
 
 import android.app.*;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -188,7 +189,39 @@ public class SwingFeedback extends Activity{
 	
 	int mSoundPoolId[] = new int[MUSICAL_NOTE_NUM];
 			
+	/*================================================================================
+	 * Simplified Audio Feedback
+	 *================================================================================*/
+	final static int SIMPLE_MUSICAL_NOTE_NUM = 10;
+	int mSimpleSoundPoolId[] = new int [SIMPLE_MUSICAL_NOTE_NUM];
 	
+	boolean mSimpleAudioFeedback = true;
+								// Do         Mi        Sol      Do2
+	int mSimpleMusicalNotes[] = {R.raw.c4,	// Do
+								R.raw.d4,	// Re
+								R.raw.e4, 	// Mi
+								R.raw.f4,	// Fa
+								R.raw.g4, 	// Sol								
+								R.raw.b3,	// Ti  
+								R.raw.a3,	// Ra
+								R.raw.g3,	// Sol
+								R.raw.f3,	// Fa
+								R.raw.e3};	// Mi
+	
+	int mSimpleSwingStrengthIconArray[] = {R.drawable.p0, 
+											R.drawable.p5, 
+											R.drawable.p10,
+											R.drawable.p15,
+											R.drawable.p20, 
+											R.drawable.n1,
+											R.drawable.n5,
+											R.drawable.n9,
+											R.drawable.n12,
+											R.drawable.n14};
+	
+	/*=================================================================================*/
+	
+
 	Handler mTimerHandler;
 	
 	/*
@@ -211,6 +244,7 @@ public class SwingFeedback extends Activity{
 	int mWhichAxis;
 	
 	DetectSwingThread mDetectSwingThread;
+	SwingDetectionThread mSwingDetectionThread;
 	/* 
 	 * Database Handler
 	 */
@@ -300,16 +334,9 @@ public class SwingFeedback extends Activity{
 		 * Widgets
 		 */
 		/*
-		mSwingFileSpinner = (Spinner)findViewById(R.id.feedback_swing_spinner);
-		mSwingFileSpinner.setOnItemSelectedListener(mItemSelectedListener);
-		
-    	spinnerAdapter = new ArrayAdapter<String>(mSwingFileSpinner.getContext(),
-									android.R.layout.simple_spinner_item);
-		*/
-		
 		mAnalysisButton = (Button)findViewById(R.id.feedback_result_button);
 		mAnalysisButton.setOnClickListener(mClickListener);
-		
+		*/
 		/*
 		mFeedbackGraphButton = (Button)findViewById(R.id.feedback_graph_button);
 		mFeedbackGraphButton.setOnClickListener(mClickListener);
@@ -379,9 +406,11 @@ public class SwingFeedback extends Activity{
 		public void onClick(View v) {
 			switch(v.getId())
 			{
+/*			
 			case R.id.feedback_result_button:
 				analyzeSwingData();
 				break;
+*/				
 /*				
 			case R.id.feedback_graph_button:
 				
@@ -392,7 +421,7 @@ public class SwingFeedback extends Activity{
 				break;
 */				
 			case R.id.feedback_back_button:
-				startActivity(new Intent(SwingFeedback.this, CollectingAccelerationData.class));
+				startActivity(new Intent(SwingFeedback.this, Home.class));
 				finish();
 				break;
 			}
@@ -718,11 +747,19 @@ public class SwingFeedback extends Activity{
 		
 		if(!mResultFileName.isEmpty())
 		{
+			/*
 			mDetectSwingThread = new DetectSwingThread(FeedbackHandler,
 														(ArrayList)mSwingDataArrayList,
 														mMaxThreshold, mMinThreshold);
 			mDetectSwingThread.setDaemon(true);
 			mDetectSwingThread.start();
+			*/
+			mSwingDetectionThread = new SwingDetectionThread(FeedbackHandler,
+															(ArrayList)mSwingDataArrayList,
+															mMaxThreshold, mMinThreshold);
+			mSwingDetectionThread.setDaemon(true);
+			mSwingDetectionThread.start();
+
 		}
 		else
 		{
@@ -855,7 +892,7 @@ public class SwingFeedback extends Activity{
     	x = y = 0;
     	if(eIndex - sIndex == 0)
     	{
-    		showMsgDialog("Errpr", "Cannot find critical points.");
+    		showMsgDialog("Error", "Cannot find critical points.");
     		return;
     	}
     	maxX = mSwingDataArrayList.get(sIndex).mXvalue;
@@ -983,10 +1020,22 @@ public class SwingFeedback extends Activity{
 		alertDlg.setTitle(title);
 		alertDlg.setMessage(message);
 		alertDlg.setIcon(R.drawable.golf_analyzer_icon);
-		alertDlg.setPositiveButton("Close", null);
+		alertDlg.setPositiveButton("Close", mClickDialogButton);
 		alertDlg.show();
 	}
 
+	DialogInterface.OnClickListener mClickDialogButton = new DialogInterface.OnClickListener() {
+		
+		public void onClick(DialogInterface dialog, int which) {
+			if(which == DialogInterface.BUTTON1)
+			{
+				startActivity(new Intent(SwingFeedback.this, Home.class));
+				finish();
+			}
+			
+		}
+	};
+	
 	/*=============================================================================
 	 * Name: setImageViewResource
 	 * 
@@ -1019,10 +1068,21 @@ public class SwingFeedback extends Activity{
 	{
 		if(!mBeepChecked)
 		{
-			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
-			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+			if(mSimpleAudioFeedback)
 			{
-				mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				mSoundPool = new SoundPool(SIMPLE_MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< SIMPLE_MUSICAL_NOTE_NUM; i++)
+				{
+					mSimpleSoundPoolId[i] = mSoundPool.load(this, mSimpleMusicalNotes[i], 1);
+				}
+			}
+			else
+			{
+				mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+				{
+					mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				}
 			}
 
 		}
@@ -1258,6 +1318,78 @@ public class SwingFeedback extends Activity{
 
 	}
 
+	public void showTimeSlotWithSimpleMusicalNotes(int index, int axis)
+	{
+		int strength = 0;
+		int matchedIndex = 0;		
+		
+		if(axis == X_AXIS)
+		{
+			strength = mSwingXResult[index];
+			
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "X: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mXImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+			
+		}
+		else
+		{
+			strength = mSwingYResult[index];
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "Y: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mYImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+
+		}
+
+		
+	}
+
 	/*=============================================================================
 	 * Name: resetIconColor
 	 * 
@@ -1444,15 +1576,21 @@ public class SwingFeedback extends Activity{
 				{
 					mTimerHandler.sendEmptyMessageDelayed(0, timeInterval);
 					wait += timeInterval;
+					/*
 					Log.i("realswing", "Duration:" + mSwingDuration 
 										+ ", Index:" + timeIndex 
 										+ ", wait:" + wait 
 										+ ", Interval:" + timeInterval);
-					
+					*/
 					if(timeIndex < TIME_SCALE)
 					{
 						if(!mBeepChecked)
-							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						{
+							if(mSimpleAudioFeedback)
+								showTimeSlotWithSimpleMusicalNotes(timeIndex, X_AXIS);
+							else
+								showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						}
 						else
 							showTimeSlotWithBeep(timeIndex, X_AXIS);
 
@@ -1461,15 +1599,18 @@ public class SwingFeedback extends Activity{
 					{
 						if(!mBeepChecked)
 						{
-							Log.i("realswing", "Musical Notes timeIndex:" + timeIndex);
+							Log.i("feedback", "Musical Notes timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
-								showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								if(mSimpleAudioFeedback)
+									showTimeSlotWithSimpleMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								else
+									showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
 							}
 						}
 						else
 						{
-							Log.i("realswing", "Beep timeIndex:" + timeIndex);
+							Log.i("feedback", "Beep timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
 								showTimeSlotWithBeep(timeIndex-TIME_SCALE, Y_AXIS);

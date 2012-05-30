@@ -5,42 +5,26 @@
     android:background="#000000"
     android:orientation="vertical" >
     
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="30dp"        
-        android:gravity="center"
-        android:text="Analysis of External Golf Swings"
-        android:textAppearance="?android:attr/textAppearanceMedium" >
-    </TextView>
-	
-    <Spinner
-        android:id="@+id/real_swing_file_spinner"
-        android:layout_width="match_parent"
-        android:layout_height="50dp" />
-  
-    
-    <LinearLayout
-        android:id="@+id/layer_button"
+	<LinearLayout 
         android:layout_width="fill_parent"
         android:layout_height="50dp"
-        android:orientation="horizontal" >
-        <Button
-            android:id="@+id/real_swing_analysis_button"
-            android:layout_width="80dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="0.05"
-            android:text="Analyze"
-            android:textAppearance="?android:attr/textAppearanceMedium" />      
-        <Button
+        android:orientation="horizontal">
+    	<Spinner
+	        android:id="@+id/real_swing_file_spinner"
+	        android:layout_width="230dp"
+	        android:layout_height="fill_parent" 
+	        android:layout_weight="1"/>
+        <ImageButton
             android:id="@+id/real_swing_home_button"
-            android:layout_width="80dp"
+            android:layout_width="60dp"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
-            android:layout_weight="0.05"
-            android:text="Home"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-    </LinearLayout>
+            android:layout_weight="0.5"
+            android:background="#000000"
+            android:src="@drawable/home_icon"/>
+	</LinearLayout>    
+    
+    
     
     <TextView
        	android:id="@+id/realswing_x_textview"
@@ -292,7 +276,7 @@
     
 	<ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="80dp" >        
+        android:layout_height="100dp" >        
     	<LinearLayout
 	        android:id="@+id/layer_result"
 	        android:layout_width="fill_parent"
@@ -305,5 +289,28 @@
 	            android:text="Result" />
 	    </LinearLayout>
 	</ScrollView>
-
+	
+	<LinearLayout
+        android:id="@+id/layer_button"
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal" >
+		<CheckBox 
+            android:id="@+id/real_swing_check_gravity"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="Remove gravity(Y)"
+            android:textAppearance="?android:attr/textAppearanceSmall" />        
+        <Button
+            android:id="@+id/real_swing_analysis_button"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:text="Analyze"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+    </LinearLayout>
 </LinearLayout>

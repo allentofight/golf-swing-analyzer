@@ -130,7 +130,8 @@ public class RealSwingAnalysisActivity extends Activity{
 	 * Widgets
 	 */
 	Button mRealSwingAnalyzeButton;
-	Button mRealSwingHomeButton;
+	ImageButton mRealSwingHomeButton;
+	CheckBox mRemoveGCheckBox;
 	
 	Spinner mRealSwingFileSpinner;
 	
@@ -149,12 +150,14 @@ public class RealSwingAnalysisActivity extends Activity{
 	FileConversionThread mFileConversionThread;
 	DetectSwingThread mDetectSwingThread;
 	
+	SwingDetectionThread mSwingDetectionThread;		// a new thread for detecting points
+	
 	String mSelectedFile = "";
 	
 	private boolean mIsAboveThresholdX;
 	private boolean mIsAboveThresholdY;
 	
-
+	private boolean mIsRemoveGChecked;
 	// Variables for the analyzed swing data
 	int mStartIndex;	// The start point of a swing
 	int mSwingStartTime;
@@ -227,6 +230,37 @@ public class RealSwingAnalysisActivity extends Activity{
 	
 	int mSoundPoolId[] = new int[MUSICAL_NOTE_NUM];
 			
+	/*================================================================================
+	 * Simplified Audio Feedback
+	 *================================================================================*/
+	final static int SIMPLE_MUSICAL_NOTE_NUM = 10;
+	int mSimpleSoundPoolId[] = new int [SIMPLE_MUSICAL_NOTE_NUM];
+	
+	boolean mSimpleAudioFeedback = true;
+								// Do         Mi        Sol      Do2
+	int mSimpleMusicalNotes[] = {R.raw.c4,	// Do
+								R.raw.d4,	// Re
+								R.raw.e4, 	// Mi
+								R.raw.f4,	// Fa
+								R.raw.g4, 	// Sol								
+								R.raw.b3,	// Ti  
+								R.raw.a3,	// Ra
+								R.raw.g3,	// Sol
+								R.raw.f3,	// Fa
+								R.raw.e3};	// Mi
+	
+	int mSimpleSwingStrengthIconArray[] = {R.drawable.p0, 
+											R.drawable.p5, 
+											R.drawable.p10,
+											R.drawable.p15,
+											R.drawable.p20, 
+											R.drawable.n1,
+											R.drawable.n5,
+											R.drawable.n9,
+											R.drawable.n12,
+											R.drawable.n14};
+	
+	/*=================================================================================*/
 	
 	Handler mTimerHandler;
 	
@@ -240,7 +274,7 @@ public class RealSwingAnalysisActivity extends Activity{
 
 	
 	List<AccelerationData> mRealSwingDataList = null;
-	List<AccelerationData> mConvertedSwingList = null;
+	//List<AccelerationData> mRealSwingDataList = null;
 	
 	/* 
 	 * SharedPreference Values 
@@ -262,8 +296,11 @@ public class RealSwingAnalysisActivity extends Activity{
 		mRealSwingAnalyzeButton = (Button)findViewById(R.id.real_swing_analysis_button);
 		mRealSwingAnalyzeButton.setOnClickListener(mClickListener);
 		
-		mRealSwingHomeButton = (Button)findViewById(R.id.real_swing_home_button);
+		mRealSwingHomeButton = (ImageButton)findViewById(R.id.real_swing_home_button);
 		mRealSwingHomeButton.setOnClickListener(mClickListener);
+		
+		mRemoveGCheckBox = (CheckBox)findViewById(R.id.real_swing_check_gravity);
+		mRemoveGCheckBox.setOnCheckedChangeListener(mCheckedChange);
 		
 		mRealSwingFileSpinner = (Spinner)findViewById(R.id.real_swing_file_spinner);
 		mRealSwingFileSpinner.setOnItemSelectedListener(mItemSelectedListener);
@@ -348,6 +385,22 @@ public class RealSwingAnalysisActivity extends Activity{
 		
 	};
 	
+	CompoundButton.OnCheckedChangeListener mCheckedChange =
+			new CompoundButton.OnCheckedChangeListener() {
+				
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) 
+				{
+					if(isChecked)
+					{
+						mIsRemoveGChecked = true;
+					}
+					else
+					{
+						mIsRemoveGChecked = false;
+					}
+					
+				}
+			};
 	/*=============================================================================
 	 * Name: initMemberVariables
 	 * 
@@ -368,6 +421,7 @@ public class RealSwingAnalysisActivity extends Activity{
 		mYMaxIndex = mYMinIndex = 0;
 		mIsAboveThresholdX = true;
 		mIsAboveThresholdY = true;
+		mIsRemoveGChecked = false;
 		
 		mRealSwingDataList = new ArrayList<AccelerationData>();
 		clearSwingResult();
@@ -431,11 +485,23 @@ public class RealSwingAnalysisActivity extends Activity{
 	{
 		if(!mBeepChecked)
 		{
-			mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
-			for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+			if(mSimpleAudioFeedback)
 			{
-				mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				mSoundPool = new SoundPool(SIMPLE_MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< SIMPLE_MUSICAL_NOTE_NUM; i++)
+				{
+					mSimpleSoundPoolId[i] = mSoundPool.load(this, mSimpleMusicalNotes[i], 1);
+				}
 			}
+			else
+			{
+				mSoundPool = new SoundPool(MUSICAL_NOTE_NUM, AudioManager.STREAM_MUSIC, 0);
+				for(int i=0; i< MUSICAL_NOTE_NUM; i++)
+				{
+					mSoundPoolId[i] = mSoundPool.load(this, mMusicalNoteArray[i], 1);
+				}
+			}
+
 		}
 		else
 		{
@@ -669,6 +735,79 @@ public class RealSwingAnalysisActivity extends Activity{
 		}
 
 	}
+	
+	public void showTimeSlotWithSimpleMusicalNotes(int index, int axis)
+	{
+		int strength = 0;
+		int matchedIndex = 0;		
+		
+		if(axis == X_AXIS)
+		{
+			strength = mSwingXResult[index];
+			
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "X: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mXImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+			
+		}
+		else
+		{
+			strength = mSwingYResult[index];
+			
+			if(strength >= 0 && strength < 5)
+				matchedIndex = 0;
+			else if(strength >= 5 && strength < 10)
+				matchedIndex = 1;
+			else if(strength >= 10 && strength < 15)
+				matchedIndex = 2;
+			else if(strength >= 15 && strength < 20)
+				matchedIndex = 3;
+			else if(strength >= 20)
+				matchedIndex = 4;
+			else if(strength < 0 && strength > -5)
+				matchedIndex = 5;
+			else if(strength <= -5 && strength > -10)
+				matchedIndex = 6;
+			else if(strength <= -10 && strength > -15)
+				matchedIndex = 7;
+			else if(strength <= -15 && strength > -20)
+				matchedIndex = 8;
+			else if(strength <= -20)
+				matchedIndex = 9;
+			
+			Log.i("pastswing", "Y: matchedIndex: " + matchedIndex + ", Index: " + index);
+			
+			mYImages[index].setImageResource(mSimpleSwingStrengthIconArray[matchedIndex]);
+			mSoundPool.play(mSimpleSoundPoolId[matchedIndex], 1, 1, 0, 0, 1);
+
+		}
+
+		
+	}
+
 	/*=============================================================================
 	 * Name: resetIconColor
 	 * 
@@ -905,7 +1044,8 @@ public class RealSwingAnalysisActivity extends Activity{
 
 		mFileConversionThread = new FileConversionThread(srcFileName, 
 														RealSwingAnalysisHandler,
-														(ArrayList)mRealSwingDataList);
+														(ArrayList)mRealSwingDataList,
+														mIsRemoveGChecked);
 		
 		mFileConversionThread.setDaemon(true);
 		mFileConversionThread.start();
@@ -927,21 +1067,15 @@ public class RealSwingAnalysisActivity extends Activity{
 		mIsAboveThresholdX = true;
 		mIsAboveThresholdY = true;
 		
-		mConvertedSwingList = new ArrayList<AccelerationData>(mRealSwingDataList);
+		Log.i("realswing", "mRealSwingDataList.size:" + mRealSwingDataList.size());
 		
-		Collections.copy(mConvertedSwingList, mRealSwingDataList);
-		Log.i("realswing", "mConvertedSwingList.size:" + mConvertedSwingList.size());
 		
-		/*
-		mDetectSwingThread = new DetectSwingThread(RealSwingAnalysisHandler,
-													(ArrayList)mConvertedSwingList);
+		mSwingDetectionThread = new SwingDetectionThread(RealSwingAnalysisHandler,
+														(ArrayList)mRealSwingDataList,
+														mMaxThreshold, mMinThreshold);
+		mSwingDetectionThread.setDaemon(true);
+		mSwingDetectionThread.start();
 		
-		*/
-		mDetectSwingThread = new DetectSwingThread(RealSwingAnalysisHandler,
-													(ArrayList)mConvertedSwingList,
-													mMaxThreshold, mMinThreshold);
-		mDetectSwingThread.setDaemon(true);
-		mDetectSwingThread.start();
 	}
 	/*=============================================================================
 	 * Name: startRealSwingFeedback
@@ -965,18 +1099,22 @@ public class RealSwingAnalysisActivity extends Activity{
 		}
 		else
 		{
-			mSwingStartTime = mConvertedSwingList.get(mStartIndex).mTimestamp;
-			mSwingEndTime = mConvertedSwingList.get(mEndIndex).mTimestamp;
+			mSwingStartTime = mRealSwingDataList.get(mStartIndex).mTimestamp;
+			mSwingEndTime = mRealSwingDataList.get(mEndIndex).mTimestamp;
 			mSwingDuration = mSwingEndTime - mSwingStartTime;
 			
-			displayResultText("Swing Duration: " + mSwingDuration + " msec");
-			displayResultText("Time interval : " + mSwingDuration/TIME_SCALE + " msec");
+			displayResultText("Swing Duration: " + mSwingDuration + " msec"
+							+ " (" + mSwingStartTime + " ~ " + mSwingEndTime + ")");
 
-			mXMaxTime = mConvertedSwingList.get(mXMaxIndex).mTimestamp;			
-			mXMaxValue = mConvertedSwingList.get(mXMaxIndex).mXvalue;
+
+			mXMaxTime = mRealSwingDataList.get(mXMaxIndex).mTimestamp;			
+			mXMaxValue = mRealSwingDataList.get(mXMaxIndex).mXvalue;
 			
-			mXMinTime = mConvertedSwingList.get(mXMinIndex).mTimestamp;
-			mXMinValue = mConvertedSwingList.get(mXMinIndex).mXvalue;
+			mXMinTime = mRealSwingDataList.get(mXMinIndex).mTimestamp;
+			mXMinValue = mRealSwingDataList.get(mXMinIndex).mXvalue;
+			
+			displayResultText("X Min Time:" + mXMinTime + ", "+ mXMinValue);
+			displayResultText("X Max Time:" + mXMaxTime + ", " + mXMaxValue);
 			
 			// Draw lines and text
 			mXTimeScale.setFeedbackScale(TIME_SCALE, mSwingStartTime, mSwingEndTime);
@@ -1002,12 +1140,15 @@ public class RealSwingAnalysisActivity extends Activity{
 				mIsAboveThresholdX = false;
 			}
 			
-			mYMaxTime = mConvertedSwingList.get(mYMaxIndex).mTimestamp;
-			mYMaxValue = mConvertedSwingList.get(mYMaxIndex).mYvalue;
+			mYMaxTime = mRealSwingDataList.get(mYMaxIndex).mTimestamp;
+			mYMaxValue = mRealSwingDataList.get(mYMaxIndex).mYvalue;
 			
-			mYMinTime = mConvertedSwingList.get(mYMinIndex).mTimestamp;
-			mYMinValue = mConvertedSwingList.get(mYMinIndex).mYvalue;
+			mYMinTime = mRealSwingDataList.get(mYMinIndex).mTimestamp;
+			mYMinValue = mRealSwingDataList.get(mYMinIndex).mYvalue;
 			
+			displayResultText("Y Min Time:" + mYMinTime + ", "+ mYMinValue);
+			displayResultText("Y Max Time:" + mYMaxTime + ", " + mYMaxValue);
+
 			/*
 			 * When only the maximum value of Y-axis is less than Threshold(-5),
 			 * find a peak point.
@@ -1067,22 +1208,24 @@ public class RealSwingAnalysisActivity extends Activity{
     	float x, y;
     	
     	x = y = 0;
-    	maxX = mConvertedSwingList.get(sIndex).mXvalue;
-    	maxY = mConvertedSwingList.get(sIndex).mYvalue;
+    	Log.i("realswing", "Max Slot() Start index:" + sIndex + ", End: " + eIndex);
+    	
+    	maxX = mRealSwingDataList.get(sIndex).mXvalue;
+    	maxY = mRealSwingDataList.get(sIndex).mYvalue;
     	
     	minX = maxX;
     	minY = maxY;
     	
-    	startTimestamp = mConvertedSwingList.get(sIndex).mTimestamp;
-    	endTimestamp = mConvertedSwingList.get(eIndex).mTimestamp;
+    	startTimestamp = mRealSwingDataList.get(sIndex).mTimestamp;
+    	endTimestamp = mRealSwingDataList.get(eIndex).mTimestamp;
     	
     	interval = (endTimestamp - startTimestamp) / timescale;
     	
     	for(int i=sIndex; i<=eIndex; i++)
     	{
-    		timestamp = mConvertedSwingList.get(i).mTimestamp;
-    		x = mConvertedSwingList.get(i).mXvalue;
-    		y = mConvertedSwingList.get(i).mYvalue;
+    		timestamp = mRealSwingDataList.get(i).mTimestamp;
+    		x = mRealSwingDataList.get(i).mXvalue;
+    		y = mRealSwingDataList.get(i).mYvalue;
     		
     		arrIndex = (timestamp - startTimestamp) / interval;
     		if(arrIndex >= TIME_SCALE)
@@ -1137,11 +1280,11 @@ public class RealSwingAnalysisActivity extends Activity{
     			}
 
     			// Initialize maximum and minimum values in each time slot
-    			maxX = mConvertedSwingList.get(i).mXvalue;
-    			minX = mConvertedSwingList.get(i).mXvalue;
+    			maxX = mRealSwingDataList.get(i).mXvalue;
+    			minX = mRealSwingDataList.get(i).mXvalue;
     			
-    			maxY = mConvertedSwingList.get(i).mYvalue;
-    			minY = mConvertedSwingList.get(i).mYvalue;
+    			maxY = mRealSwingDataList.get(i).mYvalue;
+    			minY = mRealSwingDataList.get(i).mYvalue;
     			prevIndex = arrIndex;
     		}
     		
@@ -1185,7 +1328,7 @@ public class RealSwingAnalysisActivity extends Activity{
     {
     	int timestamp = 0;
     	
-    	timestamp = mConvertedSwingList.get(index).mTimestamp;
+    	timestamp = mRealSwingDataList.get(index).mTimestamp;
     	
     	return timestamp;
     }
@@ -1230,40 +1373,65 @@ public class RealSwingAnalysisActivity extends Activity{
     		switch(msg.what)
     		{
     		case MSG_CONVERSION_DONE:
-    			startAnalyzeSwingData();	// Start to analyze the converted swing data
+    			
+    			if(msg.arg1 != -1)
+    			{
+    				//displayResultText("Conversion done.");
+    				startAnalyzeSwingData();	// Start to analyze the converted swing data
+    			}
+    			else
+    				displayResultText("Conversion failed.");	
     			break;    		
     		case MSG_START_POINT:
     			mStartIndex = msg.arg1;
-    			handlerText = "Start Time: " + msg.arg2;
-    			displayResultText(handlerText);
+    			//handlerText = "Start Time: " + msg.arg2;
+    			//displayResultText(handlerText);
     			break;
     		case MSG_END_POINT:
     			mEndIndex = msg.arg1;
-    			handlerText = "End Time  : " + msg.arg2;
-    			displayResultText(handlerText);
+    			//handlerText = "End Time  : " + msg.arg2;
+    			//displayResultText(handlerText);
     			break;
     		case MSG_PEAK_X_MAX:
     			mXMaxIndex = msg.arg1;
-    			value = (int)mConvertedSwingList.get(mXMaxIndex).mXvalue;
+    			/*
+    			value = (int)mRealSwingDataList.get(mXMaxIndex).mXvalue;
     			handlerText = "X-axis(Threshold:" + mMaxThreshold+") " 
     						+  "+Peak:" + value + ", Time:" + msg.arg2;
     			
     			mRealSwingXTextView.setText(handlerText);
+    			*/
     			break;
     		case MSG_PEAK_X_MIN:
+    			mXMinIndex = msg.arg1;
+    			value = (int)mRealSwingDataList.get(mXMinIndex).mXvalue;
+    			handlerText = "X-axis(Threshold:" + mMaxThreshold+") " 
+    						+  "-Peak:" + value + ", Time:" + msg.arg2;
+    			
+    			mRealSwingXTextView.setText(handlerText);
+
     			mXMinIndex = msg.arg1;
     			break;
     		case MSG_PEAK_Y_MAX:
     			mYMaxIndex = msg.arg1;
+    			value = (int)mRealSwingDataList.get(mYMaxIndex).mYvalue;
+
+    			handlerText = "Y-axis(Threshold:" + mMaxThreshold+") " 
+						+  "+Peak:" + value + ", Time:" + msg.arg2;    			
+    			
+    			mRealSwingYTextView.setText(handlerText);
+
     			break;    			
     		case MSG_PEAK_Y_MIN:
-    			mYMinIndex = msg.arg1;    			
-    			value = (int)mConvertedSwingList.get(mYMinIndex).mYvalue;
+    			mYMinIndex = msg.arg1;   
+    			/*
+    			value = (int)mRealSwingDataList.get(mYMinIndex).mYvalue;
 
     			handlerText = "Y-axis(Threshold:" + mMinThreshold+") " 
 						+  "-Peak:" + value + ", Time:" + msg.arg2;    			
     			
     			mRealSwingYTextView.setText(handlerText);
+    			*/
     			break;
     		case MSG_DETECT_DONE_X:
     			break;
@@ -1400,15 +1568,22 @@ public class RealSwingAnalysisActivity extends Activity{
 				{
 					mTimerHandler.sendEmptyMessageDelayed(0, timeInterval);
 					wait += timeInterval;
+					/*
 					Log.i("realswing", "Duration:" + mSwingDuration 
 										+ ", Index:" + timeIndex 
 										+ ", wait:" + wait 
 										+ ", Interval:" + timeInterval);
+					*/
 					
 					if(timeIndex < TIME_SCALE)
 					{
 						if(!mBeepChecked)
-							showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						{
+							if(mSimpleAudioFeedback)
+								showTimeSlotWithSimpleMusicalNotes(timeIndex, X_AXIS);
+							else
+								showTimeSlotWithMusicalNotes(timeIndex, X_AXIS);
+						}
 						else
 							showTimeSlotWithBeep(timeIndex, X_AXIS);
 
@@ -1417,10 +1592,13 @@ public class RealSwingAnalysisActivity extends Activity{
 					{
 						if(!mBeepChecked)
 						{
-							Log.i("realswing", "Musical Notes timeIndex:" + timeIndex);
+							Log.i("pastswing", "Musical Notes timeIndex:" + timeIndex);
 							if(timeIndex - TIME_SCALE < 10)
 							{
-								showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								if(mSimpleAudioFeedback)
+									showTimeSlotWithSimpleMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
+								else
+									showTimeSlotWithMusicalNotes(timeIndex-TIME_SCALE, Y_AXIS);
 							}
 						}
 						else
